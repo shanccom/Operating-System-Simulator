@@ -24,17 +24,17 @@ public class Process {
   
   // Memoria
   private final int requiredPages;
-  private final Set<Integer> loadedPages;  // Páginas actualmente en memoria
+  private final Set<Integer> loadedPages;  // Paginas actualmente en memoria
   private int pageFaults;
   
   // Métricas de tiempo
-  private int startTime;           // Tiempo en que inició su primera ejecución
-  private int completionTime;      // Tiempo en que terminó
+  private int startTime;           // Tiempo en que inicio su primera ejecucion
+  private int completionTime;      // Tiempo en que termino
   private int waitingTime;         // Tiempo total en estado READY
-  private int responseTime;        // Tiempo desde llegada hasta primera ejecución
+  private int responseTime;        // Tiempo desde llegada hasta primera ejecucion
   private boolean hasStarted;      // Para calcular response time
   
-  private int lastExecutionTime;   // Último momento en que se ejecutó (para cálculos)
+  private int lastExecutionTime;   // Último momento en que se ejecuto 
   
   public Process(String pid, int arrivalTime, List<Burst> bursts, int priority, int requiredPages) {
       this.pid = pid;
