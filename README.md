@@ -15,31 +15,33 @@
 
 ---
 
-### 1. Módulo de Planificación
+## 1. Modulos
+
+### 1.1. Módulo de Planificación
 - **FCFS** (First Come First Served)
 - **SJF** (Shortest Job First)  
 - **Round Robin** con quantum configurable
 - Métricas: Tiempo de espera, retorno y utilización de CPU
 
-###  2. Módulo de Memoria Virtual
+###  1.2. Módulo de Memoria Virtual
 - **FIFO** (First In First Out)
 - **LRU** (Least Recently Used)
 - **Algoritmo Óptimo**
 - Registro de fallos de página y reemplazos
 
-###  3. Módulo de Sincronización
+###  1.3. Módulo de Sincronización
 -  Procesos como **Threads independientes**
 -  Estados: `NUEVO → LISTO → EJECUTANDO → BLOQUEADO → TERMINADO`
 -  Semáforos y Locks para evitar *race conditions*
 -  **BONUS:** Manejo de ráfagas de E/S (+2 pts)
 
-###  4. Interfaz Gráfica
+###  1.4. Interfaz Gráfica
 -  Diagrama de Gantt interactivo
 -  Tabla de páginas en tiempo real
 -  Log de eventos del sistema
 
 ---
-## Estructura del Proyecto
+## 2. Estructura del Proyecto
 ```
 Operating-System-Simulator/
 │
@@ -89,3 +91,20 @@ Operating-System-Simulator/
     └── diagramas/
 ```
 
+## 3. Compilacion 
+
+### 3.1 En Ubuntu
+```
+mkdir -p bin
+javac -d bin Main.java model/*.java utils/*.java modules/scheduler/*.java modules/memory/*.java modules/sync/*.java
+java -cp bin Main data/config.txt data/procesos.txt
+```
+
+
+### 3.2 En Windows (powershell)
+
+```
+mkdir bin
+javac -d bin Main.java model/*.java utils/*.java modules/scheduler/*.java modules/memory/*.java modules/sync/*.java
+java -cp bin Main data/config.txt data/procesos.txt
+```
