@@ -1,5 +1,6 @@
 package modules.sync;
 
+import model.Burst;
 import model.Process;
 import model.ProcessState;
 import modules.memory.MemoryManager;
