@@ -17,6 +17,7 @@ public class Config {
       FIFO,     // First In First Out
       LRU,      // Least Recently Used
       OPTIMAL   // Algoritmo Óptimo
+      NRU   // Algoritmo Óptimo
   }
   
   private int totalFrames;
