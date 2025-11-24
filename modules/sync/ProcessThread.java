@@ -77,7 +77,41 @@ public class ProcessThread extends Thread {
     }
   }
 
+  private void executeCPUBurst(Burst burst) throws InterruptedException {
+    Logger.log(" Proceso " + process.getPid() + " ejecutando CPU (restane " + burst.getRemainingTime() + ")");
 
+    while (!burst.isCompleted() && process.getState() == ProcessState.RUNNING){
+      burst.execute(1);
+
+      Logger.debug("Proceso " + process.getPid() + " ejecuto 1 unidad CPU (restante " + burst.getRemainingTime() + ")");
+      Thread.sleep(50);
+
+      if (process.getState() != ProcessState.RUNNING) {
+        Logeer.log("Proceso " + process.getPid() + " fue preemptive");
+        break;
+      } 
+    }
+
+    if (burst.isCompleted()) {
+      Logger.log("Proceso " + process.getPid() + " completo rafaga CPU");
+    }
+  }
+
+  //Luego implementaremos IOManager por lo cual este despertara al proceso cuando termine 
+  private void executeIOBurst(Burst burst) throws InterruptedException {
+    Logger.log("Proceso " + process.getPid() + " inicia I/O por " burst.getDuration() + " unidades");
+    syncController.notifyProcessBlocked(process, ProcessState.BLOCKED_IO);
+
+    int ioTIme = burst.getDuration() * 100;
+    Thread.sleep(ioTime);
+
+    burst.execute(burst.getDuration());
+
+    Logger.log("Proceso " + process.getPid() + " completo I/0");
+
+    process.setState(ProcessState.READY);
+    syncController.notifyProcessReady(process);
+  }
 
   @Override 
   public void run() {
@@ -96,7 +130,31 @@ public class ProcessThread extends Thread {
     }
   }
 
+  private void terminateProcess() {
+    Logger.log("Proceso " + process.getPid() + " TERMINADO" );
+    process.setState(ProcessState.TERMINATED);
 
+    synController.releaseProcessResources(process);
 
+    Logger.log(">>> Proceso " + process.getPid() + " TERMINADO - Métricas:");
+    Logger.log("    Tiempo de espera: " + process.getWaitingTime());
+    Logger.log("    Tiempo de retorno: " + process.getTurnaroundTime());
+    Logger.log("    Fallos de página: " + process.getPageFaults());
+    running = false;
+  }
 
+  public void wakeUp() {
+    syncronized (process) {
+      process.notifyAll();
+    }
+  }
+
+  public void stopThread() {
+    running = false;
+    wakeUp();
+  }
+
+  public Process getProcess() {
+    return process;
+  }
 }
