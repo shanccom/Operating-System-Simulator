@@ -1,9 +1,5 @@
 package model;
 
-/**
- * Clase para la configuracion del sistema 
- */
-
 public class Config {
   
   public enum SchedulerType {
@@ -22,18 +18,14 @@ public class Config {
   private int totalFrames;
   private int frameSize;  // Tamaño de cada marco
   
-  // Configuración de planificación
   private SchedulerType schedulerType;
   private int quantum;  // Para Round Robin
   
-  // Configuración de memoria
   private ReplacementType replacementType;
   
-  // Configuración de simulación
-  private boolean enableIO;  // Habilitar E/S (este es el bonus de preferencia hay que hacerlo)
-  private int timeUnit;      // Duración de cada unidad de tiempo en ms (para visualización)
+  private boolean enableIO;
+  private int timeUnit;
   
-  //Valores por defecto del sistema
   public Config() {
       this.totalFrames = 10;
       this.frameSize = 4096;

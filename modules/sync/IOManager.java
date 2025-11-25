@@ -1,4 +1,4 @@
-packege modules.sync;
+package modules.sync;
 
 import model.Burst;
 import model.Process;
@@ -10,9 +10,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IOManager implements Runnable {
+  
   private static class IORequest {
     final Process process;
-    final Burst ioBuest;
+    final Burst ioBurst;
     final int requestTime;
 
     IORequest(Process process, Burst ioBurst, int requestTime) {
@@ -23,9 +24,29 @@ public class IOManager implements Runnable {
 
     @Override
     public String toString() {
-      return String.format("IORequest[%s, duracion=%d]", process.getPid, ioBurst.getDuration());
+      return String.format("IORequest[%s, duracion=%d]", process.getPid(), ioBurst.getDuration());
     }
   }
+
+  private final BlockingQueue<IORequest> ioQueue;
+  private final SyncController syncController;
+  private volatile boolean running;
+  private Thread ioThread;
+  private final AtomicInteger totalIOOperations;
+  private final AtomicInteger completedIOOperations;
+  private int totalIOTime;
+
+  public IOManager(SyncController syncController) {
+    this.ioQueue = new LinkedBlockingQueue<>();
+    this.syncController = syncController;
+    this.running = false;
+    this.totalIOOperations = new AtomicInteger(0);
+    this.completedIOOperations = new AtomicInteger(0);
+    this.totalIOTime = 0;
+
+    Logger.log("IOManager inicializado");
+  }
+
 
   public void start() {
     if (running) {
@@ -34,7 +55,7 @@ public class IOManager implements Runnable {
     }
 
     running = true;
-    ioThread = new Thread(thism "IOManager Thread");
+    ioThread = new Thread(this, "IOManager Thread");
     ioThread.setDaemon(true);
     ioThread.start();
 
@@ -66,9 +87,10 @@ public class IOManager implements Runnable {
   private void processIORequest(IORequest request) throws InterruptedException {
     Process process = request.process;
     Burst ioBurst = request.ioBurst;
-    int duration = ioBurst.getDuration;
+    int duration = ioBurst.getDuration();
 
-    Logger.log(String.format(IOManager procesando I/O de %s por %d unidades, process.getPid(), duration));
+    Logger.log("[SYNC] IOManager tomó solicitud de cola bloqueante");
+    Logger.log(String.format("IOManager procesando I/O de %s por %d unidades", process.getPid(), duration));
     
     int currentTime = syncController.getScheduler().getCurrentTime();
     int ioTimeMs = duration * 100;
@@ -79,6 +101,7 @@ public class IOManager implements Runnable {
       Thread.sleep(sleepPerStep);
 
       Logger.debug(String.format("IOManager: %s I/O progreso %d/%d", process.getPid(), i+1, steps ));
+      
     }
 
     if(running) {
@@ -90,9 +113,9 @@ public class IOManager implements Runnable {
       int waitTime = completionTime - currentTime;
 
       Logger.log(String.format("IOManager completo I/O de %s (espero %d unidades)", process.getPid(), waitTime));
+      Logger.log("[SYNC] IOManager notificando proceso listo después de I/O");
       process.setState(ProcessState.READY);
       syncController.notifyProcessReady(process);
-          
       Logger.log(String.format(">>> Proceso %s desbloqueado por I/O, volvió a READY", process.getPid())); 
     }
   }

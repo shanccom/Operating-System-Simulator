@@ -51,20 +51,20 @@ public class SyncController {
   public boolean prepareProcessForExecution(Process process) {
     globalLock.lock();
     try {
+      Logger.log("[SYNC] Adquiriendo lock global para proceso " + process.getPid()); // ✅ AGREGAR
       Logger.debug("Preparando proceso " + process.getPid() + " para ejecucion");
       
       if (process.getState() != ProcessState.READY) {
-          Logger.warning("Proceso " + process.getPid() + " no esta en estado READY");
-          return false;
+        Logger.warning("Proceso " + process.getPid() + " no esta en estado READY");
+        return false;
       }
       
-      // Cargar las paginas necesarias
       boolean pagesLoaded = loadRequiredPages(process);
       
       if (!pagesLoaded) {
-          process.setState(ProcessState.BLOCKED_MEMORY);
-          Logger.log("Proceso " + process.getPid() + " bloqueado por falta de memoria");
-          return false;
+        process.setState(ProcessState.BLOCKED_MEMORY);
+        Logger.log("[SYNC] Proceso " + process.getPid() + " bloqueado esperando memoria");
+        return false;
       }
       
       // Proceso listo para ejecutar
@@ -72,6 +72,7 @@ public class SyncController {
       return true;
         
     } finally {
+      Logger.debug("[SYNC] Liberando lock global");
       globalLock.unlock();
     }
   }
@@ -97,6 +98,8 @@ public class SyncController {
   private boolean loadRequiredPages(Process process) {
     memoryLock.lock();
     try {
+      Logger.debug("[SYNC] Adquiriendo lock de memoria para " + process.getPid());
+      
       Burst currentBurst = process.getCurrentBurst();
       if (currentBurst == null){
         return false;
@@ -108,10 +111,12 @@ public class SyncController {
       int loadedCount = 0;
       for (int page = 0; page < requiredForBurst; page++) {
         if(!memoryManager.isPageLoaded(process.getPid(), page)) {
+          Logger.debug("[SYNC] Esperando cargar página " + page + " con lock activo");
           boolean loaded = memoryManager.loadPage(process, page);
 
           if (loaded) {
             loadedCount++;
+            Logger.debug("[SYNC] Página " + page + " cargada exitosamente");
           } else {
             Logger.warning("No se pudo cargar pagina " + page + " del proceso " + process.getPid());
                     return false; // Fallo critico
@@ -135,23 +140,39 @@ public class SyncController {
   public void notifyProcessBlocked(Process process, ProcessState blockReason) {
     globalLock.lock();
     try {
-      Logger.logStateChange(process.getPid(), process.getState(), blockReason, scheduler.getCurrentTime());
-      process.setState(blockReason);
+      Logger.debug("[SYNC] Lock adquirido para notificar proceso " + process.getPid());
+      ProcessState previousState = process.getState();
+
+      if (previousState != ProcessState.READY) {
+        Logger.logStateChange(process.getPid(), previousState, ProcessState.READY, scheduler.getCurrentTime());
+        process.setState(ProcessState.READY);
+      }
+
+      Logger.log(">>> Agregando proceso " + process.getPid() + " a la cola del scheduler");
+      scheduler.addProcess(process);
+      Logger.debug("[SYNC] Señalando condición processReady"); 
+      processReady.signalAll(); 
     } finally {
+      Logger.debug("[SYNC] Liberando lock global");
       globalLock.unlock();
     }
   }
   
-  // Notifica que un proceso esta listo nuevamente
   public void notifyProcessReady(Process process) {
     globalLock.lock();
+
     try {
-      if (process.getState().isBlocked()) {
-        Logger.logStateChange(process.getPid(), process.getState(), 
-                            ProcessState.READY, scheduler.getCurrentTime());
-        scheduler.addProcess(process);
-        processReady.signalAll();
+      ProcessState previousState = process.getState();
+
+      if (previousState != ProcessState.READY) {
+        Logger.logStateChange(process.getPid(), previousState, ProcessState.READY, scheduler.getCurrentTime());
+        process.setState(ProcessState.READY);
       }
+
+      Logger.log(">>> Agregando proceso " + process.getPid() + " a la cola del scheduler");
+      scheduler.addProcess(process);
+      processReady.signalAll();
+      
     } finally {
       globalLock.unlock();
     }

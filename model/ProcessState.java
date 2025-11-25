@@ -1,9 +1,5 @@
 package model;
 
-/**
- * Estados de un proceso
-**/
-
 public enum ProcessState {
   NEW,
   READY,
@@ -13,10 +9,10 @@ public enum ProcessState {
   TERMINATED;
 
   public boolean isBlocked() {
-      return this == BLOCKED_MEMORY || this == BLOCKED_IO;
+    return this == BLOCKED_MEMORY || this == BLOCKED_IO;
   }
   
   public boolean isActive() {
-      return this != TERMINATED;
+    return this != TERMINATED;
   }
 }

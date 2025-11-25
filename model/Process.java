@@ -1,33 +1,20 @@
 package model;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-/**
- * Proceso con informacion para el sistema (de ser el caso que me olvide de agregar algo ponganlo y avisen porfa)
-**/
 
 public class Process {
   
   private final String pid;
   private final int arrivalTime;
   private int priority;
-  
-  // Ráfagas de ejecución (CPU y E/S)
   private final List<Burst> bursts;
   private int currentBurstIndex;
-  
-  // Estado del proceso
   private ProcessState state;
-  
-  // Memoria
   private final int requiredPages;
-  private final Set<Integer> loadedPages;  // Paginas actualmente en memoria
+  private final Set<Integer> loadedPages;
   private int pageFaults;
-  
-  // Métricas de tiempo
   private int startTime;           // Tiempo en que inicio su primera ejecucion
   private int completionTime;      // Tiempo en que termino
   private int waitingTime;         // Tiempo total en estado READY
@@ -37,52 +24,44 @@ public class Process {
   private int lastExecutionTime;   // Último momento en que se ejecuto 
   
   public Process(String pid, int arrivalTime, List<Burst> bursts, int priority, int requiredPages) {
-      this.pid = pid;
-      this.arrivalTime = arrivalTime;
-      this.bursts = new ArrayList<>(bursts);
-      this.priority = priority;
-      this.requiredPages = requiredPages;
-      
-      this.currentBurstIndex = 0;
-      this.state = ProcessState.NEW;
-      this.loadedPages = new HashSet<>();
-      this.pageFaults = 0;
-      this.waitingTime = 0;
-      this.hasStarted = false;
-      this.lastExecutionTime = arrivalTime;
+    this.pid = pid;
+    this.arrivalTime = arrivalTime;
+    this.bursts = new ArrayList<>(bursts);
+    this.priority = priority;
+    this.requiredPages = requiredPages;
+    this.currentBurstIndex = 0;
+    this.state = ProcessState.NEW;
+    this.loadedPages = new HashSet<>();
+    this.pageFaults = 0;
+    this.waitingTime = 0;
+    this.hasStarted = false;
+    this.lastExecutionTime = arrivalTime;
+    this.startTime = -1;
+    this.completionTime = -1;
+    this.responseTime = -1;
   }
   
-  // Rafaga actual que debe de ejecutarse
   public Burst getCurrentBurst() {
-      if (currentBurstIndex < bursts.size()) {
-          return bursts.get(currentBurstIndex);
-      }
-      return null;
+    if (currentBurstIndex < bursts.size()) {
+      return bursts.get(currentBurstIndex);
+    }
+    return null;
   }
   
-  // Pasa a la siguiente rafaga
   public void advanceBurst() {
-      currentBurstIndex++;
+    currentBurstIndex++;
   }
   
-  // Verifica si todas las rafagashan sido completadas
   public boolean isCompleted() {
-      return currentBurstIndex >= bursts.size();
+    return currentBurstIndex >= bursts.size();
   }
   
-  // Tiempo total de las rafas 
   public int getTotalCPUTime() {
-      return bursts.stream()
-              .filter(Burst::isCPU)
-              .mapToInt(Burst::getDuration)
-              .sum();
+      return bursts.stream().filter(Burst::isCPU).mapToInt(Burst::getDuration).sum();
   }
   
-  // Obtiene el tiempo total de todas las ráfagas
   public int getTotalBurstTime() {
-      return bursts.stream()
-              .mapToInt(Burst::getDuration)
-              .sum();
+      return bursts.stream().mapToInt(Burst::getDuration).sum();
   }
   
   public int getTurnaroundTime() {
@@ -91,53 +70,42 @@ public class Process {
     return completionTime - arrivalTime;
   }
   
-  // Registra el inicio de la primera ejecución
   public void markFirstExecution(int currentTime) {
-      if (!hasStarted) {
-          this.hasStarted = true;
-          this.startTime = currentTime;
-          this.responseTime = currentTime - arrivalTime;
-      }
+    if (!hasStarted) {
+      this.hasStarted = true;
+      this.startTime = currentTime;
+      this.responseTime = currentTime - arrivalTime;
+    }
   }
   
-  // Actualiza el tiempo de espera cuando el proceso está en READY
-  public void updateWaitingTime(int currentTime) {
-      if (state == ProcessState.READY) {
-          waitingTime += (currentTime - lastExecutionTime);
-      }
-      lastExecutionTime = currentTime;
+  public void incrementWaitingTime() {
+    if (state == ProcessState.READY) {
+      waitingTime++;
+    }
   }
   
-  // Gestión de memoria
-  
-  // Carga la pagina a memoria
   public void loadPage(int pageNumber) {
-      loadedPages.add(pageNumber);
+    loadedPages.add(pageNumber);
   }
   
-  // Descarga una pagina de memoria
   public void unloadPage(int pageNumber) {
-      loadedPages.remove(pageNumber);
+    loadedPages.remove(pageNumber);
   }
   
-  // Verifica si la pagina esta cargada
   public boolean isPageLoaded(int pageNumber) {
-      return loadedPages.contains(pageNumber);
+    return loadedPages.contains(pageNumber);
   }
   
-  // Incrementa el contador de fallos de pagina
   public void incrementPageFaults() {
-      pageFaults++;
+    pageFaults++;
   }
   
   public void clearLoadedPages() {
-      loadedPages.clear();
+    loadedPages.clear();
   }
   
-  // Getters y Setters
-  
   public String getPid() {
-      return pid;
+    return pid;
   }
   
   public int getArrivalTime() {
@@ -201,29 +169,29 @@ public class Process {
   }
   
   public int getRemainingTime() {
-      int remaining = 0;
-      for (int i = currentBurstIndex; i < bursts.size(); i++) {
-          remaining += bursts.get(i).getRemainingTime();
-      }
-      return remaining;
+    int remaining = 0;
+    for (int i = currentBurstIndex; i < bursts.size(); i++) {
+      remaining += bursts.get(i).getRemainingTime();
+    }
+    return remaining;
   }
   
   @Override
   public String toString() {
-      return String.format("Process[%s, Arrival=%d, Priority=%d, State=%s, Pages=%d]",
-              pid, arrivalTime, priority, state, requiredPages);
+    return String.format("Process[%s, Arrival=%d, Priority=%d, State=%s, Pages=%d]",
+      pid, arrivalTime, priority, state, requiredPages);
   }
   
   @Override
   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Process process = (Process) o;
-      return pid.equals(process.pid);
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Process process = (Process) o;
+    return pid.equals(process.pid);
   }
   
   @Override
   public int hashCode() {
-      return pid.hashCode();
+    return pid.hashCode();
   }
 }

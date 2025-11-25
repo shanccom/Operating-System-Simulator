@@ -45,15 +45,26 @@ public abstract class Scheduler {
      * Anade un proceso a la cola de listos (thread-safe)
      */
     public synchronized void addProcess(Process process) {
-        if (process.getState() == ProcessState.NEW || 
-            process.getState() == ProcessState.BLOCKED_MEMORY ||
-            process.getState() == ProcessState.BLOCKED_IO) {
-            
-            process.setState(ProcessState.READY);
-            readyQueue.offer(process);
-            Logger.debug("Proceso " + process.getPid() + " anadido a cola READY");
-            notifyAll();
+        // Validar que no sea un proceso ya terminado
+        if (process.getState() == ProcessState.TERMINATED) {
+            Logger.warning("Intento de agregar proceso terminado: " + process.getPid());
+            return;
         }
+        
+        // Validar que no esté ya en la cola (evitar duplicados)
+        if (readyQueue.contains(process)) {
+            Logger.debug("Proceso " + process.getPid() + " ya está en la cola READY");
+            return;
+        }
+        
+        if (process.getState() != ProcessState.READY) {
+            process.setState(ProcessState.READY);
+        }
+      
+        readyQueue.offer(process);
+        Logger.debug("Proceso " + process.getPid() + " añadido a cola READY (tamaño: " + 
+                    readyQueue.size() + ")");
+        notifyAll();
     }
     
     /**
