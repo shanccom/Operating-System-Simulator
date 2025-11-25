@@ -4,6 +4,7 @@ import model.Process;
 import model.ProcessState;
 import modules.scheduler.FCFS;
 import modules.scheduler.SJF;
+import modules.scheduler.RoundRobin;
 import modules.scheduler.Scheduler;
 
 import java.util.ArrayList;
@@ -36,13 +37,13 @@ public class TestScheduler {
         System.out.println("║ PRUEBA 1: FCFS (First Come First Served)            ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new FCFS(), cloneProcesses(testProcesses));
-        */
+        
         System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ PRUEBA 2: SJF (Shortest Job First)                  ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new SJF(), cloneProcesses(testProcesses));
-        
-        /*System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
+        */
+        System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ PRUEBA 3: Round Robin (quantum=2)                    ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new RoundRobin(2), cloneProcesses(testProcesses));
@@ -51,7 +52,7 @@ public class TestScheduler {
         System.out.println("║ PRUEBA 4: Round Robin (quantum=4)                    ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new RoundRobin(4), cloneProcesses(testProcesses));
-        */
+        
         // Comparación final
         System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ COMPARACIÓN DE ALGORITMOS                            ║");
@@ -110,23 +111,27 @@ public class TestScheduler {
     private static void testAlgorithm(Scheduler scheduler, List<Process> processes) {
         System.out.println("\n🔹 Algoritmo: " + scheduler.getAlgorithmName());
         System.out.println("─".repeat(60));
-        
+
         int currentTime = 0;
         int maxTime = 100; // Límite de seguridad
-        
+
         // Agregar procesos que llegan al tiempo 0
         for (Process p : processes) {
             if (p.getArrivalTime() == 0) {
                 //p.setState(ProcessState.READY);
+                p.setState(ProcessState.READY);
                 scheduler.addProcess(p);
                 System.out.println("[t=" + currentTime + "] " + p.getPid() + " → READY");
             }
         }
-        
+
         // Simulación
 
         Process currentProcess = null;
+        Process preemptedProcess = null;   // ← proceso expulsado por quantum
+
         while (currentTime < maxTime) {
+
             // 1. Verificar nuevas llegadas
             for (Process p : processes) {
                 if (p.getArrivalTime() == currentTime && p.getState() == ProcessState.NEW) {
@@ -135,122 +140,109 @@ public class TestScheduler {
                     System.out.println("[t=" + currentTime + "] " + p.getPid() + " → READY");
                 }
             }
-            
+
+            //Aquí se agrega el preemptedProcess (si viene de la iteración anterior)
+            if (preemptedProcess != null) {
+                scheduler.addProcess(preemptedProcess);
+                preemptedProcess = null;
+            }
+
             // 2. Actualizar tiempos de espera
             for (Process p : scheduler.getReadyQueueSnapshot()) {
                 p.updateWaitingTime(currentTime);
             }
-            
-            // 3. Seleccionar proceso
+
+            // 3. Seleccionar proceso si CPU está libre
             if (currentProcess == null || currentProcess.getState() != ProcessState.RUNNING) {
-                System.out.println("[DEBUG t=" + currentTime + "] Cola READY tiene " + 
-                                 scheduler.getReadyQueueSize() + " procesos");
                 
                 currentProcess = scheduler.selectNextProcess();
-                
-                if (currentProcess == null) {
-                    // No hay procesos listos
-                    if (allProcessesFinished(processes)) {
-                        System.out.println("[t=" + currentTime + "] ✓ Todos los procesos terminados");
-                        break;
-                    }
-                    scheduler.recordIdleTime(1);
-                    System.out.println("[t=" + currentTime + "] CPU IDLE");
-                    currentTime++;
-                    continue;
+                if (currentProcess != null) {
+                    currentProcess.setState(ProcessState.RUNNING);
+                    currentProcess.markFirstExecution(currentTime);
                 }
-                
-                System.out.println("[t=" + currentTime + "] ✓ Proceso seleccionado: " + currentProcess.getPid());
-                currentProcess.setState(ProcessState.RUNNING);
-                currentProcess.markFirstExecution(currentTime);
             }
-            // 4. Ejecutar proceso actual
+
+            // Si no hay proceso actual, avanzar tiempo
+            if (currentProcess == null) {
+                currentTime++;
+                scheduler.setCurrentTime(currentTime);
+                continue;
+            }
+
+            // 4. Ejecutar ráfaga de CPU
             Burst burst = currentProcess.getCurrentBurst();
-            if (burst != null) {
-                // Solo ejecutar ráfagas de CPU
-                if (burst.isCPU()) {
-                    boolean burstCompleted = burst.execute(1);
-                    scheduler.recordCPUTime(1);
-                    
-                    System.out.printf("[t=%d] %s ejecutando %s (restante: %d)\n",
-                        currentTime, currentProcess.getPid(), burst.getType(), 
-                        burst.getRemainingTime());
-                    
-                    // 5. Verificar si terminó la ráfaga
-                    if (burstCompleted) {
-                        System.out.println("[t=" + currentTime + "] " + currentProcess.getPid() + 
-                                         " completó ráfaga " + burst.getType());
-                        
-                        currentProcess.advanceBurst();
-                        
-                        if (currentProcess.isCompleted()) {
-                            // Proceso terminado
-                            currentProcess.setState(ProcessState.TERMINATED);
-                            currentProcess.setCompletionTime(currentTime + 1);
-                            scheduler.onProcessComplete(currentProcess);
-                            System.out.println("[t=" + currentTime + "] " + currentProcess.getPid() + 
-                                             " → TERMINATED");
-                            currentProcess = null; // Liberar CPU
-                        } else {
-                            // Siguiente ráfaga
-                            Burst nextBurst = currentProcess.getCurrentBurst();
-                            if (nextBurst != null && nextBurst.isIO()) {
-                                // Simular E/S bloqueante
-                                currentProcess.setState(ProcessState.BLOCKED_IO);
-                                System.out.println("[t=" + currentTime + "] " + currentProcess.getPid() + 
-                                                 " → BLOCKED_IO");
-                                // TODO: En implementación completa, manejar E/S en cola separada
-                                // Por ahora, simulamos E/S instantánea y lo devolvemos
-                                currentProcess.setState(ProcessState.NEW);
-                                scheduler.addProcess(currentProcess);
-                                currentProcess = null; // Liberar CPU
-                            } else {
-                                // Otra ráfaga de CPU, devolver a ready
-                                currentProcess.setState(ProcessState.NEW);
-                                scheduler.addProcess(currentProcess);
-                                currentProcess = null; // Liberar CPU
-                            }
-                        }
+
+            if (burst != null && burst.isCPU()) {
+
+                boolean burstCompleted = burst.execute(1);
+                scheduler.recordCPUTime(1);
+
+                System.out.printf("[t=%d] %s ejecutando %s (restante: %d)\n",
+                    currentTime, currentProcess.getPid(), burst.getType(),
+                    burst.getRemainingTime());
+
+                // 5. Verificar si terminó la ráfaga
+                if (burstCompleted) {
+                    System.out.println("[t=" + currentTime + "] "
+                            + currentProcess.getPid() + " completó ráfaga CPU");
+
+                    currentProcess.advanceBurst();
+
+                    if (currentProcess.isCompleted()) {
+                        currentProcess.setState(ProcessState.TERMINATED);
+                        currentProcess.setCompletionTime(currentTime + 1);
+                        scheduler.onProcessComplete(currentProcess);
+                        System.out.println("[t=" + currentTime + "] "
+                                + currentProcess.getPid() + " → TERMINATED");
+                        currentProcess = null;
                     } else {
-                        // Ráfaga no completada - verificar si debe ser interrumpida
-                        
-                        /*  Para Round Robin: verificar quantum
-                        if (scheduler instanceof RoundRobin) {
-                            RoundRobin rr = (RoundRobin) scheduler;
-                            rr.decrementQuantum();
-                            
-                            if (rr.isQuantumExpired()) {
-                                System.out.println("[t=" + currentTime + "] " + 
-                                                 currentProcess.getPid() + " → PREEMPTED (quantum)");
-                                currentProcess.setState(ProcessState.NEW);
-                                scheduler.addProcess(currentProcess);
-                                currentProcess = null; // Liberar CPU para cambio de contexto
-                            }
-                            // Si no expiró, continuar ejecutando el mismo proceso
-                        }
-                            */
-                        // Para FCFS y SJF: continuar ejecutando sin interrupción
+                        // Suponemos que NO hay IO real (tu test simplificado)
+                        // devolverlo a NEW para reencolar en la siguiente iteración
+                        currentProcess.setState(ProcessState.NEW);
+                        preemptedProcess = currentProcess;
+                        currentProcess = null;
+                        // NOTA: NO avanzamos tiempo aquí; el bloque al final lo hará.
                     }
+
                 } else {
-                    // Ráfaga de E/S (no debería llegar aquí en ejecución normal)
-                    System.out.println("[ERROR] Ráfaga de E/S en ejecución de CPU");
-                    currentProcess = null;
+
+                    // *** ROUND ROBIN: verificar quantum ***
+                    if (scheduler instanceof RoundRobin) {
+                        RoundRobin rr = (RoundRobin) scheduler;
+                        rr.decrementaQuantum();
+                        if (rr.isQuantumAgotado()) {
+                            System.out.println("[t=" + currentTime + "] " + currentProcess.getPid() + " → PREEMPTED (quantum)");
+
+                            // Guardamos para reinsertar en el siguiente tick (DESPUÉS de las llegadas)
+                            preemptedProcess = currentProcess;
+                            preemptedProcess.setState(ProcessState.NEW);
+                            currentProcess = null;
+
+                            // IMPORTANTÍSIMO: avanzar el tiempo aquí para que la reinserción
+                            // ocurra en el siguiente tick (y así las llegadas del siguiente tick
+                            // sean procesadas primero).
+                            currentTime++;
+                            scheduler.setCurrentTime(currentTime);
+
+                            // Saltamos al inicio del bucle (en el nuevo tiempo)
+                            continue;
+                        }
+                    }
+
                 }
             }
-            
+
+            // --- Eliminé la inserción duplicada que tenías AL FINAL ---
+            // (ya se inserta arriba, justo después de procesar llegadas)
+
             currentTime++;
             scheduler.setCurrentTime(currentTime);
         }
-        
-        if (currentTime >= maxTime) {
-            System.out.println("\n⚠️  Simulación detenida por límite de tiempo");
-        }
-        
-        // Mostrar métricas
+
+        // Métricas
         System.out.println("\n" + "─".repeat(60));
         scheduler.printMetrics();
-        
-        // Detalles por proceso
+
         System.out.println("\nDetalle por proceso:");
         System.out.printf("%-6s %-10s %-12s %-12s\n", "PID", "Waiting", "Turnaround", "Response");
         System.out.println("─".repeat(45));
@@ -262,9 +254,9 @@ public class TestScheduler {
                 p.getResponseTime()
             );
         }
-
-        
     }
+
+
      /**
      * Cuenta procesos activos (no terminados)
      */
