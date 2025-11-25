@@ -45,13 +45,13 @@ public abstract class Scheduler {
      * Anade un proceso a la cola de listos (thread-safe)
      */
     public synchronized void addProcess(Process process) {
-        if (process.getState() == ProcessState.NEW || 
-            process.getState() == ProcessState.BLOCKED_MEMORY ||
-            process.getState() == ProcessState.BLOCKED_IO) {
+    // Aceptar procesos que necesiten ir a READY
+        if (process.getState() != ProcessState.TERMINATED && 
+            process.getState() != ProcessState.RUNNING) {
             
             process.setState(ProcessState.READY);
             readyQueue.offer(process);
-            Logger.debug("Proceso " + process.getPid() + " anadido a cola READY");
+            Logger.debug("Proceso " + process.getPid() + " añadido a cola READY");
             notifyAll();
         }
     }
@@ -148,7 +148,10 @@ public abstract class Scheduler {
     public synchronized List<Process> getReadyQueueSnapshot() {
         return new ArrayList<>(readyQueue);
     }
-    
+    public Process peekNextProcess() {
+        return readyQueue.peek();
+    }
+
     public synchronized int getReadyQueueSize() {
         return readyQueue.size();
     }
