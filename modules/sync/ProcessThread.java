@@ -11,7 +11,7 @@ public class ProcessThread extends Thread {
   private final SyncController syncController;
   private volatile boolean running;
 
-  public ProcessThread (Process process, SyncController, syncController) {
+  public ProcessThread (Process process, SyncController syncController) {
     super("Thread-" + process.getPid());
 
     this.process = process;
