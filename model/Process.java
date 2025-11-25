@@ -85,9 +85,10 @@ public class Process {
               .sum();
   }
   
-  // Calcula el tiempo de retorno (turnaround time)
   public int getTurnaroundTime() {
-      return completionTime - arrivalTime;
+    if (completionTime < 0) 
+      return -1;
+    return completionTime - arrivalTime;
   }
   
   // Registra el inicio de la primera ejecución
