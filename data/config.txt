@@ -8,5 +8,5 @@ scheduler=FCFS            # Algoritmo: FCFS, SJF, ROUND_ROBIN, PRIORITY
 quantum=2                 # Para Round Robin
 
 # Simulación
-enableIO=false           # Habilitar E/S (bonus)
+enableIO=true           # Habilitar E/S (bonus)
 timeUnit=100             # ms por unidad de tiempo
