@@ -12,7 +12,7 @@ public class Config {
   public enum ReplacementType {
       FIFO,     // First In First Out
       LRU,      // Least Recently Used
-      OPTIMAL   // Algoritmo Óptimo
+      OPTIMAL,   // Algoritmo Óptimo
       NRU   // Algoritmo Óptimo
   }
   
