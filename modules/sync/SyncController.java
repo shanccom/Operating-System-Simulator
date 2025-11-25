@@ -11,22 +11,18 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-// Coordina sincronizacion entre planificador y memoria
 public class SyncController {
   
   private final Scheduler scheduler;
   private final MemoryManager memoryManager;
   
-  // Locks para sincronizacion
   private final Lock schedulerLock;
   private final Lock memoryLock;
   private final Lock globalLock;
   
-  // Conditions para esperas coordinadas
   private final Condition memoryAvailable;
   private final Condition processReady;
   
-  // Estado del controlador
   private volatile boolean running;
   private volatile boolean paused;
   
@@ -47,11 +43,10 @@ public class SyncController {
     Logger.log("SyncController inicializado");
   }
   
-  // Prepara un proceso para ejecucion
   public boolean prepareProcessForExecution(Process process) {
     globalLock.lock();
     try {
-      Logger.log("[SYNC] Adquiriendo lock global para proceso " + process.getPid()); // ✅ AGREGAR
+      Logger.log("[SYNC] Adquiriendo lock global para proceso " + process.getPid());
       Logger.debug("Preparando proceso " + process.getPid() + " para ejecucion");
       
       if (process.getState() != ProcessState.READY) {
@@ -67,7 +62,6 @@ public class SyncController {
         return false;
       }
       
-      // Proceso listo para ejecutar
       process.setState(ProcessState.RUNNING);
       return true;
         
@@ -77,24 +71,19 @@ public class SyncController {
     }
   }
   
-  // Calcula cuantas paginas necesita un proceso para la rafaga actual, 
   private int calculatePagesForBurst(Process process, Burst burst) {
     int totalPages = process.getRequiredPages();
     
-    // Las primeras 40% de las paginas son suficientes para ejecutar
     int basePages = Math.max(1, (int) Math.ceil(totalPages * 0.4));
     
     if (burst.isCPU()) {
-        // Rafagas CPU necesitan menos paginas
         return Math.min(basePages, totalPages);
     } else {
-        // Rafagas I/O podrian necesitar mas
         return Math.min(basePages + 1, totalPages);
     }
   }
 
 
-  // Carga las paginas requeridas por un proceso
   private boolean loadRequiredPages(Process process) {
     memoryLock.lock();
     try {
@@ -136,7 +125,6 @@ public class SyncController {
     }
   }
   
-  // Notifica que un proceso ha sido bloqueado
   public void notifyProcessBlocked(Process process, ProcessState blockReason) {
     globalLock.lock();
     try {
@@ -178,7 +166,6 @@ public class SyncController {
     }
   }
   
-  // Espera hasta que haya un proceso listo
   public void waitForReadyProcess() throws InterruptedException {
     globalLock.lock();
     try {
@@ -190,7 +177,6 @@ public class SyncController {
     }
   }
   
-  // Espera hasta que haya memoria disponible
   public void waitForMemoryAvailable() throws InterruptedException {
     globalLock.lock();
     try {
@@ -202,7 +188,6 @@ public class SyncController {
     }
   }
   
-  // Notifica que hay memoria disponible
   public void notifyMemoryAvailable() {
     globalLock.lock();
     try {
@@ -212,7 +197,6 @@ public class SyncController {
     }
   }
   
-  // Sincroniza el tiempo entre scheduler y memoria
   public void synchronizeTime(int time) {
     globalLock.lock();
     try {
@@ -223,11 +207,9 @@ public class SyncController {
     }
   }
   
-  // Libera los recursos de un proceso terminado
   public void releaseProcessResources(Process process) {
     globalLock.lock();
     try {
-      // Liberar paginas de memoria
       memoryLock.lock();
       try {
         memoryManager.freeProcessPages(process.getPid());
@@ -236,7 +218,6 @@ public class SyncController {
         memoryLock.unlock();
       }
       
-      // Actualizar estado
       process.setState(ProcessState.TERMINATED);
       scheduler.onProcessComplete(process);
       
@@ -247,7 +228,6 @@ public class SyncController {
     }
   }
   
-  // Inicia el controlador
   public void start() {
     globalLock.lock();
     try {
@@ -258,7 +238,6 @@ public class SyncController {
     }
   }
   
-  // Detiene el controlador
   public void stop() {
     globalLock.lock();
     try {
@@ -271,7 +250,6 @@ public class SyncController {
     }
   }
   
-  // Pausa la simulacion
   public void pause() {
     globalLock.lock();
     try {
@@ -282,7 +260,6 @@ public class SyncController {
     }
   }
   
-  // Reanuda la simulacion
   public void resume() {
     globalLock.lock();
     try {
