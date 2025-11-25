@@ -89,6 +89,11 @@ public class IOManager implements Runnable {
     Burst ioBurst = request.ioBurst;
     int duration = ioBurst.getDuration();
 
+    if (process.getState() == ProcessState.TERMINATED) {
+      Logger.warning("IOManager ignora solicitud de procesos terminado " + process.getPid());
+      return;
+    }
+
     Logger.log("[SYNC] IOManager tomó solicitud de cola bloqueante");
     Logger.log(String.format("IOManager procesando I/O de %s por %d unidades", process.getPid(), duration));
     
@@ -99,12 +104,16 @@ public class IOManager implements Runnable {
 
     for(int i = 0; i < steps && running; i++){
       Thread.sleep(sleepPerStep);
-
       Logger.debug(String.format("IOManager: %s I/O progreso %d/%d", process.getPid(), i+1, steps ));
       
+      if (process.getState() == ProcessState.TERMINATED) {
+        Logger.warning("Proceso " + process.getPid() + " terminó durante I/O, abortando operación");
+        return;
+      }
+
     }
 
-    if(running) {
+    if(running && process.getState() != ProcessState.TERMINATED) {
       ioBurst.execute(duration);
       process.advanceBurst();
       completedIOOperations.incrementAndGet();
