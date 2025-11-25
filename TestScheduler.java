@@ -31,18 +31,18 @@ public class TestScheduler {
         System.out.println("═══════════════════════════════════════════════════════");
         printProcessTable(testProcesses);
         
-        // Probar cada algoritmo
+        /*/ Probar cada algoritmo
         System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ PRUEBA 1: FCFS (First Come First Served)            ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new FCFS(), cloneProcesses(testProcesses));
-        
-        /*System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
+        */
+        System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ PRUEBA 2: SJF (Shortest Job First)                  ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new SJF(), cloneProcesses(testProcesses));
         
-        System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
+        /*System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ PRUEBA 3: Round Robin (quantum=2)                    ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new RoundRobin(2), cloneProcesses(testProcesses));
@@ -63,7 +63,7 @@ public class TestScheduler {
      * Crea procesos de prueba
      * P1: Llega en t=0, CPU(4), IO(3), CPU(5)
      * P2: Llega en t=2, CPU(6), IO(2), CPU(3)
-     * P3: Llega en t=4, CPU(8)
+     * P3: Llega en t=4, CPU(3)
      */
     private static List<Process> createTestProcesses() {
         List<Process> processes = new ArrayList<>();
@@ -95,7 +95,7 @@ public class TestScheduler {
             "P3",
             4,
             Arrays.asList(
-                new Burst(BurstType.CPU, 8)
+                new Burst(BurstType.CPU, 3)
             ),
             3,
             6
