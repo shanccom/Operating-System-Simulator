@@ -54,6 +54,12 @@ public class SyncController {
         return false;
       }
       
+      Burst currentBurst = process.getCurrentBurst();
+      if (currentBurst == null) {
+        Logger.warning("Proceso " + process.getPid() + " no tiene ráfaga actual");
+        return false;
+      }
+
       boolean pagesLoaded = loadRequiredPages(process);
       
       if (!pagesLoaded) {
@@ -127,8 +133,14 @@ public class SyncController {
   
   public void notifyProcessBlocked(Process process, ProcessState blockReason) {
     globalLock.lock();
+    Logger.debug("[SYNC] ✓ Lock global adquirido para notificar " + process.getPid());
     try {
-      Logger.debug("[SYNC] Lock adquirido para notificar proceso " + process.getPid());
+
+      if (process.getState() == ProcessState.TERMINATED) {
+        Logger.warning("Ignorando notificación para proceso terminado: " + process.getPid());
+        return;
+      }
+      
       ProcessState previousState = process.getState();
 
       if (previousState != ProcessState.READY) {
@@ -136,7 +148,7 @@ public class SyncController {
         process.setState(ProcessState.READY);
       }
 
-      Logger.log(">>> Agregando proceso " + process.getPid() + " a la cola del scheduler");
+      Logger.log("Agregando proceso " + process.getPid() + " a la cola del scheduler");
       scheduler.addProcess(process);
       Logger.debug("[SYNC] Señalando condición processReady"); 
       processReady.signalAll(); 
@@ -157,7 +169,7 @@ public class SyncController {
         process.setState(ProcessState.READY);
       }
 
-      Logger.log(">>> Agregando proceso " + process.getPid() + " a la cola del scheduler");
+      Logger.log("Agregando proceso " + process.getPid() + " a la cola del scheduler");
       scheduler.addProcess(process);
       processReady.signalAll();
       

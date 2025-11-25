@@ -125,7 +125,7 @@ public class IOManager implements Runnable {
       Logger.log("[SYNC] IOManager notificando proceso listo después de I/O");
       process.setState(ProcessState.READY);
       syncController.notifyProcessReady(process);
-      Logger.log(String.format(">>> Proceso %s desbloqueado por I/O, volvió a READY", process.getPid())); 
+      Logger.log(String.format("Proceso %s desbloqueado por I/O, volvió a READY", process.getPid())); 
     }
   }
 
