@@ -1,7 +1,7 @@
 # Memoria
 frames=10                  # Número de marcos de memoria
 frameSize=4096           
-replacement=FIFO          # Algoritmo: FIFO, LRU, OPTIMAL
+replacement=LRU          # Algoritmo: FIFO, LRU, OPTIMAL, NRU
 
 # Planificación
 scheduler=FCFS            # Algoritmo: FCFS, SJF, ROUND_ROBIN, PRIORITY

@@ -55,7 +55,7 @@ public class Main {
   private static Scheduler createScheduler(Config config) {
     return switch (config.getSchedulerType()) {
       case FCFS -> new FCFS();
-      case SJF -> {
+      case SJF -> { 
         Logger.warning("SJF no implementado aún, usando FCFS");
         yield new FCFS();
       }
@@ -84,14 +84,9 @@ public class Main {
     
     return switch (config.getReplacementType()) {
       case FIFO -> new modules.memory.FIFO(frames);
-      case LRU -> {
-        Logger.warning("LRU no implementado aún, usando FIFO");
-        yield new modules.memory.FIFO(frames);
-      }
-      case OPTIMAL -> {
-        Logger.warning("OPTIMAL no implementado aún, usando FIFO");
-        yield new modules.memory.FIFO(frames);
-      }
+      case LRU -> new modules.memory.LRU(frames);
+      case OPTIMAL -> new modules.memory.Optimal(frames);
+      case NRU -> new modules.memory.NRU(frames);
       default -> {
         Logger.warning("Algoritmo de memoria desconocido, usando FIFO por defecto");
         yield new modules.memory.FIFO(frames);
