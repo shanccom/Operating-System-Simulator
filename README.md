@@ -82,6 +82,7 @@ Operating-System-Simulator/
 │        │   │
 │        │   └── utils/
 │        │       ├── FileParser.java
+│        │       ├── SimulationFactory.java
 │        │       └── Logger.java
 │        │
 │        └── resources/
