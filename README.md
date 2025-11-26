@@ -45,50 +45,58 @@
 ```
 Operating-System-Simulator/
 │
-├── Main.java                         # Punto de entrada
+├── pom.xml                        # Configuración Maven + JavaFX
 │
-├── modules/
-│   ├── scheduler/
-│   │   ├── Scheduler.java              # Clase base abstracta
-│   │   ├── FCFS.java                   # First Come First Served
-│   │   ├── SJF.java                    # Shortest Job First
-│   │   └── RoundRobin.java             # Round Robin
-│   │
-│   ├── memory/
-│   │   ├── MemoryManager.java          # Gestor principal
-│   │   ├── FIFO.java                   # First In First Out
-│   │   ├── LRU.java                    # Least Recently Used
-│   │   └── Optimal.java                # Algoritmo Óptimo
-│   │
-│   ├── sync/
-│   │   ├── ProcessThread.java          # Thread del proceso
-│   │   ├── SyncController.java         # Sincronización
-│   │   └── IOManager.java              # Gestor E/S (BONUS)
-│   │
-│   └── gui/
-│       ├── MainWindow.java             # Ventana principal
-│       ├── GanttChart.java             # Diagrama de Gantt
-│       └── MemoryTable.java            # Tabla de memoria
+├── src/
+│   └── main/
+│        ├── java/
+│        │   ├── Main.java              
+│        │   │
+│        │   ├── modules/
+│        │   │   ├── scheduler/
+│        │   │   │   ├── Scheduler.java
+│        │   │   │   ├── FCFS.java
+│        │   │   │   ├── SJF.java
+│        │   │   │   └── RoundRobin.java
+│        │   │   │
+│        │   │   ├── memory/
+│        │   │   │   ├── MemoryManager.java
+│        │   │   │   ├── FIFO.java
+│        │   │   │   ├── LRU.java
+│        │   │   │   └── Optimal.java
+│        │   │   │
+│        │   │   ├── sync/
+│        │   │   │   ├── ProcessThread.java
+│        │   │   │   ├── SyncController.java
+│        │   │   │   └── IOManager.java
+│        │   │   │
+│        │   │   └── gui/
+│        │   │       ├── MainWindow.java
+│        │   │       ├── GanttChart.java
+│        │   │       └── MemoryTable.java
+│        │   │
+│        │   ├── model/
+│        │   │   ├── Process.java
+│        │   │   ├── ProcessState.java
+│        │   │   ├── Burst.java
+│        │   │   └── Config.java
+│        │   │
+│        │   └── utils/
+│        │       ├── FileParser.java
+│        │       └── Logger.java
+│        │
+│        └── resources/
+│            ├── data/                 
+│                ├── procesos.txt
+│                ├── test_case_1.txt
+│                └── test_case_2.txt
+│                         
 │
-├── model/                            # Clases de datos
-│   ├── Process.java
-│   ├── ProcessState.java
-│   ├── Burst.java
-│   └── Config.java
-│
-├── utils/                           # Utilidades
-│   ├── FileParser.java
-│   └── Logger.java
-│
-├── data/                             # Archivos de prueba
-│   ├── procesos.txt
-│   ├── test_case_1.txt
-│   └── test_case_2.txt
-│
-└── docs/                             # Documentación
+└── docs/
     ├── informe_ieee.pdf
     ├── presentacion.pdf
     └── diagramas/
+
 ```
 
 ## 3. Compilacion 
