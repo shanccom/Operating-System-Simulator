@@ -79,7 +79,7 @@ public abstract class MemoryManager {
       this.pageReplacements = 0;
       this.totalPageLoads = 0;
       
-      Logger.log("MemoryManager inicializado con " + totalFrames + " marcos");
+      Logger.log("[MEM] MemoryManager inicializado con " + totalFrames + " marcos");
   }
   
   // Intenta cargar una pagina en memoria
@@ -90,7 +90,7 @@ public abstract class MemoryManager {
       
       // Verificar si la pagina ya esta cargada
       if (isPageLoaded(pid, pageNumber)) {
-          Logger.debug("Pagina " + pageNumber + " del proceso " + pid + " ya esta en memoria");
+          Logger.debug("[MEM] Pagina " + pageNumber + " del proceso " + pid + " ya esta en memoria");
           accessPage(pid, pageNumber);
           return true;
       }
@@ -117,7 +117,7 @@ public abstract class MemoryManager {
           return true;
       }
       
-      Logger.error("No se pudo cargar la pagina " + pageNumber + " del proceso " + pid);
+      Logger.error("[MEM] No se pudo cargar la pagina " + pageNumber + " del proceso " + pid);
       return false;
   }
   
@@ -153,7 +153,7 @@ public abstract class MemoryManager {
       processPageMap.computeIfAbsent(pid, k -> new HashSet<>()).add(pageNumber);
       
       totalPageLoads++;
-      Logger.debug("Pagina " + pageNumber + " del proceso " + pid + 
+      Logger.debug("[MEM] Pagina " + pageNumber + " del proceso " + pid + 
                   " cargada en marco " + frameIndex);
   }
   
@@ -197,7 +197,7 @@ public abstract class MemoryManager {
           }
       }
       processPageMap.remove(pid);
-      Logger.debug("Paginas del proceso " + pid + " liberadas");
+      Logger.debug("[MEM] Paginas del proceso " + pid + " liberadas");
   }
   
   // Obtiene el estado actual de los marcos
@@ -205,7 +205,7 @@ public abstract class MemoryManager {
       StringBuilder sb = new StringBuilder();
       sb.append("Estado de Memoria:\n");
       for (int i = 0; i < totalFrames; i++) {
-          sb.append(String.format("Marco %2d: %s\n", i, frames[i]));
+          sb.append(String.format("[MEM] Marco %2d: %s\n", i, frames[i]));
       }
       return sb.toString();
   }
@@ -249,7 +249,7 @@ public abstract class MemoryManager {
   // Imprime metricas de memoria
   public void printMetrics() {
       Logger.separator();
-      Logger.section("METRICAS DE MEMORIA - " + getAlgorithmName());
+      Logger.section("[MEM] METRICAS DE MEMORIA - " + getAlgorithmName());
       Logger.log("Total de fallos de pagina: " + pageFaults);
       Logger.log("Total de reemplazos: " + pageReplacements);
       Logger.log("Total de cargas de pagina: " + totalPageLoads);
@@ -269,6 +269,6 @@ public abstract class MemoryManager {
       pageFaults = 0;
       pageReplacements = 0;
       totalPageLoads = 0;
-      Logger.log("Memoria reseteada");
+      Logger.log("[MEM] Memoria reseteada");
   }
 }
