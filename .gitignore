@@ -92,7 +92,7 @@ config.local.txt
 !docs/diagramas/.gitkeep
 
 # Archivos de Maven
-target/
+
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
