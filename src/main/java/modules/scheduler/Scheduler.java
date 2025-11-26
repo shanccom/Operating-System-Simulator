@@ -45,10 +45,16 @@ public abstract class Scheduler {
      * Anade un proceso a la cola de listos (thread-safe)
      */
     public synchronized void addProcess(Process process) {
-        // Validar que no sea un proceso ya terminado
-        if (process.getState() == ProcessState.TERMINATED) {
-            Logger.warning("Intento de agregar proceso terminado: " + process.getPid());
-            return;
+
+    // Aceptar procesos que necesiten ir a READY
+        if (process.getState() != ProcessState.TERMINATED && 
+            process.getState() != ProcessState.RUNNING) {
+            
+            process.setState(ProcessState.READY);
+            readyQueue.offer(process);
+            Logger.debug("Proceso " + process.getPid() + " añadido a cola READY");
+            notifyAll();
+
         }
         
         // Validar que no esté ya en la cola (evitar duplicados)
@@ -159,7 +165,10 @@ public abstract class Scheduler {
     public synchronized List<Process> getReadyQueueSnapshot() {
         return new ArrayList<>(readyQueue);
     }
-    
+    public Process peekNextProcess() {
+        return readyQueue.peek();
+    }
+
     public synchronized int getReadyQueueSize() {
         return readyQueue.size();
     }
