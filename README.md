@@ -108,3 +108,7 @@ mkdir bin
 javac -d bin Main.java model/*.java utils/*.java modules/scheduler/*.java modules/memory/*.java modules/sync/*.java
 java -cp bin Main data/config.txt data/procesos.txt
 ```
+
+
+## Requisitos GUI
+

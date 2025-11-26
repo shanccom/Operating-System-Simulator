@@ -9,10 +9,6 @@ import java.util.*;
  * NRU (Not Recently Used)
  * Clasifica páginas en 4 clases según acceso/modificación.
  * Aquí se simula con aleatoriedad para que funcione sin bits R/M reales.
- * 
- * Mejorado con:
- * - Métodos auxiliares para mostrar clases.
- * - Comentarios para futura GUI.
  */
 public class NRU extends MemoryManager {
 

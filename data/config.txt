@@ -1,5 +1,5 @@
 # Memoria
-frames=10                  # Número de marcos de memoria
+frames=3                  # Número de marcos de memoria
 frameSize=4096           
 replacement=LRU          # Algoritmo: FIFO, LRU, OPTIMAL, NRU
 

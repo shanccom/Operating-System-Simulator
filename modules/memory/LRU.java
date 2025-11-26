@@ -7,9 +7,6 @@ import utils.Logger;
  * LRU (Least Recently Used)
  * Reemplaza la página menos recientemente usada.
  * 
- * Mejorado con:
- * - Métodos auxiliares para debugging.
- * - Comentarios para futura GUI.
  */
 public class LRU extends MemoryManager {
 

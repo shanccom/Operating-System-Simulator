@@ -9,11 +9,6 @@ import java.util.Queue;
 /**
  * FIFO (First In First Out) - Algoritmo de reemplazo de páginas
  * Reemplaza la página que lleva más tiempo en memoria.
- * 
- * Mejorado con:
- * - Métodos auxiliares para debugging y métricas.
- * - Validaciones adicionales.
- * - Comentarios para futura integración con GUI.
  */
 public class FIFO extends MemoryManager {
 
