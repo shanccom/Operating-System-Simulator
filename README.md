@@ -113,7 +113,7 @@ mvn javafx:run
 Requiere Maven y JDK 17.
 - Ir a la página oficial: Apache Maven Download https://maven.apache.org/download.cgi 	
 - Descargar el archivo apache-maven-3.9.11-bin.zip (Binary zip archive).
-C:\Program Files\Apache\Maven\apache-maven-3.9.x
+C:\Program Files\Apache\Maven\apache-maven-3.9.x\bin
 Agregarlo al path
 
 
