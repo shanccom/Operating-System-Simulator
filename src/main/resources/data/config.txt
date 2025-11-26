@@ -1,12 +1,7 @@
-# Memoria
-frames=3                  # Número de marcos de memoria
-frameSize=4096           
-replacement=LRU          # Algoritmo: FIFO, LRU, OPTIMAL, NRU
-
-# Planificación
-scheduler=FCFS            # Algoritmo: FCFS, SJF, ROUND_ROBIN, PRIORITY
-quantum=2                 # Para Round Robin
-
-# Simulación
-enableIO=true           # Habilitar E/S (bonus)
-timeUnit=100             # ms por unidad de tiempo
+frames=3
+frameSize=4096
+replacement=LRU
+scheduler=FCFS
+quantum=2
+enableIO=true
+timeUnit=100

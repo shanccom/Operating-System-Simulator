@@ -19,6 +19,12 @@ public class FIFO extends MemoryManager {
         super(totalFrames);
         this.frameQueue = new LinkedList<>();
         Logger.log("Algoritmo FIFO inicializado con " + totalFrames + " marcos");
+
+        System.out.println("🚨 STACK TRACE - ¿Quién creó FIFO?");
+        StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+        for (int i = 0; i < Math.min(5, stack.length); i++) {
+            System.out.println("  " + stack[i]);
+        }
     }
 
     @Override

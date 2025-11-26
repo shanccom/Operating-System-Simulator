@@ -12,56 +12,78 @@ import java.io.File;
 
 public class MainFX extends Application {
 
-    private File configFile;
-    private File processFile;
+  private File configFile = new File("src/main/resources/data/config.txt");
+  private File processFile = new File("src/main/resources/data/procesos.txt");
 
-    @Override
-    public void start(Stage stage) {
-        stage.setTitle("Simulador de Sistema Operativo");
+  @Override
+  public void start(Stage stage) {
+    stage.setTitle("Simulador de Sistema Operativo");
 
-        Label label = new Label("Selecciona archivos para iniciar la simulación");
-        Button btnConfig = new Button("Seleccionar archivo de configuración");
-        Button btnProcess = new Button("Seleccionar archivo de procesos");
-        Button btnRun = new Button("Iniciar simulación");
+    Label labelConfig = new Label("Config: " + configFile.getName());
+    Label labelProcess = new Label("Procesos: " + processFile.getName());
+    Label labelStatus = new Label("Archivos cargados. Presiona 'Iniciar' para comenzar.");
+    
+    Button btnConfig = new Button("Cambiar archivo de configuración");
+    Button btnProcess = new Button("Cambiar archivo de procesos");
+    Button btnRun = new Button("Iniciar simulación");
 
-        btnConfig.setOnAction(e -> {
-            configFile = openFile(stage);
-        });
+    btnConfig.setOnAction(e -> {
+      File newFile = openFile(stage);
+      if (newFile != null) {
+        configFile = newFile;
+        labelConfig.setText("Config: " + configFile.getName());
+        labelStatus.setText("Configuración actualizada");
+      }
+    });
 
-        btnProcess.setOnAction(e -> {
-            processFile = openFile(stage);
-        });
+    btnProcess.setOnAction(e -> {
+      File newFile = openFile(stage);
+      if (newFile != null) {
+        processFile = newFile;
+        labelProcess.setText("Procesos: " + processFile.getName());
+        labelStatus.setText("Archivo de procesos actualizado");
+      }
+    });
 
-        btnRun.setOnAction(e -> {
-            if (configFile == null || processFile == null) {
-                label.setText("Selecciona ambos archivos antes de iniciar.");
-                return;
-            }
+    btnRun.setOnAction(e -> {
+      if (!configFile.exists() || !processFile.exists()) {
+        labelStatus.setText("Error: Los archivos no existen en las rutas especificadas");
+        return;
+      }
 
-            try {
-                gui.SimulationRunner.runSimulation(
-                        configFile.getAbsolutePath(),
-                        processFile.getAbsolutePath()
-                );
-                label.setText("Simulación completada (ver consola)");
-            } catch (Exception ex) {
-                label.setText("Error al ejecutar la simulación: " + ex.getMessage());
-                ex.printStackTrace();
-            }
-        });
+      try {
+        labelStatus.setText("Ejecutando simulación...");
+        
+        SimulationRunner.runSimulation(
+          configFile.getAbsolutePath(),
+          processFile.getAbsolutePath()
+        );
+        
+        labelStatus.setText("Simulación completada (ver consola)");
+          
+      } catch (Exception ex) {
+        labelStatus.setText("Error: " + ex.getMessage());
+        ex.printStackTrace();
+      }
+    });
 
-        VBox root = new VBox(10, label, btnConfig, btnProcess, btnRun);
-        root.setStyle("-fx-padding: 20; -fx-font-size: 14px;");
-        stage.setScene(new Scene(root, 400, 250));
-        stage.show();
-    }
+    VBox root = new VBox(10, labelConfig, labelProcess, labelStatus, 
+                         btnConfig, btnProcess, btnRun);
+    root.setStyle("-fx-padding: 20; -fx-font-size: 14px;");
+    stage.setScene(new Scene(root, 1920, 1080));
+    stage.show();
+  }
 
-    private File openFile(Stage stage) {
-        FileChooser fc = new FileChooser();
-        return fc.showOpenDialog(stage);
-    }
+  private File openFile(Stage stage) {
+    FileChooser fc = new FileChooser();
+    fc.getExtensionFilters().addAll(
+      new FileChooser.ExtensionFilter("Archivos de texto", "*.txt"),
+      new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
+    );
+    return fc.showOpenDialog(stage);
+  }
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+  public static void main(String[] args) {
+    launch(args);
+  }
 }

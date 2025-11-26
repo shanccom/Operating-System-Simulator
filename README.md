@@ -71,9 +71,8 @@ Operating-System-Simulator/
 │        │   │   │   └── IOManager.java
 │        │   │   │
 │        │   │   └── gui/
-│        │   │       ├── MainWindow.java
-│        │   │       ├── GanttChart.java
-│        │   │       └── MemoryTable.java
+│        │   │       ├── MainFX.java
+│        │   │       └── SimulationRunner.java
 │        │   │
 │        │   ├── model/
 │        │   │   ├── Process.java

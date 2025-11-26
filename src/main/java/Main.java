@@ -1,18 +1,20 @@
 import model.Config;
 import model.Process;
 import modules.memory.MemoryManager;
-import modules.scheduler.FCFS;
 import modules.scheduler.Scheduler;
 import modules.sync.SimulationEngine;
 import utils.FileParser;
 import utils.Logger;
+import utils.SimulationFactory;
 
 import java.util.List;
+
 
 public class Main {
     
   public static void main(String[] args) {
     try {
+        
       String configFile = args[0];
       String processFile = args[1];
       
@@ -24,7 +26,7 @@ public class Main {
       
       if (!config.validate()) {
         Logger.error("Configuración inválida");
-        return;
+        System.exit(1);
       }
       
       Logger.section("CARGANDO PROCESOS");
@@ -32,15 +34,16 @@ public class Main {
       
       if (processes.isEmpty()) {
         Logger.error("No se encontraron procesos para simular");
-        return;
+        System.exit(1);
       }
-       
-      Scheduler scheduler = createScheduler(config);
-      MemoryManager memoryManager = createMemoryManager(config);
+      
+      Scheduler scheduler = SimulationFactory.createScheduler(config);
+      MemoryManager memoryManager = SimulationFactory.createMemoryManager(config);
       
       printConfiguration(config, processes);
       
-      SimulationEngine engine = new SimulationEngine( scheduler, memoryManager, processes, config );
+      SimulationEngine engine = new SimulationEngine( scheduler, memoryManager, processes, config
+      );
       
       engine.run();
       Logger.printSummary();
@@ -52,69 +55,26 @@ public class Main {
     }
   }
     
-  private static Scheduler createScheduler(Config config) {
-    return switch (config.getSchedulerType()) {
-      case FCFS -> new FCFS();
-      case SJF -> { 
-        Logger.warning("SJF no implementado aún, usando FCFS");
-        yield new FCFS();
+    private static void printConfiguration(Config config, List<Process> processes) {
+      Logger.separator();
+      Logger.log("CONFIGURACIÓN DEL SISTEMA:");
+      Logger.log("  Algoritmo de planificación: " + config.getSchedulerType());
+      Logger.log("  Algoritmo de reemplazo: " + config.getReplacementType());
+      Logger.log("  Marcos de memoria: " + config.getTotalFrames());
+      Logger.log("  Quantum (RR): " + config.getQuantum());
+      Logger.log("  E/S habilitada: " + config.isEnableIO());
+      Logger.log("  Unidad de tiempo (ms): " + config.getTimeUnit());
+      Logger.log("  Número de procesos: " + processes.size());
+      
+      Logger.log("\nPROCESOS CARGADOS:");
+      for (Process process : processes) {
+        Logger.log(String.format("  %s: Llegada=%d, Ráfagas=%d, Memoria=%d páginas",
+          process.getPid(),
+          process.getArrivalTime(),
+          process.getBursts().size(),
+          process.getRequiredPages()
+        ));
       }
-      case ROUND_ROBIN -> {
-        Logger.warning("Round Robin no implementado aún, usando FCFS");
-        yield new FCFS();
-      }
-      case PRIORITY -> {
-        Logger.warning("Priority no implementado aún, usando FCFS");
-        yield new FCFS();
-      }
-      default -> {
-        Logger.warning("Algoritmo desconocido, usando FCFS por defecto");
-        yield new FCFS();
-      }
-    };
-  }
-    
-  private static MemoryManager createMemoryManager(Config config) {
-    int frames = config.getTotalFrames();
-    
-    if (frames <= 0) {
-      Logger.warning("Número de marcos inválido, usando 10 por defecto");
-      frames = 10;
+      Logger.separator();
     }
-    
-    return switch (config.getReplacementType()) {
-      case FIFO -> new modules.memory.FIFO(frames);
-      case LRU -> new modules.memory.LRU(frames);
-      case OPTIMAL -> new modules.memory.Optimal(frames);
-      case NRU -> new modules.memory.NRU(frames);
-      default -> {
-        Logger.warning("Algoritmo de memoria desconocido, usando FIFO por defecto");
-        yield new modules.memory.FIFO(frames);
-      }
-    };
-  }
-    
-
-  private static void printConfiguration(Config config, List<Process> processes) {
-    Logger.separator();
-    Logger.log("CONFIGURACIÓN DEL SISTEMA:");
-    Logger.log("  Algoritmo de planificación: " + config.getSchedulerType());
-    Logger.log("  Algoritmo de reemplazo: " + config.getReplacementType());
-    Logger.log("  Marcos de memoria: " + config.getTotalFrames());
-    Logger.log("  Quantum (RR): " + config.getQuantum());
-    Logger.log("  E/S habilitada: " + config.isEnableIO());
-    Logger.log("  Unidad de tiempo (ms): " + config.getTimeUnit());
-    Logger.log("  Número de procesos: " + processes.size());
-    
-    Logger.log("\nPROCESOS CARGADOS:");
-    for (Process process : processes) {
-      Logger.log(String.format("  %s: Llegada=%d, Ráfagas=%d, Memoria=%d páginas",
-        process.getPid(),
-        process.getArrivalTime(),
-        process.getBursts().size(),
-        process.getRequiredPages()
-      ));
-    }
-    Logger.separator();
-  }
 }
