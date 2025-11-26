@@ -45,12 +45,12 @@
 ```
 Operating-System-Simulator/
 │
-├── pom.xml                        # Configuración Maven + JavaFX
+├── pom.xml
 │
 ├── src/
 │   └── main/
 │        ├── java/
-│        │   ├── Main.java              
+│        │   ├── Main.java
 │        │   │
 │        │   ├── modules/
 │        │   │   ├── scheduler/
@@ -72,7 +72,27 @@ Operating-System-Simulator/
 │        │   │   │
 │        │   │   └── gui/
 │        │   │       ├── MainFX.java
-│        │   │       └── SimulationRunner.java
+│        │   │       ├── SimulationRunner.java
+│        │   │       |
+│        │   │       ├── navigation/
+│        │   │       │   └── NavBarController.java
+│        │   │       |
+│        │   │       ├── pages/
+│        │   │       │   ├── ConfigPageController.java
+│        │   │       │   ├── DashboardPageController.java
+│        │   │       │   ├── ResultsPageController.java
+│        │   │       │   └── SettingsPageController.java
+│        │   │       |
+│        │   │       ├── dashboard/
+│        │   │       │   ├── CPUViewController.java
+│        │   │       │   ├── MemoryViewController.java
+│        │   │       │   └── SyncViewController.java
+│        │   │       |
+│        │   │       └── components/
+│        │   │           ├── GanttView.java
+│        │   │           ├── FrameTableView.java
+│        │   │           ├── ProcessListView.java
+│        │   │           └── LogConsoleView.java
 │        │   │
 │        │   ├── model/
 │        │   │   ├── Process.java
@@ -86,16 +106,39 @@ Operating-System-Simulator/
 │        │       └── Logger.java
 │        │
 │        └── resources/
-│            ├── data/                 
-│                ├── procesos.txt
-│                ├── test_case_1.txt
-│                └── test_case_2.txt
-│                         
+│            ├── gui/
+│            │   ├── navigation/
+│            │   │   └── navbar.fxml
+│            │   │
+│            │   ├── pages/
+│            │   │   ├── config.fxml
+│            │   │   ├── dashboard.fxml
+│            │   │   ├── results.fxml
+│            │   │   └── settings.fxml
+│            │   │
+│            │   ├── dashboard/
+│            │   │   ├── cpu.fxml
+│            │   │   ├── memory.fxml
+│            │   │   └── sync.fxml
+│            │   │
+│            │   └── components/
+│            │       ├── gantt.fxml
+│            │       ├── frame_table.fxml
+│            │       ├── process_list.fxml
+│            │       └── log_console.fxml
+│            │
+│            ├── data/
+│            │   ├── procesos.txt
+│            │   ├── test_case_1.txt
+│            │   └── test_case_2.txt
+│            │
+│            └── application.css
 │
 └── docs/
     ├── informe_ieee.pdf
     ├── presentacion.pdf
     └── diagramas/
+
 
 ```
 
@@ -121,4 +164,10 @@ Agregarlo al path
 ```
 mvn clean install
 mvn javafx:run
+```
+
+## 4. Diagramas ...
+```
+Enlace mockups: https://www.canva.com/design/DAG51rAcC7Y/fr2ibHrbrLbHoTcIJMwuNg/edit?utm_content=DAG51rAcC7Y&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
+
 ```

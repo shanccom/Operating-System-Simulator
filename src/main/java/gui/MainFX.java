@@ -70,7 +70,8 @@ public class MainFX extends Application {
     VBox root = new VBox(10, labelConfig, labelProcess, labelStatus, 
                          btnConfig, btnProcess, btnRun);
     root.setStyle("-fx-padding: 20; -fx-font-size: 14px;");
-    stage.setScene(new Scene(root, 1920, 1080));
+    stage.setScene(new Scene(root, 900, 600));
+
     stage.show();
   }
 
