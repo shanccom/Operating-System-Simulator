@@ -7,12 +7,19 @@ import utils.Logger;
 /*Shortest Remaining Time First Scheduling
 (SRT)
 
-❑ Versión preemptive de SJF
-❑ Cada vez que llega un nuevo proceso a la cola de espera, la decisión
+-  Versión preemptive de SJF
+-  Cada vez que llega un nuevo proceso a la cola de espera, la decisión
 sobre qué proceso planificar a continuación se vuelve a tomar
 mediante el algoritmo SJF.
-❑ ¿Es SRT más "óptima" que SJF en términos de tiempo medio de
+-  ¿Es SRT más "óptima" que SJF en términos de tiempo medio de
 espera mínimo para un conjunto determinado de procesos?
+
+Comparacion----
+-  SJF: Óptimo solo si todos los procesos llegan al mismo tiempo
+-  SRT: Óptimo globalmente porque siempre elige el trabajo más corto disponible en cada momento
+
+Trade-off: SRT genera más cambios de contexto (context switches) que SJF, lo cual tiene un costo en sistemas reales.
+
  */
 public class SRT extends Scheduler {
     

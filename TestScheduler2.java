@@ -56,12 +56,12 @@ public class TestScheduler2 {
         System.out.println("║ PRUEBA 4: Round Robin (quantum=4)                    ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new RoundRobin(4), cloneProcesses(testProcesses));
-        
+        */
         System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ PRUEBA 5: SRTF (Shortest Remaining Time First)      ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new SRT(), cloneProcesses(testProcesses));
-        */
+        
         System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ PRUEBA 6: Priority (No Preemptive)                  ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
@@ -455,7 +455,10 @@ public class TestScheduler2 {
             new FCFS(),
             new SJF(),
             new RoundRobin(2),
-            new RoundRobin(4)
+            new RoundRobin(4),
+            new SRT(),
+            new Priority(false),
+            new Priority(true)  
         };
         
         System.out.printf("\n%-22s %-12s %-12s %-12s %-12s\n",
