@@ -5,6 +5,8 @@ import model.ProcessState;
 import modules.scheduler.FCFS;
 import modules.scheduler.SJF;
 import modules.scheduler.RoundRobin;
+import modules.scheduler.SRT;
+import modules.scheduler.Priority;
 import modules.scheduler.Scheduler;
 
 import java.util.ArrayList;
@@ -35,7 +37,7 @@ public class TestScheduler2 {
         printProcessTable(testProcesses);
         
         //Probar cada algoritmo
-        System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
+        /*System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ PRUEBA 1: FCFS (First Come First Served)            ║");
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new FCFS(), cloneProcesses(testProcesses));
@@ -55,6 +57,23 @@ public class TestScheduler2 {
         System.out.println("╚═══════════════════════════════════════════════════════╝");
         testAlgorithm(new RoundRobin(4), cloneProcesses(testProcesses));
         
+        System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
+        System.out.println("║ PRUEBA 5: SRTF (Shortest Remaining Time First)      ║");
+        System.out.println("╚═══════════════════════════════════════════════════════╝");
+        testAlgorithm(new SRT(), cloneProcesses(testProcesses));
+        */
+        System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
+        System.out.println("║ PRUEBA 6: Priority (No Preemptive)                  ║");
+        System.out.println("╚═══════════════════════════════════════════════════════╝");
+        testAlgorithm(new Priority(false), cloneProcesses(testProcesses));
+
+        System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
+        System.out.println("║ PRUEBA 7: Priority (Preemptive)                     ║");
+        System.out.println("╚═══════════════════════════════════════════════════════╝");
+        testAlgorithm(new Priority(true), cloneProcesses(testProcesses));
+
+
+
         // Comparación final
         System.out.println("\n\n╔═══════════════════════════════════════════════════════╗");
         System.out.println("║ COMPARACIÓN DE ALGORITMOS                            ║");
@@ -89,7 +108,7 @@ public class TestScheduler2 {
             "P2",
             2,
             Arrays.asList(
-                new Burst(BurstType.CPU, 6),
+                new Burst(BurstType.CPU, 1),
                 new Burst(BurstType.IO, 2),
                 new Burst(BurstType.CPU, 3)
             ),
@@ -149,8 +168,20 @@ public class TestScheduler2 {
                     p.setState(ProcessState.READY);
                     scheduler.addProcess(p);
                     System.out.println("[t=" + currentTime + "] " + p.getPid() + " → READY");
+                    
+                    //VERIFICAR EXPROPIACIÓN POR LLEGADA 
+                    if (currentProcess != null && scheduler.shouldPreempt(currentProcess, p)) {
+                        System.out.println("[t=" + currentTime + "] " + 
+                                         currentProcess.getPid() + 
+                                         " → PREEMPTED (nueva llegada de " + p.getPid() + ")");
+                        preemptedProcess = currentProcess;
+                        preemptedProcess.setState(ProcessState.NEW);
+                        currentProcess = null;
+                    }
                 }
             }
+            
+            
             
 
             // 3. Re-encolar proceso expulsado (si existe)
@@ -176,13 +207,26 @@ public class TestScheduler2 {
                     io.process.advanceBurst(); // Avanzar a la siguiente ráfaga
                     io.process.setState(ProcessState.NEW);
                     scheduler.addProcess(io.process);
+
+                    // *** VERIFICAR EXPROPIACIÓN POR E/S COMPLETADA ***
+                    if (currentProcess != null && 
+                        scheduler.shouldPreempt(currentProcess, io.process)) {
+                        System.out.println("[t=" + currentTime + "] " + 
+                                         currentProcess.getPid() + 
+                                         " → PREEMPTED (retorno de E/S de " + 
+                                         io.process.getPid() + ")");
+                        preemptedProcess = currentProcess;
+                        preemptedProcess.setState(ProcessState.NEW);
+                        currentProcess = null;
+                    }
+
                 }
             }
             ioQueue.removeAll(completedIO);
 
             // 4. Actualizar tiempos de espera
             for (Process p : scheduler.getReadyQueueSnapshot()) {
-                System.out.println("[t=" + currentTime + "] " + p.getPid() + " espera en READY---------/n");
+                //System.out.println("[t=" + currentTime + "] " + p.getPid() + " espera en READY---------/n");
                 p.updateWaitingTime(currentTime);
             }
 
@@ -289,23 +333,28 @@ public class TestScheduler2 {
                             preemptedProcess = currentProcess;
                             preemptedProcess.setState(ProcessState.NEW);
                             currentProcess = null;
-
-                            // IMPORTANTÍSIMO: avanzar el tiempo aquí para que la reinserción
-                            // ocurra en el siguiente tick (y así las llegadas del siguiente tick
-                            // sean procesadas primero).
-                            //currentTime++;
-                            //scheduler.setCurrentTime(currentTime);
-
-                            // Saltamos al inicio del bucle (en el nuevo tiempo)
-                            //continue;
                         }
                     }
 
+                    /*  *** VERIFICAR EXPROPIACIÓN POR QUANTUM (PRIORITY + RR) ***
+                    if (scheduler instanceof PriorityRR) {
+                        PriorityRR prr = (PriorityRR) scheduler;
+                        prr.decrementaQuantum();
+                        if (prr.isQuantumAgotado()) {
+                            System.out.println("[t=" + currentTime + "] " + 
+                                             currentProcess.getPid() + 
+                                             " → PREEMPTED (quantum agotado)");
+                            preemptedProcess = currentProcess;
+                            preemptedProcess.setState(ProcessState.NEW);
+                            currentProcess = null;
+                        }
+                    }
+                    */
+                    
+                    
+
                 }
             }
-
-            // --- Eliminé la inserción duplicada que tenías AL FINAL ---
-            // (ya se inserta arriba, justo después de procesar llegadas)
 
             currentTime++;
             scheduler.setCurrentTime(currentTime);
@@ -351,9 +400,8 @@ public class TestScheduler2 {
             .allMatch(p -> p.getState() == ProcessState.TERMINATED);
     }
     
-    /**
-     * Clona procesos para reutilizarlos
-     */
+    //Clona procesos para reutilizarlos
+    
     private static List<Process> cloneProcesses(List<Process> original) {
         List<Process> cloned = new ArrayList<>();
         
