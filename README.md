@@ -45,70 +45,80 @@
 ```
 Operating-System-Simulator/
 │
-├── Main.java                         # Punto de entrada
+├── pom.xml                        # Configuración Maven + JavaFX
 │
-├── modules/
-│   ├── scheduler/
-│   │   ├── Scheduler.java              # Clase base abstracta
-│   │   ├── FCFS.java                   # First Come First Served
-│   │   ├── SJF.java                    # Shortest Job First
-│   │   └── RoundRobin.java             # Round Robin
-│   │
-│   ├── memory/
-│   │   ├── MemoryManager.java          # Gestor principal
-│   │   ├── FIFO.java                   # First In First Out
-│   │   ├── LRU.java                    # Least Recently Used
-│   │   └── Optimal.java                # Algoritmo Óptimo
-│   │
-│   ├── sync/
-│   │   ├── ProcessThread.java          # Thread del proceso
-│   │   ├── SyncController.java         # Sincronización
-│   │   └── IOManager.java              # Gestor E/S (BONUS)
-│   │
-│   └── gui/
-│       ├── MainWindow.java             # Ventana principal
-│       ├── GanttChart.java             # Diagrama de Gantt
-│       └── MemoryTable.java            # Tabla de memoria
+├── src/
+│   └── main/
+│        ├── java/
+│        │   ├── Main.java              
+│        │   │
+│        │   ├── modules/
+│        │   │   ├── scheduler/
+│        │   │   │   ├── Scheduler.java
+│        │   │   │   ├── FCFS.java
+│        │   │   │   ├── SJF.java
+│        │   │   │   └── RoundRobin.java
+│        │   │   │
+│        │   │   ├── memory/
+│        │   │   │   ├── MemoryManager.java
+│        │   │   │   ├── FIFO.java
+│        │   │   │   ├── LRU.java
+│        │   │   │   └── Optimal.java
+│        │   │   │
+│        │   │   ├── sync/
+│        │   │   │   ├── ProcessThread.java
+│        │   │   │   ├── SyncController.java
+│        │   │   │   └── IOManager.java
+│        │   │   │
+│        │   │   └── gui/
+│        │   │       ├── MainWindow.java
+│        │   │       ├── GanttChart.java
+│        │   │       └── MemoryTable.java
+│        │   │
+│        │   ├── model/
+│        │   │   ├── Process.java
+│        │   │   ├── ProcessState.java
+│        │   │   ├── Burst.java
+│        │   │   └── Config.java
+│        │   │
+│        │   └── utils/
+│        │       ├── FileParser.java
+│        │       └── Logger.java
+│        │
+│        └── resources/
+│            ├── data/                 
+│                ├── procesos.txt
+│                ├── test_case_1.txt
+│                └── test_case_2.txt
+│                         
 │
-├── model/                            # Clases de datos
-│   ├── Process.java
-│   ├── ProcessState.java
-│   ├── Burst.java
-│   └── Config.java
-│
-├── utils/                           # Utilidades
-│   ├── FileParser.java
-│   └── Logger.java
-│
-├── data/                             # Archivos de prueba
-│   ├── procesos.txt
-│   ├── test_case_1.txt
-│   └── test_case_2.txt
-│
-└── docs/                             # Documentación
+└── docs/
     ├── informe_ieee.pdf
     ├── presentacion.pdf
     └── diagramas/
+
 ```
 
 ## 3. Compilacion 
 
 ### 3.1 En Ubuntu
+Requiere Maven y JDK 17.
 ```
-mkdir -p bin
-javac -d bin Main.java model/*.java utils/*.java modules/scheduler/*.java modules/memory/*.java modules/sync/*.java
-java -cp bin Main data/config.txt data/procesos.txt
+mvn javafx:run
 ```
 
 
 ### 3.2 En Windows (powershell)
 
+Requiere Maven y JDK 17.
+- Ir a la página oficial: Apache Maven Download https://maven.apache.org/download.cgi 	
+- Descargar el archivo apache-maven-3.9.11-bin.zip (Binary zip archive).
+C:\Program Files\Apache\Maven\apache-maven-3.9.x
+Agregarlo al path
+
+
+## Desplegar ...
 ```
-mkdir bin
-javac -d bin Main.java model/*.java utils/*.java modules/scheduler/*.java modules/memory/*.java modules/sync/*.java
-java -cp bin Main data/config.txt data/procesos.txt
+mvn clean install
+mvn javafx:run
 ```
-
-
-## Requisitos GUI
-
