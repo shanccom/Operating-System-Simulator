@@ -28,7 +28,7 @@ public class LRU extends MemoryManager {
             }
         }
 
-        Logger.debug("LRU seleccionó marco " + victimIndex + " como víctima");
+        Logger.debug("LRU selecciono marco " + victimIndex + " como víctima");
 
         // GUI: onVictimSelected(victimIndex, frames[victimIndex].getProcessId(), frames[victimIndex].getPageNumber(), "LRU", currentTime);
         return victimIndex;

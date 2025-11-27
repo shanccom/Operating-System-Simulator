@@ -188,6 +188,7 @@ public class FileParser {
             case "FIFO" -> Config.ReplacementType.FIFO;
             case "LRU" -> Config.ReplacementType.LRU;
             case "OPTIMAL", "OPT" -> Config.ReplacementType.OPTIMAL;
+            case "NRU" -> Config.ReplacementType.NRU;
             default -> throw new IllegalArgumentException("Tipo de reemplazo desconocido: " + value);
         };
     }
