@@ -27,6 +27,7 @@ public class ConfigPage extends VBox {
         labelConfig.setText("Config: " + configFile.getName());
         labelProcess.setText("Procesos: " + processFile.getName());
         labelStatus.setText("Listo para iniciar");
+        labelStatus.getStyleClass().add("status-text");
 
         VBox sectionFiles = buildFileSection(stage);
         VBox sectionCPU = buildCpuSection();
@@ -43,14 +44,20 @@ public class ConfigPage extends VBox {
     }
 
     private VBox buildFileSection(Stage stage) {
-        VBox box = new VBox(10);
+        VBox box = new VBox(12);
+        box.getStyleClass().add("card");
 
         Label title = new Label("Load Input Files");
-        title.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+        title.getStyleClass().add("card-title");
+
         Label subtitle = new Label("Selecciona archivos de configuración y procesos.");
+        subtitle.getStyleClass().add("card-subtitle");
+
+        HBox rowConfig = new HBox(10);
+        rowConfig.setAlignment(Pos.CENTER_LEFT);
 
         Button btnConfig = new Button("Cargar archivo de configuración");
-        Button btnProcess = new Button("Cargar archivo de procesos");
+        btnConfig.getStyleClass().add("secondary-button");
 
         btnConfig.setOnAction(e -> {
             File f = openFile(stage);
@@ -60,6 +67,12 @@ public class ConfigPage extends VBox {
             }
         });
 
+        HBox rowProcess = new HBox(10);
+        rowProcess.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnProcess = new Button("Cargar archivo de procesos");
+        btnProcess.getStyleClass().add("secondary-button");
+
         btnProcess.setOnAction(e -> {
             File f = openFile(stage);
             if (f != null) {
@@ -68,60 +81,62 @@ public class ConfigPage extends VBox {
             }
         });
 
-        box.getChildren().addAll(
-                title,
-                subtitle,
-                new HBox(10, labelConfig, btnConfig),
-                new HBox(10, labelProcess, btnProcess)
-        );
+        rowConfig.getChildren().addAll(labelConfig, btnConfig);
+        rowProcess.getChildren().addAll(labelProcess, btnProcess);
 
+        box.getChildren().addAll(title, subtitle, rowConfig, rowProcess);
         return box;
     }
 
     private VBox buildCpuSection() {
-        VBox box = new VBox(10);
+        VBox box = new VBox(12);
+        box.getStyleClass().add("card");
 
         Label title = new Label("Configuración de Algoritmo de Planificación CPU");
-        title.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+        title.getStyleClass().add("card-title");
+
         Label subtitle = new Label("Selecciona el algoritmo para la simulación.");
+        subtitle.getStyleClass().add("card-subtitle");
 
         ComboBox<String> schedulerCombo = new ComboBox<>();
         schedulerCombo.getItems().addAll("FCFS", "RR", "SJF");
         schedulerCombo.getSelectionModel().select("FCFS");
+        schedulerCombo.getStyleClass().add("input-control");
 
-        box.getChildren().addAll(
-                title,
-                subtitle,
-                new HBox(10, new Label("Scheduler:"), schedulerCombo)
-        );
+        HBox row = new HBox(10, new Label("Scheduler:"), schedulerCombo);
+        row.setAlignment(Pos.CENTER_LEFT);
 
+        box.getChildren().addAll(title, subtitle, row);
         return box;
     }
 
     private VBox buildMemorySection() {
-        VBox box = new VBox(10);
+        VBox box = new VBox(12);
+        box.getStyleClass().add("card");
 
         Label title = new Label("Configuración de Memoria");
-        title.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+        title.getStyleClass().add("card-title");
+
         Label subtitle = new Label("Selecciona el algoritmo de reemplazo.");
+        subtitle.getStyleClass().add("card-subtitle");
 
         ComboBox<String> replaceCombo = new ComboBox<>();
         replaceCombo.getItems().addAll("FIFO", "LRU", "OPTIMAL");
         replaceCombo.getSelectionModel().select("FIFO");
+        replaceCombo.getStyleClass().add("input-control");
 
-        box.getChildren().addAll(
-                title,
-                subtitle,
-                new HBox(10, new Label("Replacement:"), replaceCombo)
-        );
+        HBox row = new HBox(10, new Label("Replacement:"), replaceCombo);
+        row.setAlignment(Pos.CENTER_LEFT);
 
+        box.getChildren().addAll(title, subtitle, row);
         return box;
     }
 
     private Button buildStartButton() {
         Button btn = new Button("Start Simulation");
-        btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
+        btn.getStyleClass().add("primary-button");
         btn.setOnAction(e -> runSimulation(labelStatus));
+        btn.setMaxWidth(Double.MAX_VALUE);
         return btn;
     }
 
@@ -132,7 +147,7 @@ public class ConfigPage extends VBox {
         );
 
         File initialDir = new File("src/main/resources/data");
-        if(initialDir.exists()) {
+        if (initialDir.exists()) {
             fc.setInitialDirectory(initialDir);
         }
         return fc.showOpenDialog(stage);
@@ -147,7 +162,6 @@ public class ConfigPage extends VBox {
             status.setText("Simulación completada.");
         } catch (Exception ex) {
             status.setText("Error: " + ex.getMessage());
-            ex.printStackTrace();
         }
     }
 }

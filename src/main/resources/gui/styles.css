@@ -93,3 +93,96 @@
   -fx-text-fill: #a89cc4;
   -fx-font-size: 13px;
 }
+
+.status-text {
+  -fx-text-fill: #d7c8f8;
+}
+
+.helper-text {
+  -fx-text-fill: #cbb9e8;
+  -fx-font-size: 13px;
+}
+
+.upload-zone {
+  -fx-border-color: rgba(255,255,255,0.16);
+  -fx-border-radius: 12;
+  -fx-border-style: segments(10, 6) line-cap round;
+  -fx-background-color: rgba(255,255,255,0.03);
+}
+
+.upload-icon {
+  -fx-font-size: 26px;
+  -fx-text-fill: #b637fa;
+}
+
+.file-chip {
+  -fx-background-color: rgba(182,55,250,0.18);
+  -fx-text-fill: #f5e9ff;
+  -fx-padding: 6 12;
+  -fx-background-radius: 20;
+  -fx-font-weight: 700;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 8, 0.2, 0, 2);
+}
+
+.primary-button {
+  -fx-background-color: linear-gradient(to right, #b637fa, #7c3aed);
+  -fx-text-fill: white;
+  -fx-font-weight: 800;
+  -fx-background-radius: 12;
+  -fx-padding: 12 14;
+  -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 10, 0.2, 0, 4);
+}
+
+.primary-button:hover {
+  -fx-background-color: linear-gradient(to right, #c353ff, #8b5cf6);
+}
+
+.secondary-button {
+  -fx-background-color: rgba(255,255,255,0.06);
+  -fx-text-fill: #f5e9ff;
+  -fx-font-weight: 700;
+  -fx-background-radius: 12;
+  -fx-padding: 10 12;
+  -fx-border-color: rgba(255,255,255,0.12);
+  -fx-border-radius: 12;
+  -fx-cursor: hand;
+}
+
+.secondary-button:hover {
+  -fx-background-color: rgba(255,255,255,0.12);
+}
+
+.ghost-button {
+  -fx-background-color: rgba(255,255,255,0.05);
+  -fx-text-fill: #d5c3f5;
+  -fx-font-weight: 700;
+  -fx-background-radius: 10;
+  -fx-padding: 10 12;
+  -fx-border-color: rgba(182,55,250,0.45);
+  -fx-border-radius: 10;
+  -fx-cursor: hand;
+}
+
+.ghost-button-off {
+  -fx-background-color: rgba(255,255,255,0.08);
+  -fx-text-fill: #f2c2ff;
+}
+
+.input-control {
+  -fx-background-color: #0f0a1a;
+  -fx-text-fill: #f5e9ff;
+  -fx-padding: 10 12;
+  -fx-background-radius: 10;
+  -fx-border-radius: 10;
+  -fx-border-color: rgba(255,255,255,0.14);
+}
+
+.input-control:focused {
+  -fx-border-color: #b637fa;
+  -fx-effect: dropshadow(gaussian, rgba(182,55,250,0.35), 12, 0.25, 0, 3);
+}
+
+.separator *.line {
+  -fx-border-color: rgba(255,255,255,0.10);
+}
