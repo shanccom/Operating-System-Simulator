@@ -1,73 +1,87 @@
 package gui;
+
 import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.stage.FileChooser;
 
 import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import gui.pages.ConfigPage;
+import gui.pages.DashboardPage;
+import gui.pages.ResultadosPage;
 
 public class MainFX extends Application {
 
-    private File configFile;
-    private File processFile;
+  private final Map<String, VBox> pages = new LinkedHashMap<>();
+  private final Map<String, Button> navButtons = new LinkedHashMap<>();
+  @Override
+  public void start(Stage stage) {
+    stage.setTitle("Simulador de Sistema Operativo");
 
-    @Override
-    public void start(Stage stage) {
-        stage.setTitle("Simulador de Sistema Operativo");
+    BorderPane root = new BorderPane();
+    root.setPadding(new Insets(10));
+    crearPaginas(stage);
+    HBox nbar = crearNavbar();
+    root.setTop(nbar);
+    root.setCenter(pages.get("config"));
 
-        Label label = new Label("Selecciona archivos para iniciar la simulación");
-        Button btnConfig = new Button("Seleccionar archivo de configuración");
-        Button btnProcess = new Button("Seleccionar archivo de procesos");
-        Button btnRun = new Button("Iniciar simulación");
-        btnConfig.setOnAction(e -> {
-            configFile = openFile(stage);
-        });
+    Scene scene = new Scene(root, 1000, 650);
+    stage.setScene(scene);
+    stage.show();
+   
+  }
+  private void crearPaginas(Stage stage) {
+    pages.put("config", new ConfigPage(stage));
+    pages.put("dashboard", new DashboardPage());
+    pages.put("resultados", new ResultadosPage());
+  }
+  private HBox crearNavbar() {
+    HBox navbar = new HBox(10);
 
-        btnProcess.setOnAction(e -> {
-            processFile = openFile(stage);
-        });
+    Button configBtn = crearNavButton("Configuracion", "config");
+    Button dashboardBtn = crearNavButton("Dashboard", "dashboard");
+    Button resultsBtn = crearNavButton("Resultados", "resultados");
 
-        btnRun.setOnAction(e -> {
-            if (configFile == null || processFile == null) {
-                label.setText("Selecciona ambos archivos antes de iniciar.");
-                return;
-            }
+    navbar.getChildren().addAll(
+      configBtn,
+      dashboardBtn,
+      resultsBtn
+    );
 
-            try {
-                gui.SimulationRunner.runSimulation(
-                        configFile.getAbsolutePath(),
-                        processFile.getAbsolutePath()
-                );
-                label.setText("Simulación completada (ver consola)");
-                // 🔥 Aquí abrimos la ventana de memoria
-                Stage memoryStage = new Stage();
-                gui.MemoryVisualizer visualizer = new gui.MemoryVisualizer();
-                visualizer.start(memoryStage);
+    return navbar;
+  }
 
+  private Button crearNavButton(String text, String pageKey) {
+    Button button = new Button(text);
+    button.setOnAction(e -> switchPage(pageKey));
+    navButtons.put(pageKey, button);
+    return button;
+  }
 
-
-
-            } catch (Exception ex) {
-                label.setText("Error al ejecutar la simulación: " + ex.getMessage());
-                ex.printStackTrace();
-            }
-        });
-
-        VBox root = new VBox(10, label, btnConfig, btnProcess, btnRun);
-        root.setStyle("-fx-padding: 20; -fx-font-size: 14px;");
-        stage.setScene(new Scene(root, 400, 250));
-        stage.show();
+  private void switchPage(String pageKey) {
+    VBox page = pages.get(pageKey);
+    if (page != null) {
+      BorderPane root = (BorderPane) navButtons
+        .values()
+        .iterator()
+        .next()
+        .getScene()
+        .getRoot();
+      root.setCenter(page);
     }
+  }
 
-    private File openFile(Stage stage) {
-        FileChooser fc = new FileChooser();
-        return fc.showOpenDialog(stage);
-    }
-
-    public static void main(String[] args) {
-        launch(args);
-    }
+  public static void main(String[] args) {
+    launch(args);
+  }
 }

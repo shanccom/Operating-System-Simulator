@@ -19,7 +19,6 @@ public class ConfigPage extends VBox {
     private final Label labelStatus = new Label();
 
     public ConfigPage(Stage stage) {
-
         setSpacing(20);
         setPadding(new Insets(20));
         setAlignment(Pos.TOP_LEFT);
@@ -47,6 +46,7 @@ public class ConfigPage extends VBox {
         VBox box = new VBox(10);
 
         Label title = new Label("Load Input Files");
+        title.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
         Label subtitle = new Label("Selecciona archivos de configuración y procesos.");
 
         Button btnConfig = new Button("Cargar archivo de configuración");
@@ -82,6 +82,7 @@ public class ConfigPage extends VBox {
         VBox box = new VBox(10);
 
         Label title = new Label("Configuración de Algoritmo de Planificación CPU");
+        title.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
         Label subtitle = new Label("Selecciona el algoritmo para la simulación.");
 
         ComboBox<String> schedulerCombo = new ComboBox<>();
@@ -101,6 +102,7 @@ public class ConfigPage extends VBox {
         VBox box = new VBox(10);
 
         Label title = new Label("Configuración de Memoria");
+        title.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
         Label subtitle = new Label("Selecciona el algoritmo de reemplazo.");
 
         ComboBox<String> replaceCombo = new ComboBox<>();
@@ -118,6 +120,7 @@ public class ConfigPage extends VBox {
 
     private Button buildStartButton() {
         Button btn = new Button("Start Simulation");
+        btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
         btn.setOnAction(e -> runSimulation(labelStatus));
         return btn;
     }
@@ -127,6 +130,11 @@ public class ConfigPage extends VBox {
         fc.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("TXT files", "*.txt")
         );
+
+        File initialDir = new File("src/main/resources/data");
+        if(initialDir.exists()) {
+            fc.setInitialDirectory(initialDir);
+        }
         return fc.showOpenDialog(stage);
     }
 
@@ -139,6 +147,7 @@ public class ConfigPage extends VBox {
             status.setText("Simulación completada.");
         } catch (Exception ex) {
             status.setText("Error: " + ex.getMessage());
+            ex.printStackTrace();
         }
     }
 }
