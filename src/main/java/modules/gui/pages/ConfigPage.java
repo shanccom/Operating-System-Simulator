@@ -244,7 +244,6 @@ public class ConfigPage extends VBox {
             );
 
             config.setQuantum(quantumSpinner.getValue());
-            config.setEnableIO(enableIOCheck.isSelected());
             config.setTimeUnit(timeUnitSpinner.getValue());
 
         } catch (Exception e) {

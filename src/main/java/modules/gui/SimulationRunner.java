@@ -15,15 +15,9 @@ public class SimulationRunner {
 
   public static void runSimulation(Config config, String processPath) throws Exception {
       
-    FileParser.validateFile(configPath);
-    FileParser.validateFile(processPath);
-    
-    Config config = FileParser.parseConfig(configPath);
-    
     if (!config.validate()) {
             throw new IllegalArgumentException("Configuración inválida");
     }
-    FileParser.validateFile(processPath);
   
     List<Process> processes = FileParser.parseProcesses(processPath);
     if (processes.isEmpty()) {
