@@ -139,7 +139,7 @@ public class ConfigPage extends VBox {
     }
 
     private Button buildStartButton() {
-        Button btn = new Button("Start Simulation");
+        Button btn = new Button("Iniciar Simulacion");
         btn.getStyleClass().add("primary-button");
         btn.setOnAction(e -> runSimulation(labelStatus));
         btn.setMaxWidth(Double.MAX_VALUE);

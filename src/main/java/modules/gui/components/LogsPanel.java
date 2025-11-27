@@ -3,6 +3,7 @@ package modules.gui.components;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
 import utils.Logger;
@@ -19,6 +20,8 @@ public class LogsPanel extends VBox {
         Label title = new Label("Panel de Ejecución");
         title.getStyleClass().add("card-title");
 
+        list.setCellFactory(v -> new LogCell());
+
         getChildren().addAll(title, list);
 
         Logger.addListener(entry -> {
@@ -27,5 +30,21 @@ public class LogsPanel extends VBox {
                 list.scrollTo(list.getItems().size() - 1);
             });
         });
+    }
+
+    private static class LogCell extends ListCell<Logger.LogEntry> {
+        @Override
+        protected void updateItem(Logger.LogEntry item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (item == null || empty) {
+                setText(null);
+                setStyle("");
+                return;
+            }
+
+            setText(item.toString());
+
+        }
     }
 }
