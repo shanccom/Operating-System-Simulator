@@ -1,5 +1,6 @@
 package modules.gui.components;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -21,8 +22,10 @@ public class LogsPanel extends VBox {
         getChildren().addAll(title, list);
 
         Logger.addListener(entry -> {
-            list.getItems().add(entry);   
-            list.scrollTo(list.getItems().size() - 1);
+            Platform.runLater(() -> {
+                list.getItems().add(entry);
+                list.scrollTo(list.getItems().size() - 1);
+            });
         });
     }
 }
