@@ -45,6 +45,15 @@ public class LogsPanel extends VBox {
 
             setText(item.toString());
 
+            String color = switch (item.getLevel()) {
+                case ERROR -> "#ff7070ff";
+                case WARNING -> "#fac424ff";
+                case DEBUG -> "#6b79a5ff";
+                case EVENT -> "#15c98dff";
+                default -> "#1f2937";
+            };
+
+            setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Consolas';");
         }
     }
 }
