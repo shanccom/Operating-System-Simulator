@@ -45,16 +45,74 @@ public class ConfigPage extends VBox {
 
     private VBox buildFileSection(Stage stage) {
         VBox box = new VBox(10);
+
+        Label title = new Label("Load Input Files");
+        Label subtitle = new Label("Selecciona archivos de configuración y procesos.");
+
+        Button btnConfig = new Button("Cargar archivo de configuración");
+        Button btnProcess = new Button("Cargar archivo de procesos");
+
+        btnConfig.setOnAction(e -> {
+            File f = openFile(stage);
+            if (f != null) {
+                configFile = f;
+                labelConfig.setText("Config: " + f.getName());
+            }
+        });
+
+        btnProcess.setOnAction(e -> {
+            File f = openFile(stage);
+            if (f != null) {
+                processFile = f;
+                labelProcess.setText("Procesos: " + f.getName());
+            }
+        });
+
+        box.getChildren().addAll(
+                title,
+                subtitle,
+                new HBox(10, labelConfig, btnConfig),
+                new HBox(10, labelProcess, btnProcess)
+        );
+
         return box;
     }
 
     private VBox buildCpuSection() {
         VBox box = new VBox(10);
+
+        Label title = new Label("Configuración de Algoritmo de Planificación CPU");
+        Label subtitle = new Label("Selecciona el algoritmo para la simulación.");
+
+        ComboBox<String> schedulerCombo = new ComboBox<>();
+        schedulerCombo.getItems().addAll("FCFS", "RR", "SJF");
+        schedulerCombo.getSelectionModel().select("FCFS");
+
+        box.getChildren().addAll(
+                title,
+                subtitle,
+                new HBox(10, new Label("Scheduler:"), schedulerCombo)
+        );
+
         return box;
     }
 
     private VBox buildMemorySection() {
         VBox box = new VBox(10);
+
+        Label title = new Label("Configuración de Memoria");
+        Label subtitle = new Label("Selecciona el algoritmo de reemplazo.");
+
+        ComboBox<String> replaceCombo = new ComboBox<>();
+        replaceCombo.getItems().addAll("FIFO", "LRU", "OPTIMAL");
+        replaceCombo.getSelectionModel().select("FIFO");
+
+        box.getChildren().addAll(
+                title,
+                subtitle,
+                new HBox(10, new Label("Replacement:"), replaceCombo)
+        );
+
         return box;
     }
 
