@@ -1,6 +1,0 @@
-frames=3
-frameSize=4096
-replacement=NRU
-scheduler=ROUND_ROBIN
-quantum=2
-timeUnit=100

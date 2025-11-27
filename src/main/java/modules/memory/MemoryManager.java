@@ -5,7 +5,7 @@ import utils.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
+//NUEVO ADECUAMOS PARA USAR DISPARADORES de eventos
 // Clase base para gestion de memoria virtual
 public abstract class MemoryManager {
   
@@ -63,7 +63,7 @@ public abstract class MemoryManager {
   
   public MemoryManager(int totalFrames) {
       if (totalFrames <= 0) {
-          throw new IllegalArgumentException("Numero de marcos debe ser positivo");
+          throw new IllegalArgumentException("[MEM] Numero de marcos debe ser positivo");
       }
       
       this.totalFrames = totalFrames;
@@ -85,7 +85,7 @@ public abstract class MemoryManager {
       
       String pid = process.getPid();
       
-      // Verificar si la pagina ya esta cargada
+      // Verificar si la pagina ya esta cargada, no se proudcira page fault
       if (isPageLoaded(pid, pageNumber)) {
           Logger.debug("[MEM] Pagina " + pageNumber + " del proceso " + pid + " ya esta en memoria");
           accessPage(pid, pageNumber);
@@ -113,7 +113,7 @@ public abstract class MemoryManager {
           replacePage(victimFrame, pid, pageNumber);
           return true;
       }
-      
+      //Para debugguear
       Logger.error("[MEM] No se pudo cargar la pagina " + pageNumber + " del proceso " + pid);
       return false;
   }

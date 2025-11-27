@@ -13,11 +13,18 @@ import java.util.List;
 
 public class SimulationRunner {
 
-  public static void runSimulation(String configPath, String processPath) throws Exception {
+  public static void runSimulation(Config config, String processPath) throws Exception {
+      
+    FileParser.validateFile(configPath);
+    FileParser.validateFile(processPath);
+    
     Config config = FileParser.parseConfig(configPath);
+    
     if (!config.validate()) {
-      throw new Exception("Configuracion invalida");
+            throw new IllegalArgumentException("Configuración inválida");
     }
+    FileParser.validateFile(processPath);
+  
     List<Process> processes = FileParser.parseProcesses(processPath);
     if (processes.isEmpty()) {
       throw new Exception("No se encontraron procesos para simular");
@@ -33,6 +40,7 @@ public class SimulationRunner {
   }
     
   private static void printSystemConfiguration(Config config, List<Process> processes, Scheduler scheduler, MemoryManager memoryManager) {
+    
     System.out.println();
     Logger.log("CONFIGURACION DEL SISTEMA:");
     Logger.log("    Algoritmo de planificacion: " + scheduler.getAlgorithmName());
