@@ -17,18 +17,23 @@ public class LogsPanel extends VBox {
         setPadding(new Insets(16));
         getStyleClass().add("card");
 
-        Label title = new Label("Panel de Ejecución");
+
+        Label title = new Label("Logs en Tiempo Real");
         title.getStyleClass().add("card-title");
 
         list.setCellFactory(v -> new LogCell());
 
+        list.getStyleClass().add("logs-panel");
+
         getChildren().addAll(title, list);
 
-        Logger.addListener(entry -> {
-            Platform.runLater(() -> {
-                list.getItems().add(entry);
-                list.scrollTo(list.getItems().size() - 1);
-            });
+        Logger.addListener(this::addLog);
+    }
+
+    private void addLog(Logger.LogEntry entry) {
+        Platform.runLater(() -> {
+            list.getItems().add(entry);
+            list.scrollTo(list.getItems().size() - 1);
         });
     }
 
@@ -46,14 +51,14 @@ public class LogsPanel extends VBox {
             setText(item.toString());
 
             String color = switch (item.getLevel()) {
-                case ERROR -> "#ff7070ff";
-                case WARNING -> "#fac424ff";
-                case DEBUG -> "#6b79a5ff";
-                case EVENT -> "#15c98dff";
-                default -> "#1f2937";
+                case ERROR -> "#ef4444";
+                case WARNING -> "#f59e0b";
+                case DEBUG -> "#e0e9fbff";
+                case EVENT -> "#10b981";
+                default -> "#9fa5acff";
             };
 
-            setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Consolas';");
+            setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Consolas';" + "-fx-background-color: #0f0a1a;");
         }
     }
 }
