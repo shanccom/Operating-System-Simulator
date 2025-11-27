@@ -12,25 +12,25 @@ public class DashboardPage extends VBox {
         setSpacing(20);
         setPadding(new Insets(20));
         setAlignment(Pos.TOP_LEFT);
+        getStyleClass().add("page-container");
 
         HBox topBar = new HBox(10);
         topBar.setAlignment(Pos.CENTER_LEFT);
 
         Label title = new Label("Simulacion");
+        title.getStyleClass().add("page-title");
+
         Label subtitle = new Label("Dashboard");
+        subtitle.getStyleClass().add("page-subtitle");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button clearLogButton = new Button("Limpiar log");
-        Button runButton = new Button("Iniciar simulación");
 
         topBar.getChildren().addAll(
                 title,
                 subtitle,
-                spacer,
-                clearLogButton,
-                runButton
+                spacer
         );
 
         GridPane grid = new GridPane();
@@ -51,27 +51,70 @@ public class DashboardPage extends VBox {
         grid.getRowConstraints().addAll(row1, row2);
 
         //Paneles
-        VBox execPanel = buildCard("Panel de Ejecución");
+        VBox execPanel = buildExePanel("Panel de Ejecución");
         grid.add(execPanel, 0, 0);
 
-        VBox queuesPanel = buildCard("Colas de Procesos");
+        VBox queuesPanel = buildProPanel("Colas de Procesos");
         grid.add(queuesPanel, 1, 0);
 
-        VBox memoryPanel = buildCard("Panel de Memoria Virtual");
+        VBox memoryPanel = buildMemPanel("Panel de Memoria Virtual");
         grid.add(memoryPanel, 0, 1);
 
-        VBox logsPanel = buildCard("Logs en Tiempo Real");
+        VBox logsPanel = buildLogsPanel("Logs en Tiempo Real");
         grid.add(logsPanel, 1, 1);
 
         getChildren().addAll(topBar, grid);
     }
 
-    private VBox buildCard(String titleText) {
+    private VBox buildExePanel(String titleText) {
         VBox card = new VBox(10);
+        card.getStyleClass().add("card");
         card.setPadding(new Insets(16));
         card.setAlignment(Pos.TOP_LEFT);
 
         Label title = new Label(titleText);
+        title.getStyleClass().add("card-title");
+
+        card.getChildren().add(title);
+
+        return card;
+    }
+
+    private VBox buildLogsPanel(String titleText) {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("card");
+        card.setPadding(new Insets(16));
+        card.setAlignment(Pos.TOP_LEFT);
+
+        Label title = new Label(titleText);
+        title.getStyleClass().add("card-title");
+
+        card.getChildren().add(title);
+
+        return card;
+    }
+    private VBox buildMemPanel(String titleText) {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("card");
+        card.setPadding(new Insets(16));
+        card.setAlignment(Pos.TOP_LEFT);
+
+        Label title = new Label(titleText);
+        title.getStyleClass().add("card-title");
+
+        card.getChildren().add(title);
+
+        return card;
+    }
+    private VBox buildProPanel(String titleText) {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("card");
+        card.setPadding(new Insets(16));
+        card.setAlignment(Pos.TOP_LEFT);
+
+        Label title = new Label(titleText);
+        title.getStyleClass().add("card-title");
+
         card.getChildren().add(title);
 
         return card;
