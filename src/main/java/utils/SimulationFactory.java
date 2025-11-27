@@ -12,15 +12,15 @@ public class SimulationFactory {
     return switch (config.getSchedulerType()) {
       case FCFS -> new FCFS();
       case SJF -> {
-        Logger.warning("SJF no implementado aún, usando FCFS");
+        Logger.warning("SJF no implementado aun, usando FCFS");
         yield new FCFS();
       }
       case ROUND_ROBIN -> {
-        Logger.warning("Round Robin no implementado aún, usando FCFS");
+        Logger.warning("Round Robin no implementado aun, usando FCFS");
         yield new FCFS();
       }
       case PRIORITY -> {
-        Logger.warning("Priority no implementado aún, usando FCFS");
+        Logger.warning("Priority no implementado aun, usando FCFS");
         yield new FCFS();
       }
       default -> {
@@ -33,7 +33,7 @@ public class SimulationFactory {
   public static MemoryManager createMemoryManager(Config config) {
     int frames = config.getTotalFrames();
     if (frames <= 0) {
-      Logger.warning("Número de marcos invalido, usando 10 por defecto");
+      Logger.warning("Numero de marcos invalido, usando 10 por defecto");
       frames = 10;
     }
     Logger.debug("Creando memory manager: " + config.getReplacementType() + 

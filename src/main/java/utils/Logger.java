@@ -10,9 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Registra todos los eventos importantes del sistema.
- */
 
 public class Logger {
     
@@ -21,9 +18,7 @@ public class Logger {
   private static boolean enableFileOutput = false;
   private static String logFilePath = "simulation.log";
   
-  /**
-   * Entrada individual de log
-   */
+
   public static class LogEntry {
       private final LocalDateTime timestamp;
       private final String message;
@@ -95,7 +90,7 @@ public class Logger {
   // Log para fallo de pagina
   public static void logPageFault(String pid, int pageNumber, int time) {
       String message = String.format(
-          "[T=%d] PAGE FAULT - Proceso %s necesita página %d",
+          "[T=%d] PAGE FAULT - Proceso %s necesita pagina %d",
           time, pid, pageNumber
       );
       log(message, LogLevel.WARNING);
@@ -105,7 +100,7 @@ public class Logger {
   public static void logPageReplacement(String victimPid, int victimPage,
                                         String newPid, int newPage, int time) {
       String message = String.format(
-          "[T=%d] REEMPLAZO - Proceso %s página %d → Proceso %s página %d",
+          "[T=%d] REEMPLAZO - Proceso %s pagina %d → Proceso %s pagina %d",
           time, victimPid, victimPage, newPid, newPage
       );
       log(message, LogLevel.EVENT);
@@ -115,7 +110,7 @@ public class Logger {
   public static void logBurstExecution(String pid, String burstType, 
                                       int duration, int time) {
       String message = String.format(
-          "[T=%d] Proceso %s ejecutando ráfaga %s por %d unidades",
+          "[T=%d] Proceso %s ejecutando rafaga %s por %d unidades",
           time, pid, burstType, duration
       );
       log(message, LogLevel.DEBUG);

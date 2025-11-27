@@ -12,20 +12,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Parser para leer archivos de configuración y procesos
- * Formato esperado en procesos.txt:
- * PID ARRIVAL_TIME BURSTS PRIORITY PAGES
- * Ejemplo: P1 0 CPU(4),IO(3),CPU(5) 1 4
- */
+
 public class FileParser {
     
     // Patrones regex para parsear las ráfagas
     private static final Pattern BURST_PATTERN = Pattern.compile("(CPU|IO)\\((\\d+)\\)");
     
-    /**
-     * Lee el archivo de configuración
-     */
     public static Config parseConfig(String filepath) throws IOException {
         Config config = new Config();
         
@@ -83,9 +75,9 @@ public class FileParser {
         return config;
     }
     
-    /**
-     * Lee el archivo de procesos
-     */
+
+     //Lee el archivo de procesos
+
     public static List<Process> parseProcesses(String filepath) throws IOException {
         List<Process> processes = new ArrayList<>();
         
@@ -117,11 +109,7 @@ public class FileParser {
         return processes;
     }
     
-    /**
-     * Parsea una línea individual de proceso
-     * Formato: PID ARRIVAL_TIME BURSTS PRIORITY PAGES
-     * Ejemplo: P1 0 CPU(4),IO(3),CPU(5) 1 4
-     */
+
     private static Process parseProcessLine(String line) {
         String[] parts = line.split("\\s+");
         
@@ -140,10 +128,7 @@ public class FileParser {
         return new Process(pid, arrivalTime, bursts, priority, requiredPages);
     }
     
-    /**
-     * Parsea la cadena de ráfagas
-     * Formato: CPU(4),IO(3),CPU(5)
-     */
+
     private static List<Burst> parseBursts(String burstsString) {
         List<Burst> bursts = new ArrayList<>();
         
@@ -167,9 +152,7 @@ public class FileParser {
         return bursts;
     }
     
-    /**
-     * Convierte string a tipo de scheduler
-     */
+
     private static Config.SchedulerType parseSchedulerType(String value) {
         return switch (value.toUpperCase()) {
             case "FCFS" -> Config.SchedulerType.FCFS;
@@ -180,9 +163,7 @@ public class FileParser {
         };
     }
     
-    /**
-     * Convierte string a tipo de reemplazo
-     */
+
     private static Config.ReplacementType parseReplacementType(String value) {
         return switch (value.toUpperCase()) {
             case "FIFO" -> Config.ReplacementType.FIFO;
@@ -193,9 +174,7 @@ public class FileParser {
         };
     }
     
-    /**
-     * Valida que un archivo exista y sea legible
-     */
+
     public static void validateFile(String filepath) throws IOException {
         java.io.File file = new java.io.File(filepath);
         if (!file.exists()) {
