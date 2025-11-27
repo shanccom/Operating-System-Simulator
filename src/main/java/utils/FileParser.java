@@ -70,8 +70,6 @@ public class FileParser {
                 }
             }
         }
-        
-        Logger.log("Configuración cargada: " + config);
         return config;
     }
     
@@ -97,15 +95,12 @@ public class FileParser {
                 try {
                     Process process = parseProcessLine(line);
                     processes.add(process);
-                    Logger.debug("Proceso parseado: " + process);
                 } catch (Exception e) {
                     Logger.error("Error en línea " + lineNumber + ": " + e.getMessage());
                     throw new IOException("Error parseando línea " + lineNumber + ": " + line, e);
                 }
             }
         }
-        
-        Logger.log("Total de procesos cargados: " + processes.size());
         return processes;
     }
     

@@ -37,15 +37,9 @@ public class SimulationEngine {
       ProcessThread thread = new ProcessThread(process, syncController, ioManager);
       processThreads.add(thread);
     }
-    
-    Logger.log("SimulationEngine creado con " + processes.size() + " procesos");
   }
   
   public void run() {
-    Logger.log("Algoritmo planificación: " + scheduler.getAlgorithmName());
-    Logger.log("Algoritmo memoria: " + memoryManager.getAlgorithmName());
-    Logger.log("Total procesos: " + allProcesses.size());
-    
     running = true;
     syncController.start();
     ioManager.start();
@@ -58,14 +52,11 @@ public class SimulationEngine {
   }
   
   private void startAllThreads() {
-    Logger.log("Iniciando " + processThreads.size() + " threads de procesos...");
-    
     for (ProcessThread thread : processThreads) {
       thread.start();
       Logger.debug("Thread iniciado: " + thread.getName());
     }
-    
-    Logger.log("Todos los threads iniciados");
+    System.out.println();
   }
 
   private void notifyTimeAdvance() {
@@ -171,12 +162,10 @@ public class SimulationEngine {
   }
   
   private void showResults() {
-    Logger.separator();
     scheduler.printMetrics();
     memoryManager.printMetrics();
     
-    Logger.separator();
-    Logger.section("MÉTRICAS POR PROCESO");
+    Logger.log("MÉTRICAS POR PROCESO");
     for (Process p : allProcesses) {
       Logger.log(String.format(
         "%s: Espera=%d, Retorno=%d, Respuesta=%d, PageFaults=%d",
@@ -187,7 +176,6 @@ public class SimulationEngine {
         p.getPageFaults()
       ));
     }
-    Logger.separator();
   }
   
   private void sleep(int ms) {

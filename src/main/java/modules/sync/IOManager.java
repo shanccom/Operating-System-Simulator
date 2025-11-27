@@ -43,8 +43,6 @@ public class IOManager implements Runnable {
     this.totalIOOperations = new AtomicInteger(0);
     this.completedIOOperations = new AtomicInteger(0);
     this.totalIOTime = 0;
-
-    Logger.log("IOManager inicializado");
   }
 
 
@@ -53,13 +51,10 @@ public class IOManager implements Runnable {
       Logger.warning("IOManager ya se esta ejecutando");
       return;
     }
-
     running = true;
     ioThread = new Thread(this, "IOManager Thread");
     ioThread.setDaemon(true);
     ioThread.start();
-
-    Logger.log("IOManager iniciado con thread independiente");
   }
 
   @Override 
@@ -190,8 +185,7 @@ public class IOManager implements Runnable {
   }
 
   public void printMetrics() {
-    Logger.separator();
-    Logger.section("Metricas de Entrada y Salida");
+    Logger.log("Metricas de Entrada y Salida");
     
     int total = totalIOOperations.get();
     int completed = completedIOOperations.get();
@@ -206,8 +200,6 @@ public class IOManager implements Runnable {
       double avgTime = (double) totalIOTime / completed;
       Logger.log(String.format("Tiempo promedio I/O: %.2f unidades", avgTime));
     }
-    
-    Logger.separator();
   }
 
   public static class IOStatistics {

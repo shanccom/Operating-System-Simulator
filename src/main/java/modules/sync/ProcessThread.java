@@ -19,8 +19,6 @@ public class ProcessThread extends Thread {
     this.syncController = syncController;
     this.IoManager = IoManager;
     this.running = true;
-
-    Logger.log("Thread creado para proceso " + process.getPid());
   }
 
   private void waitForArrival() throws InterruptedException {
@@ -114,14 +112,9 @@ public class ProcessThread extends Thread {
   @Override 
   public void run() {
     try {
-      Logger.log("Thread del proceso " + process.getPid() + " iniciado");
-
       waitForArrival();
       arriveAtSystem();
       mainExecutionLoop();
-
-      Logger.log("Thread del proceso " + process.getPid() + " terminado");
-
     } catch (InterruptedException e) {
       Logger.warning("Thread del proceso " + process.getPid() + "interrumpido");
       Thread.currentThread().interrupt();

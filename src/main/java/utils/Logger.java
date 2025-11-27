@@ -33,8 +33,8 @@ public class Logger {
       @Override
       public String toString() {
           DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
-          return String.format("[%s] [%s] %s", 
-              timestamp.format(formatter), level, message);
+          return String.format("[%s] %s", 
+              timestamp.format(formatter), message);
       }
       
       public String getMessage() {
@@ -143,7 +143,6 @@ public class Logger {
       log("Log limpiado");
   }
   
-  //Exportacion a un archivo
   public static void exportToFile(String filepath) throws IOException {
       try (PrintWriter writer = new PrintWriter(new FileWriter(filepath))) {
           writer.println("Generado: " + LocalDateTime.now());
@@ -201,15 +200,5 @@ public class Logger {
   
   public static void setLogFilePath(String path) {
       logFilePath = path;
-  }
-  
-  public static void separator() {
-      log("-----------------------------------------");
-  }
-  
-  public static void section(String title) {
-      separator();
-      log("-----" + title + "----");
-      separator();
   }
 }

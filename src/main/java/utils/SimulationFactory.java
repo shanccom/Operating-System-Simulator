@@ -8,21 +8,11 @@ import modules.scheduler.FCFS;
 public class SimulationFactory {
     
   public static Scheduler createScheduler(Config config) {
-    Logger.debug("Creando scheduler: " + config.getSchedulerType());
     return switch (config.getSchedulerType()) {
       case FCFS -> new FCFS();
-      case SJF -> {
-        Logger.warning("SJF no implementado aun, usando FCFS");
-        yield new FCFS();
-      }
-      case ROUND_ROBIN -> {
-        Logger.warning("Round Robin no implementado aun, usando FCFS");
-        yield new FCFS();
-      }
-      case PRIORITY -> {
-        Logger.warning("Priority no implementado aun, usando FCFS");
-        yield new FCFS();
-      }
+      case SJF -> new SJF()
+      case ROUND_ROBIN -> new ROUND_ROBIN()
+      case PRIORITY -> new PRIORITY()
       default -> {
         Logger.warning("Algoritmo desconocido, usando FCFS por defecto");
         yield new FCFS();
@@ -36,27 +26,20 @@ public class SimulationFactory {
       Logger.warning("Numero de marcos invalido, usando 10 por defecto");
       frames = 10;
     }
-    Logger.debug("Creando memory manager: " + config.getReplacementType() + 
-                " con " + frames + " marcos");
-    
     return switch (config.getReplacementType()) {
       case FIFO -> {
-        Logger.log("Inicializando FIFO con " + frames + " marcos");
         yield new modules.memory.FIFO(frames);
       }
       
       case LRU -> {
-        Logger.log("Inicializando LRU con " + frames + " marcos");
         yield new modules.memory.LRU(frames);
       }
       
       case OPTIMAL -> {
-        Logger.log("Inicializando OPTIMAL con " + frames + " marcos");
         yield new modules.memory.Optimal(frames);
       }
       
       case NRU -> {
-        Logger.log("Inicializando NRU con " + frames + " marcos");
         yield new modules.memory.NRU(frames);
       }
       

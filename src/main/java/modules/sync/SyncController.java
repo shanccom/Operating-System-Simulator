@@ -39,8 +39,6 @@ public class SyncController {
     
     this.running = false;
     this.paused = false;
-    
-    Logger.log("SyncController inicializado");
   }
   
   public boolean prepareProcessForExecution(Process process) {
@@ -244,7 +242,6 @@ public class SyncController {
     globalLock.lock();
     try {
       running = true;
-      Logger.log("SyncController iniciado");
     } finally {
       globalLock.unlock();
     }
