@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
+//eliminar
 public class FileParser {
     
     // Patrones regex para parsear las ráfagas

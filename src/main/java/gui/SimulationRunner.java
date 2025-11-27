@@ -13,18 +13,13 @@ import java.util.List;
 
 public class SimulationRunner {
 
-  public static void runSimulation(String configPath, String processPath) throws Exception {
+  public static void runSimulation(Config config, String processPath) throws Exception {
       
-    FileParser.validateFile(configPath);
-    FileParser.validateFile(processPath);
-    
-    Config config = FileParser.parseConfig(configPath);
-    
     if (!config.validate()) {
-      throw new Exception("Configuracion invalida");
+            throw new IllegalArgumentException("Configuración inválida");
     }
-    
-  
+    FileParser.validateFile(processPath);
+
     List<Process> processes = FileParser.parseProcesses(processPath);
     
     if (processes.isEmpty()) {
@@ -44,7 +39,7 @@ public class SimulationRunner {
     engine.run();
     Logger.printSummary();
   }
-    
+  //cREO QUE NO SE IMPRIME
   private static void printSystemConfiguration(
           Config config, 
           List<Process> processes,
