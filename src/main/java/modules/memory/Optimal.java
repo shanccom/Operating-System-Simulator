@@ -5,15 +5,7 @@ import utils.Logger;
 
 import java.util.*;
 
-/**
- * Optimal
- * Reemplaza la página cuyo próximo uso está más lejos.
- * Requiere trazas futuras simuladas.
- * 
- * Mejorado con:
- * - Métodos auxiliares para mostrar distancias futuras.
- * - Comentarios para futura GUI.
- */
+
 public class Optimal extends MemoryManager {
 
     private final Map<String, List<Integer>> futureAccesses = new HashMap<>();
@@ -52,7 +44,7 @@ public class Optimal extends MemoryManager {
 
         Logger.debug("Optimal seleccionó marco " + victim + " como víctima (distancia futura: " + farthest + ")");
 
-        // GUI: onVictimSelected(victim, frames[victim].getProcessId(), frames[victim].getPageNumber(), "Optimal", currentTime);
+        
         return victim;
     }
 
@@ -80,9 +72,6 @@ public class Optimal extends MemoryManager {
         return sb.toString();
     }
 
-    /**
-     * Imprime estado de distancias futuras.
-     */
     public void printFutureState(String pid) {
         Logger.log(getFutureState(pid));
         // GUI: dibujar distancias al próximo uso

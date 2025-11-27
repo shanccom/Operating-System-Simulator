@@ -3,11 +3,7 @@ package modules.memory;
 import model.Process;
 import utils.Logger;
 
-/**
- * LRU (Least Recently Used)
- * Reemplaza la página menos recientemente usada.
- * 
- */
+
 public class LRU extends MemoryManager {
 
     public LRU(int totalFrames) {
@@ -28,9 +24,8 @@ public class LRU extends MemoryManager {
             }
         }
 
-        Logger.debug("LRU selecciono marco " + victimIndex + " como víctima");
+        Logger.debug("LRU selecciono marco " + victimIndex + " como victima");
 
-        // GUI: onVictimSelected(victimIndex, frames[victimIndex].getProcessId(), frames[victimIndex].getPageNumber(), "LRU", currentTime);
         return victimIndex;
     }
 
@@ -39,9 +34,6 @@ public class LRU extends MemoryManager {
         return "LRU (Least Recently Used)";
     }
 
-    /**
-     * Devuelve el estado de los marcos con sus tiempos de acceso.
-     */
     public String getAccessState() {
         StringBuilder sb = new StringBuilder("Estado de accesos LRU:\n");
         for (int i = 0; i < totalFrames; i++) {
@@ -52,9 +44,7 @@ public class LRU extends MemoryManager {
         return sb.toString();
     }
 
-    /**
-     * Imprime el estado detallado de accesos.
-     */
+
     public void printAccessState() {
         Logger.log(getAccessState());
         // GUI: dibujar heatmap de lastAccessTime

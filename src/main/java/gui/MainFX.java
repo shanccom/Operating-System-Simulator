@@ -61,7 +61,7 @@ public class MainFX extends Application {
         Label title = new Label("Sistema Operativo");
         title.getStyleClass().add("brand");
 
-        Button configBtn = crearNavButton("Configuración", "config");
+        Button configBtn = crearNavButton("Configuracion", "config");
         Button dashboardBtn = crearNavButton("Dashboard", "dashboard");
         Button resultsBtn = crearNavButton("Resultados", "resultados");
 

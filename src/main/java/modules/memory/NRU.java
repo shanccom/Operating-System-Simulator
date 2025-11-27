@@ -5,11 +5,8 @@ import utils.Logger;
 
 import java.util.*;
 
-/**
- * NRU (Not Recently Used)
- * Clasifica páginas en 4 clases según acceso/modificación.
- * Aquí se simula con aleatoriedad para que funcione sin bits R/M reales.
- */
+ //Aquí se simula con aleatoriedad para que funcione sin bits R/M reales.
+
 public class NRU extends MemoryManager {
 
     public NRU(int totalFrames) {
@@ -32,7 +29,7 @@ public class NRU extends MemoryManager {
         int victim = candidates.get(new Random().nextInt(candidates.size()));
         Logger.debug("NRU seleccionó marco " + victim + " como víctima");
 
-        // GUI: onVictimSelected(victim, frames[victim].getProcessId(), frames[victim].getPageNumber(), "NRU", currentTime);
+      
         return victim;
     }
 
@@ -41,9 +38,7 @@ public class NRU extends MemoryManager {
         return "NRU (Not Recently Used)";
     }
 
-    /**
-     * Devuelve un estado simulado de clases NRU.
-     */
+
     public String getClassState() {
         StringBuilder sb = new StringBuilder("Estado de clases NRU:\n");
         for (int i = 0; i < totalFrames; i++) {
@@ -57,11 +52,9 @@ public class NRU extends MemoryManager {
         return sb.toString();
     }
 
-    /**
-     * Imprime estado simulado de clases NRU.
-     */
+   
     public void printClassState() {
         Logger.log(getClassState());
-        // GUI: dibujar badges R/M y clases NRU
+       
     }
 }

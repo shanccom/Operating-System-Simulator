@@ -18,16 +18,13 @@ public class SimulationRunner {
     FileParser.validateFile(configPath);
     FileParser.validateFile(processPath);
     
-    Logger.section("CARGANDO CONFIGURACIÓN");
     Config config = FileParser.parseConfig(configPath);
     
     if (!config.validate()) {
-      throw new Exception("Configuración inválida");
+      throw new Exception("Configuracion invalida");
     }
     
-    Logger.log("Configuración válida: " + config);
-    
-    Logger.section("CARGANDO PROCESOS");
+  
     List<Process> processes = FileParser.parseProcesses(processPath);
     
     if (processes.isEmpty()) {
@@ -40,7 +37,7 @@ public class SimulationRunner {
     MemoryManager memoryManager = SimulationFactory.createMemoryManager(config);
     
     printSystemConfiguration(config, processes, scheduler, memoryManager);
-    Logger.section("INICIANDO SIMULACIÓN");
+    Logger.section("INICIANDO SIMULACION");
     SimulationEngine engine = new SimulationEngine(
       scheduler, memoryManager, processes, config
     );
@@ -55,20 +52,20 @@ public class SimulationRunner {
           MemoryManager memoryManager) {
       
     Logger.separator();
-    Logger.log("CONFIGURACIÓN DEL SISTEMA:");
-    Logger.log("  Algoritmo de planificación: " + scheduler.getAlgorithmName());
+    Logger.log("CONFIGURACIoN DEL SISTEMA:");
+    Logger.log("  Algoritmo de planificacion: " + scheduler.getAlgorithmName());
     Logger.log("  Algoritmo de reemplazo: " + memoryManager.getAlgorithmName());
     Logger.log("  Marcos de memoria: " + config.getTotalFrames());
     Logger.log("  Tamaño de marco: " + config.getFrameSize() + " bytes");
     Logger.log("  Quantum (RR): " + config.getQuantum() + " unidades");
-    Logger.log("  E/S habilitada: " + (config.isEnableIO() ? "Sí" : "No"));
+    Logger.log("  E/S habilitada: " + (config.isEnableIO() ? "Si" : "No"));
     Logger.log("  Unidad de tiempo: " + config.getTimeUnit() + " ms");
-    Logger.log("  Número de procesos: " + processes.size());
+    Logger.log("  Numero de procesos: " + processes.size());
     
     Logger.log("\nPROCESOS CARGADOS:");
     for (Process process : processes) {
       Logger.log(String.format(
-        "  %s: Llegada=%d, Prioridad=%d, Ráfagas=%d, Memoria=%d páginas",
+        "  %s: Llegada=%d, Prioridad=%d, Rafagas=%d, Memoria=%d paginas",
         process.getPid(),
         process.getArrivalTime(),
         process.getPriority(),

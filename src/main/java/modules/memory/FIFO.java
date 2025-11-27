@@ -6,13 +6,10 @@ import utils.Logger;
 import java.util.LinkedList;
 import java.util.Queue;
 
-/**
- * FIFO (First In First Out) - Algoritmo de reemplazo de paginas
- * Reemplaza la pagina que lleva mas tiempo en memoria.
- */
+
 public class FIFO extends MemoryManager {
 
-    // Cola que mantiene el orden de llegada de los marcos
+
     private final Queue<Integer> frameQueue;
 
     public FIFO(int totalFrames) {
@@ -47,7 +44,7 @@ public class FIFO extends MemoryManager {
 
         Logger.debug("FIFO seleccionó marco " + victimFrame + " como víctima");
 
-        // GUI: onVictimSelected(victimFrame, frames[victimFrame].getProcessId(), frames[victimFrame].getPageNumber(), "FIFO", currentTime);
+       
         return victimFrame;
     }
 
@@ -62,7 +59,7 @@ public class FIFO extends MemoryManager {
 
         Logger.debug("Marco " + frameIndex + " agregado a cola FIFO");
 
-        // GUI: onPageIn(frameIndex, pid, pageNumber, currentTime);
+        
     }
 
     @Override
@@ -72,7 +69,7 @@ public class FIFO extends MemoryManager {
         int oldPage = frames[frameIndex].getPageNumber();
         Logger.debug("FIFO reemplazara pagina " + oldPage + " del proceso " + oldPid);
 
-        // GUI: onPageOut(frameIndex, oldPid, oldPage, currentTime);
+      
 
         // Llamar al método padre para reemplazar
         super.replacePage(frameIndex, newPid, newPage);
@@ -83,7 +80,7 @@ public class FIFO extends MemoryManager {
 
         Logger.debug("Marco " + frameIndex + " reinsertado en cola FIFO");
 
-        // GUI: onPageIn(frameIndex, newPid, newPage, currentTime);
+       
     }
 
     @Override
@@ -96,47 +93,36 @@ public class FIFO extends MemoryManager {
         super.reset();
         frameQueue.clear();
         Logger.log("Cola FIFO limpiada");
-        // GUI: limpiar visualización de la cola
+       
     }
 
-    /**
-     * Devuelve el estado actual de la cola FIFO.
-     * Útil para debugging y para mostrar en GUI.
-     */
+
     public String getQueueState() {
         return "Cola FIFO: " + frameQueue.toString();
     }
 
-    /**
-     * Devuelve el tamaño actual de la cola FIFO.
-     */
+
     public int getQueueSize() {
         return frameQueue.size();
     }
 
-    /**
-     * Devuelve true si el marco esta en la cola FIFO.
-     */
+
     public boolean isInQueue(int frameIndex) {
         return frameQueue.contains(frameIndex);
     }
 
-    /**
-     * Devuelve una copia de la cola FIFO (para GUI o debugging).
-     */
+
     public Queue<Integer> getQueueSnapshot() {
         return new LinkedList<>(frameQueue);
     }
 
-    /**
-     * Imprime el estado detallado de la cola FIFO.
-     */
+
     public void printQueueState() {
         Logger.log("Estado actual de la cola FIFO:");
         for (Integer frameIndex : frameQueue) {
             Frame f = frames[frameIndex];
             Logger.log(" -> Marco " + frameIndex + ": " + f.toString());
         }
-        // GUI: aquí podrías dibujar la cola completa en pantalla
+        
     }
 }
