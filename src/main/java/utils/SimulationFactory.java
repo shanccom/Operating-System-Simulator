@@ -33,7 +33,7 @@ public class SimulationFactory {
   public static MemoryManager createMemoryManager(Config config) {
     int frames = config.getTotalFrames();
     if (frames <= 0) {
-      Logger.warning("Número de marcos inválido, usando 10 por defecto");
+      Logger.warning("Número de marcos invalido, usando 10 por defecto");
       frames = 10;
     }
     Logger.debug("Creando memory manager: " + config.getReplacementType() + 

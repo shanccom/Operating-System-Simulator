@@ -19,11 +19,11 @@ public class Main {
       FileParser.validateFile(configFile);
       FileParser.validateFile(processFile);
       
-      Logger.section("CARGANDO CONFIGURACIÓN");
+      Logger.section("CARGANDO CONFIGURACION");
       Config config = FileParser.parseConfig(configFile);
       
       if (!config.validate()) {
-        Logger.error("Configuración inválida");
+        Logger.error("Configuracion invalida");
         return;
       }
       
@@ -56,15 +56,15 @@ public class Main {
     return switch (config.getSchedulerType()) {
       case FCFS -> new FCFS();
       case SJF -> { 
-        Logger.warning("SJF no implementado aún, usando FCFS");
+        Logger.warning("SJF no implementado aun, usando FCFS");
         yield new FCFS();
       }
       case ROUND_ROBIN -> {
-        Logger.warning("Round Robin no implementado aún, usando FCFS");
+        Logger.warning("Round Robin no implementado aun, usando FCFS");
         yield new FCFS();
       }
       case PRIORITY -> {
-        Logger.warning("Priority no implementado aún, usando FCFS");
+        Logger.warning("Priority no implementado aun, usando FCFS");
         yield new FCFS();
       }
       default -> {
@@ -78,7 +78,7 @@ public class Main {
     int frames = config.getTotalFrames();
     
     if (frames <= 0) {
-      Logger.warning("Número de marcos inválido, usando 10 por defecto");
+      Logger.warning("Numero de marcos invalido, usando 10 por defecto");
       frames = 10;
     }
     
@@ -98,17 +98,17 @@ public class Main {
   private static void printConfiguration(Config config, List<Process> processes) {
     Logger.separator();
     Logger.log("CONFIGURACION DEL SISTEMA:");
-    Logger.log("  Algoritmo de planificación: " + config.getSchedulerType());
+    Logger.log("  Algoritmo de planificacion: " + config.getSchedulerType());
     Logger.log("  Algoritmo de reemplazo: " + config.getReplacementType());
     Logger.log("  Marcos de memoria: " + config.getTotalFrames());
     Logger.log("  Quantum (RR): " + config.getQuantum());
     Logger.log("  E/S habilitada: " + config.isEnableIO());
     Logger.log("  Unidad de tiempo (ms): " + config.getTimeUnit());
-    Logger.log("  Número de procesos: " + processes.size());
+    Logger.log("  Numero de procesos: " + processes.size());
     
     Logger.log("\nPROCESOS CARGADOS:");
     for (Process process : processes) {
-      Logger.log(String.format("  %s: Llegada=%d, Ráfagas=%d, Memoria=%d páginas",
+      Logger.log(String.format("  %s: Llegada=%d, Rafagas=%d, Memoria=%d paginas",
         process.getPid(),
         process.getArrivalTime(),
         process.getBursts().size(),

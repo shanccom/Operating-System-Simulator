@@ -171,3 +171,18 @@ mvn javafx:run
 Enlace mockups: https://www.canva.com/design/DAG51rAcC7Y/fr2ibHrbrLbHoTcIJMwuNg/edit?utm_content=DAG51rAcC7Y&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
 
 ```
+# Direcciones de Acceso rapido a archivos para pruebas 
+```
+->FabbPP
+C:\Users\fabia\Documents\UNSA\2025-II\Github\Operating-System-Simulator\src\main\resources\data
+```
+
+# Descripción de Procesos.txt
+PID TIEMPO_LLEGADA INSTRUCCIONES PRIORIDAD MARCOS
+EJEMPLO: P1 0 CPU(4),IO(3),CPU(5) 1 4
+
+P1 = Identificador del proceso (Process ID)
+0 = Tiempo de llegada 
+CPU(4),IO(3),CPU(5) = Unidades de proceso rafagas
+1 = prioridad util para planificador de procesos (scheduler) con el algoritmo que se desee
+4 = marcos 
