@@ -14,42 +14,26 @@ import java.util.List;
 public class SimulationRunner {
 
   public static void runSimulation(String configPath, String processPath) throws Exception {
-      
-    FileParser.validateFile(configPath);
-    FileParser.validateFile(processPath);
-    
     Config config = FileParser.parseConfig(configPath);
-    
     if (!config.validate()) {
       throw new Exception("Configuracion invalida");
     }
-    
-  
     List<Process> processes = FileParser.parseProcesses(processPath);
-    
     if (processes.isEmpty()) {
       throw new Exception("No se encontraron procesos para simular");
     }
-    
     Scheduler scheduler = SimulationFactory.createScheduler(config);
     MemoryManager memoryManager = SimulationFactory.createMemoryManager(config);
-    
     printSystemConfiguration(config, processes, scheduler, memoryManager);
-    
     System.out.println();
     SimulationEngine engine = new SimulationEngine(
       scheduler, memoryManager, processes, config
     );
     engine.run();
-    Logger.printSummary();
   }
     
-  private static void printSystemConfiguration(
-          Config config, 
-          List<Process> processes,
-          Scheduler scheduler,
-          MemoryManager memoryManager) {
-      
+  private static void printSystemConfiguration(Config config, List<Process> processes, Scheduler scheduler, MemoryManager memoryManager) {
+    System.out.println();
     Logger.log("CONFIGURACION DEL SISTEMA:");
     Logger.log("    Algoritmo de planificacion: " + scheduler.getAlgorithmName());
     Logger.log("    Algoritmo de reemplazo: " + memoryManager.getAlgorithmName());

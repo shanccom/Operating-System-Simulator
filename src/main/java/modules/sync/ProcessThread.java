@@ -23,8 +23,6 @@ public class ProcessThread extends Thread {
 
   private void waitForArrival() throws InterruptedException {
     int arrivalTime = process.getArrivalTime();
-    Logger.debug("Proceso " + process.getPid() + " esperando hasta tiempo " + arrivalTime);
-
     synchronized(process) {
         while(running && syncController.getScheduler().getCurrentTime() < arrivalTime) {
             process.wait(50);
