@@ -25,7 +25,9 @@ public class ConfigPage extends VBox {
         getStyleClass().add("page-container");
 
         labelConfig.setText("Config: " + configFile.getName());
+        labelConfig.getStyleClass().add("text-clear");
         labelProcess.setText("Procesos: " + processFile.getName());
+        labelProcess.getStyleClass().add("text-clear");
         labelStatus.setText("Listo para iniciar");
         labelStatus.getStyleClass().add("status-text");
 
@@ -103,7 +105,9 @@ public class ConfigPage extends VBox {
         schedulerCombo.getSelectionModel().select("FCFS");
         schedulerCombo.getStyleClass().add("input-control");
 
-        HBox row = new HBox(10, new Label("Scheduler:"), schedulerCombo);
+        Label sch = new Label("Scheduler:");
+        sch.getStyleClass().add("text-clear");
+        HBox row = new HBox(10, sch, schedulerCombo);
         row.setAlignment(Pos.CENTER_LEFT);
 
         box.getChildren().addAll(title, subtitle, row);
@@ -125,7 +129,9 @@ public class ConfigPage extends VBox {
         replaceCombo.getSelectionModel().select("FIFO");
         replaceCombo.getStyleClass().add("input-control");
 
-        HBox row = new HBox(10, new Label("Replacement:"), replaceCombo);
+        Label text_row = new Label("Algoritmo de Reemplazo:");
+        text_row.getStyleClass().add("text-clear");
+        HBox row = new HBox(10, text_row, replaceCombo);
         row.setAlignment(Pos.CENTER_LEFT);
 
         box.getChildren().addAll(title, subtitle, row);
