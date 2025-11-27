@@ -41,7 +41,7 @@ public class MainFX extends Application {
    
   }
   private void crearPaginas(Stage stage) {
-    pages.put("configuracion", new ConfigPage(stage));
+    pages.put("config", new ConfigPage(stage));
     pages.put("dashboard", new DashboardPage());
     pages.put("resultados", new ResultadosPage());
   }
@@ -50,7 +50,7 @@ public class MainFX extends Application {
 
     Button configBtn = crearNavButton("Configuracion", "config");
     Button dashboardBtn = crearNavButton("Dashboard", "dashboard");
-    Button resultsBtn = crearNavButton("Resultados", "results");
+    Button resultsBtn = crearNavButton("Resultados", "resultados");
 
     navbar.getChildren().addAll(
       configBtn,
