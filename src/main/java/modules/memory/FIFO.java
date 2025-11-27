@@ -7,8 +7,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * FIFO (First In First Out) - Algoritmo de reemplazo de páginas
- * Reemplaza la página que lleva más tiempo en memoria.
+ * FIFO (First In First Out) - Algoritmo de reemplazo de paginas
+ * Reemplaza la pagina que lleva mas tiempo en memoria.
  */
 public class FIFO extends MemoryManager {
 
@@ -29,7 +29,7 @@ public class FIFO extends MemoryManager {
 
     @Override
     protected int selectVictimFrame(Process requestingProcess, int requestedPage) {
-        // FIFO: seleccionar el marco que fue cargado primero (más antiguo)
+        // FIFO: seleccionar el marco que fue cargado primero (mas antiguo)
 
         if (frameQueue.isEmpty()) {
             Logger.warning("Cola FIFO vacía, seleccionando primer marco ocupado como fallback");
@@ -42,7 +42,7 @@ public class FIFO extends MemoryManager {
             return -1;
         }
 
-        // El primer elemento de la cola es el marco más antiguo
+        // El primer elemento de la cola es el marco mas antiguo
         int victimFrame = frameQueue.poll();
 
         Logger.debug("FIFO seleccionó marco " + victimFrame + " como víctima");
@@ -53,7 +53,7 @@ public class FIFO extends MemoryManager {
 
     @Override
     protected void loadPageToFrame(int frameIndex, String pid, int pageNumber) {
-        // Llamar al método padre para cargar la página
+        // Llamar al método padre para cargar la pagina
         super.loadPageToFrame(frameIndex, pid, pageNumber);
 
         // Evitar duplicados en la cola
@@ -70,14 +70,14 @@ public class FIFO extends MemoryManager {
         // Antes de reemplazar, podemos loggear la víctima
         String oldPid = frames[frameIndex].getProcessId();
         int oldPage = frames[frameIndex].getPageNumber();
-        Logger.debug("FIFO reemplazará página " + oldPage + " del proceso " + oldPid);
+        Logger.debug("FIFO reemplazara pagina " + oldPage + " del proceso " + oldPid);
 
         // GUI: onPageOut(frameIndex, oldPid, oldPage, currentTime);
 
         // Llamar al método padre para reemplazar
         super.replacePage(frameIndex, newPid, newPage);
 
-        // Reinsertar el marco en la cola (ahora es el más reciente)
+        // Reinsertar el marco en la cola (ahora es el mas reciente)
         frameQueue.remove(frameIndex);
         frameQueue.offer(frameIndex);
 
@@ -115,7 +115,7 @@ public class FIFO extends MemoryManager {
     }
 
     /**
-     * Devuelve true si el marco está en la cola FIFO.
+     * Devuelve true si el marco esta en la cola FIFO.
      */
     public boolean isInQueue(int frameIndex) {
         return frameQueue.contains(frameIndex);
