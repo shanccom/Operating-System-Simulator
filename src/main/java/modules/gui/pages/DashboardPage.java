@@ -5,7 +5,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
-
+import modules.gui.components.*;
 public class DashboardPage extends VBox {
 
     public DashboardPage() {
@@ -51,72 +51,12 @@ public class DashboardPage extends VBox {
         grid.getRowConstraints().addAll(row1, row2);
 
         //Paneles
-        VBox execPanel = buildExePanel("Panel de Ejecución");
-        grid.add(execPanel, 0, 0);
-
-        VBox queuesPanel = buildProPanel("Colas de Procesos");
-        grid.add(queuesPanel, 1, 0);
-
-        VBox memoryPanel = buildMemPanel("Panel de Memoria Virtual");
-        grid.add(memoryPanel, 0, 1);
-
-        VBox logsPanel = buildLogsPanel("Logs en Tiempo Real");
-        grid.add(logsPanel, 1, 1);
+        grid.add(new ExePanel(), 0, 0);
+        grid.add(new ProPanel(), 1, 0);
+        grid.add(new MemPanel(), 0, 1);
+        grid.add(new LogsPanel(), 1, 1);
 
         getChildren().addAll(topBar, grid);
     }
 
-    private VBox buildExePanel(String titleText) {
-        VBox card = new VBox(10);
-        card.getStyleClass().add("card");
-        card.setPadding(new Insets(16));
-        card.setAlignment(Pos.TOP_LEFT);
-
-        Label title = new Label(titleText);
-        title.getStyleClass().add("card-title");
-
-        card.getChildren().add(title);
-
-        return card;
-    }
-
-    private VBox buildLogsPanel(String titleText) {
-        VBox card = new VBox(10);
-        card.getStyleClass().add("card");
-        card.setPadding(new Insets(16));
-        card.setAlignment(Pos.TOP_LEFT);
-
-        Label title = new Label(titleText);
-        title.getStyleClass().add("card-title");
-
-        card.getChildren().add(title);
-
-        return card;
-    }
-    private VBox buildMemPanel(String titleText) {
-        VBox card = new VBox(10);
-        card.getStyleClass().add("card");
-        card.setPadding(new Insets(16));
-        card.setAlignment(Pos.TOP_LEFT);
-
-        Label title = new Label(titleText);
-        title.getStyleClass().add("card-title");
-
-        card.getChildren().add(title);
-
-        return card;
-    }
-    private VBox buildProPanel(String titleText) {
-        VBox card = new VBox(10);
-        card.getStyleClass().add("card");
-        card.setPadding(new Insets(16));
-        card.setAlignment(Pos.TOP_LEFT);
-
-        Label title = new Label(titleText);
-        title.getStyleClass().add("card-title");
-
-        card.getChildren().add(title);
-
-        return card;
-    }
 }
