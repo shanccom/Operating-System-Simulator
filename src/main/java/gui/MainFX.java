@@ -1,5 +1,4 @@
 package gui;
-
 import javafx.application.Application;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
@@ -23,7 +22,6 @@ public class MainFX extends Application {
         Button btnConfig = new Button("Seleccionar archivo de configuración");
         Button btnProcess = new Button("Seleccionar archivo de procesos");
         Button btnRun = new Button("Iniciar simulación");
-
         btnConfig.setOnAction(e -> {
             configFile = openFile(stage);
         });
@@ -44,6 +42,14 @@ public class MainFX extends Application {
                         processFile.getAbsolutePath()
                 );
                 label.setText("Simulación completada (ver consola)");
+                // 🔥 Aquí abrimos la ventana de memoria
+                Stage memoryStage = new Stage();
+                gui.MemoryVisualizer visualizer = new gui.MemoryVisualizer();
+                visualizer.start(memoryStage);
+
+
+
+
             } catch (Exception ex) {
                 label.setText("Error al ejecutar la simulación: " + ex.getMessage());
                 ex.printStackTrace();

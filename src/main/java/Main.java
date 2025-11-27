@@ -6,7 +6,7 @@ import modules.scheduler.Scheduler;
 import modules.sync.SimulationEngine;
 import utils.FileParser;
 import utils.Logger;
-
+import modules.memory.*;
 import java.util.List;
 
 public class Main {
@@ -94,10 +94,10 @@ public class Main {
     };
   }
     
-
+//Aun no se usa
   private static void printConfiguration(Config config, List<Process> processes) {
     Logger.separator();
-    Logger.log("CONFIGURACIÓN DEL SISTEMA:");
+    Logger.log("CONFIGURACION DEL SISTEMA:");
     Logger.log("  Algoritmo de planificación: " + config.getSchedulerType());
     Logger.log("  Algoritmo de reemplazo: " + config.getReplacementType());
     Logger.log("  Marcos de memoria: " + config.getTotalFrames());

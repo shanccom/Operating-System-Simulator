@@ -246,7 +246,7 @@ public abstract class MemoryManager {
   
   public abstract String getAlgorithmName();
   
-  // Imprime metricas de memoria
+
   public void printMetrics() {
       Logger.separator();
       Logger.section("[MEM] METRICAS DE MEMORIA - " + getAlgorithmName());
@@ -258,8 +258,7 @@ public abstract class MemoryManager {
           String.format("%.2f%%", (double) pageFaults / totalPageLoads * 100));
       Logger.separator();
   }
-  
-  // Resetea el gestor de memoria
+
   public synchronized void reset() {
       for (Frame frame : frames) {
           frame.unload();
