@@ -46,7 +46,7 @@
           <artifactId>javafx-maven-plugin</artifactId>
           <version>0.0.8</version>
           <configuration>
-            <mainClass>gui.MainFX</mainClass>
+            <mainClass>modules.gui.MainFX</mainClass>
           </configuration>
         </plugin>
 

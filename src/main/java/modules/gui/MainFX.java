@@ -1,12 +1,11 @@
-package gui;
+package modules.gui;
 
-import gui.pages.ConfigPage;
-import gui.pages.DashboardPage;
-import gui.pages.ResultadosPage;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+import modules.gui.pages.ConfigPage;
+import modules.gui.pages.ResultadosPage;
+import modules.gui.pages.DashboardPage;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

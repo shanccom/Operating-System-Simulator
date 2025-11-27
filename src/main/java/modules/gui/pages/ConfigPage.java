@@ -1,6 +1,6 @@
-package gui.pages;
+package modules.gui.pages;
 
-import gui.SimulationRunner;
+import modules.gui.SimulationRunner;
 import java.io.File;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

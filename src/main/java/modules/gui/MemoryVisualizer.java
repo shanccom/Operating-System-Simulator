@@ -1,4 +1,4 @@
-package gui;
+package modules.gui;
 
 import java.util.List;
 
@@ -7,7 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import modules.memory.MemoryManager;
-import modules.gui.MemoryGrid;
+import modules.gui.components.MemoryGrid;
 
 public class MemoryVisualizer extends Application {
     @Override
