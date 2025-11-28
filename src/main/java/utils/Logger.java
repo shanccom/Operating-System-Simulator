@@ -1,7 +1,7 @@
 package utils;
 
 import model.ProcessState;
-
+import modules.memory.MemoryManager.Frame;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -102,7 +102,7 @@ public class Logger {
   // Log para fallo de pagina
   public static void logPageFault(String pid, int pageNumber, int time) {
       String message = String.format(
-          "[T=%d] PAGE FAULT - Proceso %s necesita pagina %d",
+          "[T=%d] PAGE FAULT - Proceso %s necesita SU pagina %d",
           time, pid, pageNumber
       );
       log(message, LogLevel.WARNING);
@@ -198,19 +198,65 @@ public class Logger {
       );
   }
   
-  public static void printSummary() {
-      System.out.println(getSummary());
-  }
-  
-  public static void setEnableConsoleOutput(boolean enable) {
-      enableConsoleOutput = enable;
-  }
-  
-  public static void setEnableFileOutput(boolean enable) {
-      enableFileOutput = enable;
-  }
-  
-  public static void setLogFilePath(String path) {
-      logFilePath = path;
-  }
+    public static void printSummary() {
+        System.out.println(getSummary());
+    }
+    
+    public static void setEnableConsoleOutput(boolean enable) {
+        enableConsoleOutput = enable;
+    }
+    
+    public static void setEnableFileOutput(boolean enable) {
+        enableFileOutput = enable;
+    }
+    
+    public static void setLogFilePath(String path) {
+        logFilePath = path;
+    }
+    ///memoria
+    public static void memLoad(String pid, int page, int frame) {
+        log(String.format(
+            "[MEM][LOAD] Se cargó la página %d del proceso %s en el marco %d",
+            page, pid, frame
+        ), LogLevel.EVENT);
+    }
+
+    public static void memHit(String pid, int page, int frame) {
+        log(String.format(
+            "[MEM][HIT] La página %d del proceso %s ya estaba cargada (marco %d)",
+            page, pid, frame
+        ), LogLevel.DEBUG);
+    }
+
+    public static void memFault(String pid, int page) {
+        log(String.format(
+            "[MEM][PAGE FAULT] El proceso %s pidio la página %d, pero NO estaba en memoria",
+            pid, page
+        ), LogLevel.WARNING);
+    }
+
+    public static void memReplace(String oldPid, int oldPage, String newPid, int newPage, int frame, String reason) {
+        log(String.format(
+            "[MEM][REPLACE] Se reemplazp %s:P%d por %s:P%d en el marco %d | Motivo: %s",
+            oldPid, oldPage, newPid, newPage, frame, reason
+        ), LogLevel.EVENT);
+    }
+
+    public static void memSnapshot(Frame[] frames) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\nMEMORIA FISICA =====================================\n");
+        for (int i = 0; i < frames.length; i++) {
+            Frame f = frames[i];
+            if (!f.isOccupied()) {
+                sb.append(String.format("  Frame %d : [LIBRE]\n", i));
+            } else {
+                sb.append(String.format(
+                    "  Frame %d : Proceso %s | Pagina %d | R=%b | M=%b\n",
+                    i, f.getProcessId(), f.getPageNumber(), f.isReferenced(), f.isModified()
+                ));
+            }
+        }
+        sb.append("=====================================================\n");
+        log(sb.toString(), LogLevel.DEBUG);
+    }
 }

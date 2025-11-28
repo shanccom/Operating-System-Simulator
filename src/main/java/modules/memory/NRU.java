@@ -5,7 +5,7 @@ import utils.Logger;
 
 import java.util.*;
 
- //Aquí se simula con aleatoriedad para que funcione sin bits R/M reales.
+ //Funcionando con MOdified y Referenced
 
 public class NRU extends MemoryManager {
 
@@ -14,22 +14,44 @@ public class NRU extends MemoryManager {
         Logger.log("NRU MemoryManager inicializado con " + totalFrames + " marcos");
     }
 
-    @Override
+    @Override //Clases 4 
     protected int selectVictimFrame(Process requestingProcess, int requestedPage) {
-        List<Integer> candidates = new ArrayList<>();
+        List<Integer> class0 = new ArrayList<>();
+        List<Integer> class1 = new ArrayList<>();
+        List<Integer> class2 = new ArrayList<>();
+        List<Integer> class3 = new ArrayList<>();
 
         for (int i = 0; i < totalFrames; i++) {
-            if (frames[i].isOccupied()) {
-                candidates.add(i);
+            Frame f = frames[i];
+            if (f.isOccupied()) {
+                boolean R = f.isReferenced();
+                boolean M = f.isModified();
+
+                if (!R && !M) class0.add(i);
+                else if (!R && M) class1.add(i);
+                else if (R && !M) class2.add(i);
+                else class3.add(i);
             }
         }
+        
+        Random rand = new Random(); // Elegir victima de la clase más baja disponible
+        String why = "";
+        int victim = -1;
+        if (!class0.isEmpty()) {
+            victim = class0.get(rand.nextInt(class0.size()));
+            why = "no ser referenciado ni modificado ultimamente";
+        } else if (!class1.isEmpty()) {
+            victim = class1.get(rand.nextInt(class1.size()));
+            why = "solo ser modificado ultimamente";
+        } else if (!class2.isEmpty()) {
+            victim = class2.get(rand.nextInt(class2.size()));
+            why = "solo ser referenciado ultimamente";
+        } else if (!class3.isEmpty()) {
+            victim = class3.get(rand.nextInt(class3.size()));
+            why = "ultimo, por no existencias en las anteriores categorias prioritarias...es elegido";
+        }
 
-        if (candidates.isEmpty()) return -1;
-
-        int victim = candidates.get(new Random().nextInt(candidates.size()));
-        Logger.debug("NRU seleccionó marco " + victim + " como víctima");
-
-      
+        Logger.debug("NRU selecciono marco " + victim + " como victima por " + why);
         return victim;
     }
 

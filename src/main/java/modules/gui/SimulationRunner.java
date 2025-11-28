@@ -1,5 +1,7 @@
 package modules.gui;
 
+import java.util.List;
+
 import model.Config;
 import model.Process;
 import modules.memory.MemoryManager;
@@ -8,8 +10,6 @@ import modules.sync.SimulationEngine;
 import utils.FileParser;
 import utils.Logger;
 import utils.SimulationFactory;
-
-import java.util.List;
 
 public class SimulationRunner {
 
@@ -37,6 +37,8 @@ public class SimulationRunner {
     
     System.out.println();
     Logger.log("CONFIGURACION DEL SISTEMA:");
+    Logger.log("Recuerda:  Cada proceso tiene sus propias paginas y no se mezclan, solo se comparte la memoria fisica(Frames)");
+    //Una página solo necesita un frame libre donde colocarse. La tabla de páginas es la que guarda esa relación.
     Logger.log("    Algoritmo de planificacion: " + scheduler.getAlgorithmName());
     Logger.log("    Algoritmo de reemplazo: " + memoryManager.getAlgorithmName());
     Logger.log("    Marcos de memoria: " + config.getTotalFrames());
