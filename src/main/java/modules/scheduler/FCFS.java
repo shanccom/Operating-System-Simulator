@@ -16,25 +16,25 @@ public class FCFS extends Scheduler {
     @Override
     public synchronized Process selectNextProcess() {
         if (currentProcess != null && 
-            currentProcess.getState() == model.ProcessState.RUNNING &&
-            currentProcess.getCurrentBurst() != null &&
-            !currentProcess.getCurrentBurst().isCompleted()) {
-            Logger.debug("FCFS continúa con: " + currentProcess.getPid());
-            return currentProcess; 
+          currentProcess.getState() == model.ProcessState.RUNNING &&
+          currentProcess.getCurrentBurst() != null &&
+          !currentProcess.getCurrentBurst().isCompleted()) {
+          return currentProcess; 
         }
         
         
         if (currentProcess != null && 
-            (currentProcess.getState() == model.ProcessState.TERMINATED ||
-            (currentProcess.getCurrentBurst() != null && currentProcess.getCurrentBurst().isCompleted()))) {
-            currentProcess = null;
+          (currentProcess.getState() == model.ProcessState.TERMINATED ||
+          (currentProcess.getCurrentBurst() != null && currentProcess.getCurrentBurst().isCompleted()))) {
+          currentProcess = null;
         }
         
       
-        Process next = readyQueue.poll();
+        Process next = readyQueue.peek();
         if (next != null) {
-            contextSwitch(next);
-            Logger.debug("FCFS seleccionó: " + next.getPid());
+          if (next != currentProcess) {
+            Logger.log("FCFS seleccionó: " + next.getPid());
+          }
         }
         
         return next;

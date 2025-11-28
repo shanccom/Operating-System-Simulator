@@ -56,6 +56,14 @@ public abstract class Scheduler {
       notifyAll();
     }
     
+    public synchronized void confirmProcessSelection(Process process) {
+      // Solo sacar de la cola si el proceso se pudo preparar 
+      if (readyQueue.peek() == process) {
+        readyQueue.poll();
+        contextSwitch(process);
+      }
+    }
+
     /**
      * Selecciona el siguiente proceso a ejecutar
      * DEBE ser implementado por cada algoritmo
@@ -101,6 +109,10 @@ public abstract class Scheduler {
         Logger.log("Proceso " + process.getPid() + " completado en t=" + currentTime);
     }
     
+    protected void updateCurrentProcess(Process process) {
+      this.currentProcess = process;
+    }
+
     public void incrementTime() {
         currentTime++;
     }
@@ -142,6 +154,10 @@ public abstract class Scheduler {
     
     public void setCurrentTime(int time) {
         this.currentTime = time;
+    }
+    
+    public void setCurrentProcess(Process process) {
+      this.currentProcess = process;
     }
     
     public Process getCurrentProcess() {
