@@ -11,7 +11,6 @@ public class FCFS extends Scheduler {
     
     public FCFS() {
         super();
-        Logger.log("Planificador FCFS inicializado");
     }
     
     @Override

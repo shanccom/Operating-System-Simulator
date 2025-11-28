@@ -181,8 +181,7 @@ public abstract class Scheduler {
      * Imprime el reporte de metricas
      */
     public void printMetrics() {
-        Logger.separator();
-        Logger.section("METRICAS DEL PLANIFICADOR - " + getAlgorithmName());
+        Logger.log("METRICAS DEL PLANIFICADOR - " + getAlgorithmName());
         Logger.log("Procesos completados: " + completedProcesses);
         Logger.log(String.format("Tiempo promedio de espera: %.2f", getAverageWaitingTime()));
         Logger.log(String.format("Tiempo promedio de retorno: %.2f", getAverageTurnaroundTime()));
@@ -191,7 +190,6 @@ public abstract class Scheduler {
         Logger.log("Cambios de contexto: " + contextSwitches);
         Logger.log("Tiempo total de CPU: " + totalCPUTime);
         Logger.log("Tiempo inactivo: " + idleTime);
-        Logger.separator();
     }
     
     /**

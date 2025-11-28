@@ -190,7 +190,118 @@
 .text-clear{
   -fx-text-fill: #f5e9ff;
 }
+<<<<<<< HEAD
 
 .logs-panel{
   -fx-background-color: #0f0a1a;
 }
+=======
+/* ============================================
+   FIX PARA QUITAR EL MARCO BLANCO DEL SCROLLPANE
+============================================ */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* ============================================
+   ESTILO OSCURO Y MODERNO PARA COMBOBOX
+============================================ */
+.combo-box {
+    -fx-background-color: #0f0a1a;
+    -fx-border-color: rgba(255,255,255,0.14);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-text-fill: #f5e9ff;
+    -fx-padding: 8 10;
+}
+
+.combo-box:hover {
+    -fx-border-color: rgba(182,55,250,0.45);
+    -fx-effect: dropshadow(gaussian, rgba(182,55,250,0.25), 10, 0.2, 0, 3);
+}
+
+.combo-box:focused {
+    -fx-border-color: #b637fa;
+    -fx-effect: dropshadow(gaussian, rgba(182,55,250,0.45), 12, 0.3, 0, 3);
+}
+
+/* Lista desplegable */
+.combo-box-popup .list-view {
+    -fx-background-color: #1a122b;
+    -fx-text-fill: #f5e9ff;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255,255,255,0.12);
+    -fx-border-radius: 10;
+}
+
+.combo-box-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d8c9fc;
+    -fx-padding: 8;
+}
+
+.combo-box-popup .list-cell:hover {
+    -fx-background-color: rgba(182,55,250,0.25);
+    -fx-text-fill: white;
+}
+
+
+.spinner {
+    -fx-background-color: #0f0a1a;
+    -fx-border-color: rgba(255,255,255,0.14);
+    -fx-text-fill: #f5e9ff;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 5;
+}
+
+.spinner:focused {
+    -fx-border-color: #b637fa;
+    -fx-effect: dropshadow(gaussian, rgba(182,55,250,0.45), 12, 0.3, 0, 3);
+}
+
+.spinner .increment-arrow-button,
+.spinner .decrement-arrow-button {
+    -fx-background-color: rgba(182,55,250,0.15);
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 6;
+}
+
+.spinner .increment-arrow-button:hover,
+.spinner .decrement-arrow-button:hover {
+    -fx-background-color: rgba(182,55,250,0.35);
+}
+
+.spinner .increment-arrow,
+.spinner .decrement-arrow {
+    -fx-background-color: #f5e9ff;
+}
+
+.check-box .box {
+    -fx-background-color: #0f0a1a;
+    -fx-border-color: rgba(255,255,255,0.18);
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #b637fa;
+    -fx-border-color: #d27cff;
+}
+
+.check-box:hover .box {
+    -fx-border-color: #b637fa;
+}
+
+
+.spinner .text-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: #f5e9ff;
+}
+>>>>>>> 3bfaaeafb149de49ba283bb2f3ef94f3155b6797
