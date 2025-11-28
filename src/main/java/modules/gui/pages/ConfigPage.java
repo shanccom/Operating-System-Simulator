@@ -274,7 +274,7 @@ public class ConfigPage extends VBox {
         };
     }
 
-    private void runSimulation() {
+    public void runSimulation() {
         try {
             if (processFile == null || !processFile.exists()) {
                 labelStatus.setText("Error: Debe cargar un archivo de procesos.");
@@ -308,4 +308,5 @@ public class ConfigPage extends VBox {
     public Config getCurrentConfig() {
         return buildConfigFromForm();
     }
+
 }

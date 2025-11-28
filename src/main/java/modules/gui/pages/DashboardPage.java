@@ -5,7 +5,11 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
+import modules.gui.MainFX;
+import modules.gui.SimulationRunner;
+import modules.gui.pages.ConfigPage;
 import modules.gui.components.*;
+import utils.Logger;
 public class DashboardPage extends VBox {
 
     public DashboardPage() {
@@ -25,12 +29,24 @@ public class DashboardPage extends VBox {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        Button clearLogButton = new Button("Limpiar Log");
+        clearLogButton.getStyleClass().add("secondary-button");
 
+        Button runButton = new Button("Iniciar Simulación");
+        runButton.getStyleClass().add("primary-button");
 
+        ConfigPage cp = new ConfigPage(null);
+
+        runButton.setOnAction(e -> {
+
+            cp.runSimulation();
+        });
         topBar.getChildren().addAll(
                 title,
                 subtitle,
-                spacer
+                spacer,
+                runButton
         );
 
         GridPane grid = new GridPane();
