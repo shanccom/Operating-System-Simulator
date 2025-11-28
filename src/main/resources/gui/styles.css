@@ -190,3 +190,7 @@
 .text-clear{
   -fx-text-fill: #f5e9ff;
 }
+
+.logs-panel{
+  -fx-background-color: #0f0a1a;
+}

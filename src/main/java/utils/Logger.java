@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 
 public class Logger {
@@ -17,7 +18,7 @@ public class Logger {
   private static boolean enableConsoleOutput = true;
   private static boolean enableFileOutput = false;
   private static String logFilePath = "simulation.log";
-  
+  private static final List<Consumer<LogEntry>> listeners = new ArrayList<>();
 
   public static class LogEntry {
       private final LocalDateTime timestamp;
@@ -49,7 +50,16 @@ public class Logger {
           return timestamp;
       }
   }
-  
+  // Comunicacion con la interfaz
+  public static void addListener(Consumer<LogEntry> listener) {
+    listeners.add(listener);
+  }
+
+  private static void notifyListeners(LogEntry entry) {
+    for (Consumer<LogEntry> listener : listeners) {
+      listener.accept(entry);
+    }
+  }
   // Niveles de log
   public enum LogLevel {
       INFO,
@@ -75,6 +85,8 @@ public class Logger {
       if (enableFileOutput) {
           appendToFile(entry);
       }
+
+      notifyListeners(entry);
   }
   
   //Log para cambio de estado de un proceso

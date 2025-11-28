@@ -1,6 +1,6 @@
-package gui.pages;
+package modules.gui.pages;
 
-import gui.SimulationRunner;
+import modules.gui.SimulationRunner;
 import java.io.File;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -139,7 +139,7 @@ public class ConfigPage extends VBox {
     }
 
     private Button buildStartButton() {
-        Button btn = new Button("Start Simulation");
+        Button btn = new Button("Iniciar Simulacion");
         btn.getStyleClass().add("primary-button");
         btn.setOnAction(e -> runSimulation(labelStatus));
         btn.setMaxWidth(Double.MAX_VALUE);

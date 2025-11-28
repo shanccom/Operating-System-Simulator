@@ -1,4 +1,4 @@
-package modules.gui;
+package modules.gui.components;
 
 import javafx.animation.FadeTransition;
 import javafx.geometry.Pos;
