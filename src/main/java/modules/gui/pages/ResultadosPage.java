@@ -1,11 +1,14 @@
 package modules.gui.pages;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import model.ResultadoProceso;
 
@@ -70,10 +73,48 @@ public class ResultadosPage extends VBox {
         return label;
     }
 
-    private void construirVisualizaciones() {
-        VBox seccion = new VBox(10);
-        getChildren().add(seccion);
+    private VBox crearContenedorGrafica(String titulo) {
+        Label etiqueta = new Label(titulo);
+        etiqueta.getStyleClass().add("card-subtitle");
+
+        VBox contenedor = new VBox(10);
+        contenedor.getStyleClass().add("card");
+        contenedor.getChildren().add(etiqueta);
+        return contenedor;
     }
+
+    private void construirVisualizaciones() {
+        Label subtitulo = new Label("Visualizaciones");
+        subtitulo.getStyleClass().add("section-title");
+
+        HBox graficas = new HBox(14);
+        graficas.setAlignment(Pos.CENTER_LEFT);
+
+        VBox graficaCpuCard = crearContenedorGrafica("Uso de CPU");
+
+        ProgressIndicator graficaCpu = new ProgressIndicator();
+        graficaCpu.setPrefSize(120, 120);
+        graficaCpu.setStyle("-fx-progress-color: #135bec;");
+
+        Label etiquetaCpu = new Label("Ocupación");
+        etiquetaCpu.getStyleClass().add("chart-label");
+
+        Label estadoCpu = new Label("—");
+        estadoCpu.getStyleClass().add("chart-helper");
+
+        VBox datosCpu = new VBox(4, etiquetaCpu, estadoCpu);
+        datosCpu.setAlignment(Pos.CENTER);
+
+        BorderPane cpuPane = new BorderPane();
+        cpuPane.setCenter(graficaCpu);
+        cpuPane.setBottom(datosCpu);
+
+        graficaCpuCard.getChildren().add(cpuPane);
+        graficas.getChildren().add(graficaCpuCard);
+
+        getChildren().addAll(subtitulo, graficas);
+    }
+
 
     private void construirTabla() {
         TableView<ResultadoProceso> tabla = new TableView<>();
