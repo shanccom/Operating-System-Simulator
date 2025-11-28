@@ -17,7 +17,9 @@ public class DatosResultados {
     private final int tiempoCpu;
     private final int tiempoOcioso;
     private final List<ResultadoProceso> resumenProcesos;
-
+    private final String algPlanificacion;
+    private final String algMemoria;
+    private final int totalProcesos;
     public DatosResultados(
             double tiempoEsperaPromedio,
             double tiempoRetornoPromedio,
@@ -29,7 +31,10 @@ public class DatosResultados {
             int tiempoOcioso,
             int marcosTotales,
             int marcosLibres,
-            List<ResultadoProceso> resumenProcesos
+            List<ResultadoProceso> resumenProcesos,
+            String algP,
+            String algM,
+            int totalP
     ) {
         this.tiempoEsperaPromedio = tiempoEsperaPromedio;
         this.tiempoRetornoPromedio = tiempoRetornoPromedio;
@@ -43,6 +48,9 @@ public class DatosResultados {
         this.marcosTotales = marcosTotales;
         this.marcosLibres = marcosLibres;
         this.resumenProcesos = new ArrayList<>(resumenProcesos);
+        this.algMemoria = algM;
+        this.algPlanificacion = algP;
+        this.totalProcesos = totalP;
     }
 
     public double getTiempoEsperaPromedio() {

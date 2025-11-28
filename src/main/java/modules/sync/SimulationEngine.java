@@ -61,6 +61,21 @@ public class SimulationEngine {
     syncController.stop();
     showResults();
   }*/
+
+  public DatosResultados run() {
+    
+    running = true;
+    syncController.start();
+    ioManager.start();
+    startAllThreads();
+    coordinationLoop();
+    waitForAllThreads();
+    ioManager.stop();
+    syncController.stop();
+    showResults();
+    datosFinales = construirResultados();
+    return datosFinales;
+  }
   
   private DatosResultados construirResultados() {
     Map<String, Integer> reemplazos = memoryManager.getReemplazosPorProceso();
@@ -81,7 +96,10 @@ public class SimulationEngine {
         scheduler.getIdleTime(),
         memoryManager.getTotalFrames(),
         memoryManager.getFreeFrames(),
-        resumen
+        resumen,
+        scheduler.getAlgorithmName(),
+        memoryManager.getAlgorithmName(),
+        allProcesses.size()
     );
   }
   private void startAllThreads() {
