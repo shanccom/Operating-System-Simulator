@@ -1,4 +1,4 @@
-package modules.gui.components;
+package modules.gui.dashboard;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;

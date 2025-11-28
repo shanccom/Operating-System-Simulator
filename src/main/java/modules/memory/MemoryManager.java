@@ -55,6 +55,7 @@ public abstract class MemoryManager {
   protected final int totalFrames;
   protected final Frame[] frames;
   protected final Map<String, Set<Integer>> processPageMap; // PID Paginas cargadas
+  protected final Map<String, Integer> reemplazosPorProceso;
   
   protected int currentTime;
   protected int pageFaults;
@@ -69,6 +70,7 @@ public abstract class MemoryManager {
       this.totalFrames = totalFrames;
       this.frames = new Frame[totalFrames];
       this.processPageMap = new ConcurrentHashMap<>();
+      this.reemplazosPorProceso = new ConcurrentHashMap<>();
       
       for (int i = 0; i < totalFrames; i++) {
           frames[i] = new Frame();
@@ -171,9 +173,10 @@ public abstract class MemoryManager {
       // Cargar la nueva pagina
       frame.load(newPid, newPage, currentTime);
       processPageMap.computeIfAbsent(newPid, k -> new HashSet<>()).add(newPage);
-      
+
       pageReplacements++;
       totalPageLoads++;
+      reemplazosPorProceso.merge(newPid, 1, Integer::sum);
       
       Logger.logPageReplacement(victimPid, victimPage, newPid, newPage, currentTime);
   }
@@ -227,6 +230,10 @@ public abstract class MemoryManager {
   public int getPageReplacements() {
       return pageReplacements;
   }
+
+  public Map<String, Integer> getReemplazosPorProceso() {
+      return new HashMap<>(reemplazosPorProceso);
+  }
   
   public int getTotalPageLoads() {
       return totalPageLoads;
@@ -254,8 +261,12 @@ public abstract class MemoryManager {
       Logger.log("Total de reemplazos: " + pageReplacements);
       Logger.log("Total de cargas de pagina: " + totalPageLoads);
       Logger.log("Marcos libres: " + getFreeFrames() + "/" + totalFrames);
-      Logger.log("Tasa de fallos: " + 
-          String.format("%.2f%%", (double) pageFaults / totalPageLoads * 100));
+      if (totalPageLoads > 0) {
+          Logger.log("Tasa de fallos: " +
+              String.format("%.2f%%", (double) pageFaults / totalPageLoads * 100));
+      } else {
+          Logger.log("Tasa de fallos: N/A");
+      }
       Logger.separator();
   }
 
@@ -268,6 +279,7 @@ public abstract class MemoryManager {
       pageFaults = 0;
       pageReplacements = 0;
       totalPageLoads = 0;
+      reemplazosPorProceso.clear();
       Logger.log("[MEM] Memoria reseteada");
   }
 }
