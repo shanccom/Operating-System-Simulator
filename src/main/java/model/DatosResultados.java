@@ -38,4 +38,48 @@ public class DatosResultados {
         this.marcosLibres = marcosLibres;
     }
 
+    public double getTiempoEsperaPromedio() {
+        return tiempoEsperaPromedio;
+    }
+
+    public double getTiempoRetornoPromedio() {
+        return tiempoRetornoPromedio;
+    }
+
+    public double getTiempoRespuestaPromedio() {
+        return tiempoRespuestaPromedio;
+    }
+
+    public double getUsoCpu() {
+        return usoCpu;
+    }
+
+    public double getOcioCpu() {
+        return ocioCpu;
+    }
+
+    public int getFallosPagina() {
+        return fallosPagina;
+    }
+
+    public int getReemplazosPagina() {
+        return reemplazosPagina;
+    }
+
+    public int getMarcosTotales() {
+        return marcosTotales;
+    }
+
+    public int getMarcosLibres() {
+        return marcosLibres;
+    }
+
+    public int getTiempoCpu() {
+        return tiempoCpu;
+    }
+
+    public int getTiempoOcioso() {
+        return tiempoOcioso;
+    }
+
 }
