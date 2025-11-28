@@ -43,7 +43,31 @@ public class ResultadosPage extends VBox {
         GridPane grid = new GridPane();
         grid.setHgap(12);
         grid.setVgap(12);
+
+        grid.add(crearTarjeta("Tiempo de espera promedio", crearValorPrincipal()), 0, 0);
+        grid.add(crearTarjeta("Tiempo de retorno promedio", crearValorPrincipal()), 1, 0);
+        grid.add(crearTarjeta("Utilización de CPU", crearValorPrincipal()), 2, 0);
+        grid.add(crearTarjeta("Fallos de página", crearValorPrincipal()), 3, 0);
+        grid.add(crearTarjeta("Reemplazos", crearValorPrincipal()), 4, 0);
+
         getChildren().add(grid);
+    }
+
+    private VBox crearTarjeta(String titulo, Label valor) {
+        Label etiqueta = new Label(titulo);
+        etiqueta.getStyleClass().add("card-subtitle");
+
+        VBox tarjeta = new VBox(6);
+        tarjeta.getStyleClass().add("card");
+        tarjeta.getChildren().addAll(etiqueta, valor);
+
+        return tarjeta;
+    }
+
+    private Label crearValorPrincipal() {
+        Label label = new Label("—");
+        label.getStyleClass().add("metric-value");
+        return label;
     }
 
     private void construirVisualizaciones() {
