@@ -1,6 +1,7 @@
 package modules.gui.pages;
 
 import javafx.geometry.Insets;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
@@ -22,8 +23,21 @@ public class ResultadosPage extends VBox {
 
     private void construirEncabezado() {
         BorderPane barra = new BorderPane();
+        barra.setPadding(new Insets(0, 0, 8, 0));
+
+        VBox textos = new VBox(4);
+        Label titulo = new Label("Resultados de la Simulación");
+        titulo.getStyleClass().add("page-title");
+
+        Label subtitulo = new Label("Métricas");
+        subtitulo.getStyleClass().add("page-subtitle");
+
+        textos.getChildren().addAll(titulo, subtitulo);
+
+        barra.setLeft(textos);
         getChildren().add(barra);
     }
+
 
     private void construirTarjetas() {
         GridPane grid = new GridPane();
