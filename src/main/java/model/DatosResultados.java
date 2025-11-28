@@ -1,5 +1,9 @@
 package model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class DatosResultados {
     private final double tiempoEsperaPromedio;
     private final double tiempoRetornoPromedio;
@@ -12,6 +16,7 @@ public class DatosResultados {
     private final int marcosLibres;
     private final int tiempoCpu;
     private final int tiempoOcioso;
+    private final List<ResultadoProceso> resumenProcesos;
 
     public DatosResultados(
             double tiempoEsperaPromedio,
@@ -23,7 +28,8 @@ public class DatosResultados {
             int tiempoCpu,
             int tiempoOcioso,
             int marcosTotales,
-            int marcosLibres
+            int marcosLibres,
+            List<ResultadoProceso> resumenProcesos
     ) {
         this.tiempoEsperaPromedio = tiempoEsperaPromedio;
         this.tiempoRetornoPromedio = tiempoRetornoPromedio;
@@ -36,6 +42,7 @@ public class DatosResultados {
         this.tiempoOcioso = tiempoOcioso;
         this.marcosTotales = marcosTotales;
         this.marcosLibres = marcosLibres;
+        this.resumenProcesos = new ArrayList<>(resumenProcesos);
     }
 
     public double getTiempoEsperaPromedio() {
@@ -80,6 +87,10 @@ public class DatosResultados {
 
     public int getTiempoOcioso() {
         return tiempoOcioso;
+    }
+
+    public List<ResultadoProceso> getResumenProcesos() {
+        return Collections.unmodifiableList(resumenProcesos);
     }
 
 }
