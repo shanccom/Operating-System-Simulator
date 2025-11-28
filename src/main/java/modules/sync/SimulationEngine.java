@@ -81,44 +81,56 @@ public class SimulationEngine {
   
   private void coordinationLoop() { 
     while (isRunning() && !allProcessesCompleted()) {
-      notifyTimeAdvance();
-      
-      // Incrementar tiempo de espera de procesos READY
-      synchronized(engineMonitor) {
-        for (Process p : allProcesses) {
-          if (p.getState() == ProcessState.READY) {
-            p.incrementWaitingTime();
-          }
-        }
-      }
-
-      // Coordinar con el planificador para seleccionar proceso
-      coordinateScheduler();
-
-      synchronized(engineMonitor) {
-        for (ProcessThread thread : processThreads) {
-          Process p = thread.getProcess();
-          if (p.getState() == ProcessState.BLOCKED_IO) {
-            synchronized(p) {
-              p.notifyAll(); // Despertar para que verifiquen si su I/O terminó
+        // 1. SINCRONIZAR TIEMPO PRIMERO (antes de hacer nada)
+        syncController.synchronizeTime(getCurrentTime());
+        
+        notifyTimeAdvance();
+        
+        // 2. Incrementar tiempo de espera de procesos READY
+        synchronized(engineMonitor) {
+            for (Process p : allProcesses) {
+                if (p.getState() == ProcessState.READY) {
+                    p.incrementWaitingTime();
+                }
             }
-          }
         }
-      }
 
-      if (getCurrentTime() % 5 == 0) {
-        printSystemState();
-      }
-      
-      // Sincronizar tiempo global
-      syncController.synchronizeTime(getCurrentTime());
-      
-      synchronized(engineMonitor) {
-        currentTime++;
-        scheduler.setCurrentTime(currentTime);
-      }
-      
-      sleep(config.getTimeUnit());
+        // 3. Coordinar con el planificador
+        coordinateScheduler();
+
+        // 4. Notificar procesos bloqueados en I/O
+        synchronized(engineMonitor) {
+            for (ProcessThread thread : processThreads) {
+                Process p = thread.getProcess();
+                if (p.getState() == ProcessState.BLOCKED_IO) {
+                    synchronized(p) {
+                        p.notifyAll();
+                    }
+                }
+            }
+        }
+
+        synchronized(engineMonitor) {
+            for (ProcessThread thread : processThreads) {
+                Process p = thread.getProcess();
+                if (p.getState() == ProcessState.BLOCKED_MEMORY) {
+                    thread.wakeUp();
+                }
+            }
+        }
+
+        // 5. Imprimir estado del sistema cada 5 unidades
+        if (getCurrentTime() % 5 == 0) {
+            printSystemState();
+        }
+        
+        // 6. INCREMENTAR TIEMPO AL FINAL
+        synchronized(engineMonitor) {
+            currentTime++;
+            scheduler.setCurrentTime(currentTime);
+        }
+        
+        sleep(config.getTimeUnit());
     }
   }
 
@@ -132,6 +144,32 @@ public class SimulationEngine {
     
     Process currentRunning = scheduler.getCurrentProcess();
     
+    if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
+      if (!syncController.hasRequiredPages(currentRunning)) {
+        // Proceso perdió páginas durante su ejecución
+        Logger.log("[ENGINE] " + currentRunning.getPid() + " perdió páginas durante ejecución");
+        currentRunning.setState(ProcessState.READY);
+        scheduler.addProcess(currentRunning);
+        scheduler.setCurrentProcess(null);
+        currentRunning = null;
+      }
+    }
+
+    if (currentRunning != null && currentRunning.getState() == ProcessState.TERMINATED) {
+      scheduler.setCurrentProcess(null);
+      currentRunning = null;
+    }
+
+    if (currentRunning != null && currentRunning.getState() == ProcessState.BLOCKED_IO) {
+      scheduler.setCurrentProcess(null);
+      currentRunning = null;
+    }
+
+    if (currentRunning != null && currentRunning.getState() == ProcessState.BLOCKED_MEMORY) {
+      scheduler.setCurrentProcess(null);
+      currentRunning = null;
+    }
+
     // Context switch necesario
     if (currentRunning != nextProcess) {
         if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
@@ -149,23 +187,20 @@ public class SimulationEngine {
             scheduler.recordCPUTime(1);
         } else {
             scheduler.recordIdleTime(1);
+            scheduler.addProcess(nextProcess);
         }
     } 
     // El mismo proceso continúa
-    else {
-        if (nextProcess.getState() == ProcessState.RUNNING) {
-            Logger.log("FCFS continúa con: " + nextProcess.getPid());
+    else if (nextProcess != null) {
+        boolean canExecute = syncController.canProcessExecute(nextProcess);
+        
+        if (canExecute) {
             wakeUpThread(nextProcess);
             scheduler.recordCPUTime(1);
         } else {
-            boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
-            
-            if (canExecute) {
-                wakeUpThread(nextProcess);
-                scheduler.recordCPUTime(1);
-            } else {
-                scheduler.recordIdleTime(1);
-            }
+            scheduler.setCurrentProcess(null);
+            scheduler.recordIdleTime(1);
+            scheduler.addProcess(nextProcess);
         }
     }
   }
@@ -199,6 +234,7 @@ public class SimulationEngine {
   }
   
   private void printSystemState() {
+    /** 
     Logger.log("ESTADO DEL SISTEMA (t=" + getCurrentTime() + ")");
     
     List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
@@ -221,6 +257,7 @@ public class SimulationEngine {
     }
     
     Logger.log("MEMORIA: " + memoryManager.getFreeFrames() + "/" + memoryManager.getTotalFrames() + " marcos libres");
+    */
   }
   
   private void showResults() {

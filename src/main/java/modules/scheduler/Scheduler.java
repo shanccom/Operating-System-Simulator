@@ -182,6 +182,10 @@ public abstract class Scheduler {
     public synchronized boolean hasReadyProcesses() {
         return !readyQueue.isEmpty();
     }
+
+    public void forceContextSwitch() {
+      currentProcess = null;
+    }
     
     /**
      * Imprime el reporte de metricas

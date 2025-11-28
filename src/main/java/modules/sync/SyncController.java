@@ -48,12 +48,13 @@ public class SyncController {
       
       // SOLO CUANDO LAS PÁGINAS ESTÉN CARGADAS cambiar estado
       synchronized(coordinationMonitor) {
-          if (process.getState() == ProcessState.READY) {
-              process.markFirstExecution(scheduler.getCurrentTime());
-              
-              transitionState(process, ProcessState.RUNNING);
-              return true;
+        if (process.getState() == ProcessState.READY) {
+          if (process.getResponseTime() == -1) {
+              process.markFirstExecution(t);
           }
+          transitionState(process, ProcessState.RUNNING);
+          return true;
+        }
       }
       
       return false; 
@@ -62,11 +63,6 @@ public class SyncController {
   private boolean checkAndLoadPages(Process process, int requiredPages) {
     int alreadyLoadedCount = 0;
     
-    for (int page = 0; page < requiredPages; page++) {
-        boolean loaded = memoryManager.isPageLoaded(process.getPid(), page);
-        if (loaded) alreadyLoadedCount++;
-    }
-
     // Contar páginas ya cargadas
     for (int page = 0; page < requiredPages; page++) {
         if (memoryManager.isPageLoaded(process.getPid(), page)) {
@@ -107,6 +103,7 @@ public class SyncController {
       if (process.getState() != ProcessState.TERMINATED) {
         transitionState(process, ProcessState.BLOCKED_MEMORY);
         Logger.log("[SYNC] Proceso " + process.getPid() + " bloqueado por memoria");
+        scheduler.forceContextSwitch();
       }
       
     }
@@ -194,6 +191,41 @@ public class SyncController {
       
       // Despertar threads que pueden estar esperando recursos
       coordinationMonitor.notifyAll();
+    }
+  }
+
+  public boolean hasRequiredPages(Process process) {
+    synchronized(memoryMonitor) {
+        int requiredPages = process.getRequiredPages();
+        boolean allPagesLoaded = true;
+        
+        for (int page = 0; page < requiredPages; page++) {
+            if (!memoryManager.isPageLoaded(process.getPid(), page)) {
+                // INTENTAR CARGAR LA PÁGINA
+                boolean loaded = memoryManager.loadPage(process, page);
+                if (!loaded) {
+                    allPagesLoaded = false;
+                }
+            }
+        }
+        
+        // SI EL PROCESO ESTABA BLOQUEADO Y AHORA TIENE PÁGINAS, REACTIVARLO
+        if (allPagesLoaded && process.getState() == ProcessState.BLOCKED_MEMORY) {
+            notifyProcessReady(process, "páginas cargadas");
+        }
+        
+        return allPagesLoaded;
+    }
+  }
+
+  public boolean canProcessExecute(Process process) {
+    synchronized(coordinationMonitor) {
+      // Verificar que el proceso esté listo y tenga sus páginas
+      if (process.getState() != ProcessState.READY && 
+        process.getState() != ProcessState.RUNNING) {
+        return false;
+      }
+      return hasRequiredPages(process);
     }
   }
   

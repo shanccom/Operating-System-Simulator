@@ -83,6 +83,16 @@ public class ProcessThread extends Thread {
       synchronized(threadMonitor) {
         if (currentBurst.isCompleted()) {
           process.advanceBurst();
+          Burst nextBurst = process.getCurrentBurst();
+          if (nextBurst != null && nextBurst.isIO()) {
+            // Si la siguiente es I/O, no necesitamos volver a READY
+            // El executeIOBurst ya se encargará
+          } else if (nextBurst != null && nextBurst.isCPU()) {
+            // Si la siguiente es CPU, volver a READY y notificar
+            if (process.getState() != ProcessState.RUNNING) {
+              syncController.notifyProcessReady(process, "siguiente ráfaga CPU");
+            }
+          }
         }
       }
     }
@@ -99,22 +109,24 @@ public class ProcessThread extends Thread {
   }
 
   private void executeCPUBurst(Burst burst) throws InterruptedException {
-
-    if (process.getResponseTime() == -1) {
-        process.markFirstExecution(syncController.getScheduler().getCurrentTime());
-    }
-
     while (!burst.isCompleted() && process.getState() == ProcessState.RUNNING) {
-      synchronized(threadMonitor) {
-        // Esperar señal del motor
-        threadMonitor.wait();
-      }
-
-      if (process.getState() == ProcessState.RUNNING && !burst.isCompleted()) {
-        burst.execute(1); // Ejecutar 1 unidad
-        int currentTime = syncController.getScheduler().getCurrentTime();
-        Logger.log("[T=" + currentTime + "] [THREAD-" + process.getPid() + "] CPU avanzó 1 unidad (restante: " + burst.getRemainingTime() + ")");
-      }
+        if (!syncController.hasRequiredPages(process)) {
+            Logger.log("[THREAD-" + process.getPid() + "] Falta memoria, liberando CPU");
+            syncController.notifyProcessReady(process, "falta de páginas");
+            return;
+        }
+        
+        if (process.getState() == ProcessState.RUNNING && !burst.isCompleted()) {
+            burst.execute(1);
+            int currentTime = syncController.getScheduler().getCurrentTime();
+            Logger.log("[T=" + currentTime + "] [THREAD-" + process.getPid() + "] CPU avanzó 1 unidad (restante: " + burst.getRemainingTime() + ")");
+        }
+        
+        if (!burst.isCompleted() && process.getState() == ProcessState.RUNNING) {
+            synchronized(threadMonitor) {
+                threadMonitor.wait();
+            }
+        }
     }
 
     if (burst.isCompleted()) {
@@ -122,13 +134,14 @@ public class ProcessThread extends Thread {
     }
   }
 
+
   private void executeIOBurst(Burst burst) throws InterruptedException {
     Logger.log("[THREAD-" + process.getPid() + "] Iniciando I/O (" + burst.getDuration() + " unidades)");
     
     synchronized(threadMonitor) {
       process.setState(ProcessState.BLOCKED_IO);
     }
-    
+    syncController.getScheduler().setCurrentProcess(null);
     ioManager.requestIO(process, burst);
     
   }

@@ -81,7 +81,6 @@ public abstract class MemoryManager {
   
   // Intenta cargar una pagina en memoria
   public synchronized boolean loadPage(Process process, int pageNumber) {
-      currentTime++;
       
       String pid = process.getPid();
       
