@@ -114,28 +114,50 @@ public class ResultadosPage extends VBox {
         Label titulo = new Label("Métricas por proceso");
         titulo.getStyleClass().add("section-title");
 
-        TableColumn<ResultadoProceso, String> pidCol = new TableColumn<>("Proceso");
+        Label labelProceso = new Label("Proceso");
+        Label labelEspera = new Label("Espera (ms)");
+        Label labelRetorno = new Label("Retorno (ms)");
+        Label labelRespuesta = new Label("Respuesta (ms)");
+        Label labelFallos = new Label("Fallos página");
+        Label labelReemplazos = new Label("Reemplazos");
+
+        labelProceso.getStyleClass().add("text-clear");
+        labelEspera.getStyleClass().add("text-clear");
+        labelRetorno.getStyleClass().add("text-clear");
+        labelRespuesta.getStyleClass().add("text-clear");
+        labelFallos.getStyleClass().add("text-clear");
+        labelReemplazos.getStyleClass().add("text-clear");
+
+        // Usar los Label como cabeceras de las columnas mediante setGraphic(...)
+        TableColumn<ResultadoProceso, String> pidCol = new TableColumn<>();
+        pidCol.setGraphic(labelProceso);
         pidCol.setCellValueFactory(new PropertyValueFactory<>("pid"));
 
-        TableColumn<ResultadoProceso, Integer> esperaCol = new TableColumn<>("Espera (ms)");
+        TableColumn<ResultadoProceso, Integer> esperaCol = new TableColumn<>();
+        esperaCol.setGraphic(labelEspera);
         esperaCol.setCellValueFactory(new PropertyValueFactory<>("tiempoEspera"));
 
-        TableColumn<ResultadoProceso, Integer> retornoCol = new TableColumn<>("Retorno (ms)");
+        TableColumn<ResultadoProceso, Integer> retornoCol = new TableColumn<>();
+        retornoCol.setGraphic(labelRetorno);
         retornoCol.setCellValueFactory(new PropertyValueFactory<>("tiempoRetorno"));
 
-        TableColumn<ResultadoProceso, Integer> respuestaCol = new TableColumn<>("Respuesta (ms)");
+        TableColumn<ResultadoProceso, Integer> respuestaCol = new TableColumn<>();
+        respuestaCol.setGraphic(labelRespuesta);
         respuestaCol.setCellValueFactory(new PropertyValueFactory<>("tiempoRespuesta"));
 
-        TableColumn<ResultadoProceso, Integer> fallosCol = new TableColumn<>("Fallos página");
+        TableColumn<ResultadoProceso, Integer> fallosCol = new TableColumn<>();
+        fallosCol.setGraphic(labelFallos);
         fallosCol.setCellValueFactory(new PropertyValueFactory<>("fallosPagina"));
 
-        TableColumn<ResultadoProceso, Integer> reemplazosCol = new TableColumn<>("Reemplazos");
+        TableColumn<ResultadoProceso, Integer> reemplazosCol = new TableColumn<>();
+        reemplazosCol.setGraphic(labelReemplazos);
         reemplazosCol.setCellValueFactory(new PropertyValueFactory<>("reemplazos"));
 
         tablaProcesos.getColumns().addAll(pidCol, esperaCol, retornoCol, respuestaCol, fallosCol, reemplazosCol);
         tablaProcesos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         tablaProcesos.setPrefHeight(260);
         tablaProcesos.getStyleClass().add("result-table");
+        tablaProcesos.setStyle("-fx-background-color: #0f0a1a;");
 
         VBox.setVgrow(tablaProcesos, Priority.ALWAYS);
         getChildren().addAll(titulo, tablaProcesos);
