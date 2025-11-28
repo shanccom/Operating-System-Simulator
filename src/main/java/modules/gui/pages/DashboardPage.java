@@ -11,7 +11,6 @@ import modules.gui.dashboard.*;
 
 public class DashboardPage extends VBox {
 
-    // ✅ HACER LOS PANELES ATRIBUTOS DE LA CLASE
     private ExePanel exePanel;
     private ProPanel proPanel;
     private MemPanel memPanel;
@@ -41,13 +40,10 @@ public class DashboardPage extends VBox {
         statusLabel = new Label("Configure los parámetros antes de iniciar");
         statusLabel.setStyle("-fx-text-fill: #888; -fx-font-size: 12px;");
         
-        // ✅ Botón de iniciar simulación
+        // Botón de iniciar simulación
         runButton = new Button("Iniciar Simulación");
         runButton.getStyleClass().add("primary-button");
         runButton.setOnAction(e -> iniciarSimulacion());
-
-
-        
         topBar.getChildren().addAll(
                 title,
                 subtitle,
@@ -72,7 +68,6 @@ public class DashboardPage extends VBox {
         row2.setPercentHeight(50);
         grid.getRowConstraints().addAll(row1, row2);
 
-        // ✅ INSTANCIAR PANELES COMO ATRIBUTOS
         exePanel = new ExePanel();
         proPanel = new ProPanel();
         memPanel = new MemPanel();
@@ -86,23 +81,23 @@ public class DashboardPage extends VBox {
         getChildren().addAll(topBar, grid);
     }
 
-    // ✅ MÉTODO para conectar con ConfigPage (llamado desde MainFX)
+    // para conectar con ConfigPage (llamado desde MainFX)
     public void setConfigPage(ConfigPage configPage) {
         this.configPage = configPage;
         System.out.println("[DashboardPage] ✅ ConfigPage conectado: " + configPage);
     }
 
-    // ✅ MÉTODO para iniciar la simulación
+    //MÉTODO para iniciar la simulación
     private void iniciarSimulacion() {
         if (configPage == null) {
-            statusLabel.setText("⚠️ Error: ConfigPage no conectado");
+            statusLabel.setText("Error: ConfigPage no conectado");
             statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12px;");
-            System.out.println("[DashboardPage] ❌ ConfigPage es null");
+            System.out.println("[DashboardPage] ConfigPage es null");
             return;
         }
         
-        System.out.println("[DashboardPage] 🚀 Iniciando simulación...");
-        statusLabel.setText("🚀 Simulación en curso...");
+        System.out.println("[DashboardPage] Iniciando simulación...");
+        statusLabel.setText("Simulación en curso...");
         statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 12px;");
         
         runButton.setDisable(true);
@@ -116,14 +111,14 @@ public class DashboardPage extends VBox {
                 Thread.sleep(2000);
                 javafx.application.Platform.runLater(() -> {
                     runButton.setDisable(false);
-                    statusLabel.setText("✅ Simulación iniciada correctamente");
+                    statusLabel.setText("Simulación iniciada correctamente");
                 });
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }).start();
     }
-    
+
 
     // ✅ GETTERS PARA LOS PANELES
     public ProPanel getProPanel() {
