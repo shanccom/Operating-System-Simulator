@@ -190,15 +190,9 @@
 .text-clear{
   -fx-text-fill: #f5e9ff;
 }
-<<<<<<< HEAD
-
 .logs-panel{
   -fx-background-color: #0f0a1a;
 }
-=======
-/* ============================================
-   FIX PARA QUITAR EL MARCO BLANCO DEL SCROLLPANE
-============================================ */
 .scroll-pane {
     -fx-background-color: transparent;
     -fx-padding: 0;
@@ -208,9 +202,6 @@
     -fx-background-color: transparent;
 }
 
-/* ============================================
-   ESTILO OSCURO Y MODERNO PARA COMBOBOX
-============================================ */
 .combo-box {
     -fx-background-color: #0f0a1a;
     -fx-border-color: rgba(255,255,255,0.14);
@@ -230,7 +221,6 @@
     -fx-effect: dropshadow(gaussian, rgba(182,55,250,0.45), 12, 0.3, 0, 3);
 }
 
-/* Lista desplegable */
 .combo-box-popup .list-view {
     -fx-background-color: #1a122b;
     -fx-text-fill: #f5e9ff;
@@ -304,4 +294,3 @@
     -fx-background-color: transparent;
     -fx-text-fill: #f5e9ff;
 }
->>>>>>> 3bfaaeafb149de49ba283bb2f3ef94f3155b6797
