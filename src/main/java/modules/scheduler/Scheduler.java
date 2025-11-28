@@ -151,6 +151,17 @@ public abstract class Scheduler {
     public int getCurrentTime() {
         return currentTime;
     }
+    public int getTotalCPUTime() {
+        return totalCPUTime;
+    }
+
+    public int getIdleTime() {
+        return idleTime;
+    }
+
+    public int getCompletedProcesses() {
+        return completedProcesses;
+    }
     
     public void setCurrentTime(int time) {
         this.currentTime = time;
