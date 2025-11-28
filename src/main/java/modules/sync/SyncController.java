@@ -7,292 +7,283 @@ import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
 import utils.Logger;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 public class SyncController {
   
   private final Scheduler scheduler;
   private final MemoryManager memoryManager;
-  
-  private final Lock schedulerLock;
-  private final Lock memoryLock;
-  private final Lock globalLock;
-  
-  private final Condition memoryAvailable;
-  private final Condition processReady;
-  
+  private final Object schedulerMonitor = new Object();
+  private final Object memoryMonitor = new Object();
+  private final Object coordinationMonitor = new Object();
   private volatile boolean running;
-  private volatile boolean paused;
   
   public SyncController(Scheduler scheduler, MemoryManager memoryManager) {
     this.scheduler = scheduler;
     this.memoryManager = memoryManager;
-    
-    this.schedulerLock = new ReentrantLock();
-    this.memoryLock = new ReentrantLock();
-    this.globalLock = new ReentrantLock();
-    
-    this.memoryAvailable = globalLock.newCondition();
-    this.processReady = globalLock.newCondition();
-    
     this.running = false;
-    this.paused = false;
   }
   
+  // Coordina con scheduler y memoria
   public boolean prepareProcessForExecution(Process process) {
-    globalLock.lock();
-    try {
-      Logger.log("[SYNC] Adquiriendo lock global para proceso " + process.getPid());
-      Logger.debug("Preparando proceso " + process.getPid() + " para ejecucion");
+    Logger.log("[SYNC] Preparando proceso " + process.getPid());
+    
+    // Verificar estado con coordinationMonitor
+    synchronized(coordinationMonitor) {
+      Logger.log("[SYNC] >>> Monitor de COORDINACIÓN adquirido por " + process.getPid());
       
       if (process.getState() != ProcessState.READY) {
-        Logger.warning("Proceso " + process.getPid() + " no esta en estado READY");
+        Logger.log("[SYNC] Proceso no está READY");
+        Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
         return false;
       }
       
       Burst currentBurst = process.getCurrentBurst();
-      if (currentBurst == null) {
-        Logger.warning("Proceso " + process.getPid() + " no tiene ráfaga actual");
+      if (currentBurst == null || !currentBurst.isCPU()) {
+        Logger.log("[SYNC] Sin ráfaga CPU válida");
+        Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
         return false;
       }
-
-      boolean pagesLoaded = loadRequiredPages(process);
+      
+      Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
+    }
+    
+    // Cargar páginas con memoryMonitor
+    synchronized(memoryMonitor) {
+      Logger.log("[SYNC] >>> Monitor de MEMORIA adquirido por " + process.getPid());
+      
+      Burst currentBurst = process.getCurrentBurst();
+      int requiredPages = calculatePagesForBurst(process, currentBurst);
+      
+      boolean pagesLoaded = checkAndLoadPages(process, requiredPages);
+      
+      Logger.log("[SYNC] <<< Monitor de MEMORIA liberado por " + process.getPid());
       
       if (!pagesLoaded) {
-        process.setState(ProcessState.BLOCKED_MEMORY);
-        Logger.log("[SYNC] Proceso " + process.getPid() + " bloqueado esperando memoria");
+        // Bloquear proceso por falta de memoria
+        blockProcessForMemory(process);
         return false;
       }
+    }
+    
+    // Cambiar estado a RUNNING
+    synchronized(coordinationMonitor) {
+      Logger.log("[SYNC] >>> Monitor de COORDINACIÓN adquirido por " + process.getPid());
       
-      process.setState(ProcessState.RUNNING);
-      return true;
-        
-    } finally {
-      Logger.debug("[SYNC] Liberando lock global");
-      globalLock.unlock();
+      if (process.getState() == ProcessState.READY) {
+        transitionState(process, ProcessState.RUNNING);
+        Logger.log("[SYNC] Proceso " + process.getPid() + " ahora RUNNING");
+        Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
+        return true;
+      }
+      
+      Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
+      return false;
     }
   }
   
-  private int calculatePagesForBurst(Process process, Burst burst) {
-    int totalPages = process.getRequiredPages();
+  private boolean checkAndLoadPages(Process process, int requiredPages) {
+    int alreadyLoadedCount = 0;
     
+    // Contar páginas ya cargadas
+    for (int page = 0; page < requiredPages; page++) {
+        if (memoryManager.isPageLoaded(process.getPid(), page)) {
+            alreadyLoadedCount++;
+        }
+    }
+    
+    // Si todas están cargadas, retornar éxito
+    if (alreadyLoadedCount >= requiredPages) {
+        Logger.log("[SYNC] Todas las páginas ya cargadas (" + alreadyLoadedCount + "/" + requiredPages + ")");
+        return true;
+    }
+    
+    // Cargar las páginas faltantes
+    int pagesToLoad = requiredPages - alreadyLoadedCount;
+    Logger.log("[SYNC] Cargando " + pagesToLoad + " páginas nuevas para " + process.getPid());
+    
+    int newlyLoadedCount = 0;
+    
+    for (int page = 0; page < requiredPages; page++) {
+        // Solo cargar las que NO están ya en memoria
+        if (!memoryManager.isPageLoaded(process.getPid(), page)) {
+            boolean loaded = memoryManager.loadPage(process, page);
+            
+            if (!loaded) {
+                Logger.log("[SYNC] No hay marcos disponibles");
+                return false;
+            }
+            
+            newlyLoadedCount++;
+            // Mostrar progreso de las páginas NUEVAS, no del total
+            Logger.log("[SYNC] Página " + page + " cargada (" + newlyLoadedCount + "/" + pagesToLoad + ")");
+        }
+    }
+    
+    return (alreadyLoadedCount + newlyLoadedCount) >= requiredPages;
+}
+  
+  // Bloquea proceso por falta de memoria
+  private void blockProcessForMemory(Process process) {
+    synchronized(coordinationMonitor) {
+      Logger.log("[SYNC] >>> Monitor de COORDINACIÓN adquirido para bloquear");
+      
+      if (process.getState() != ProcessState.TERMINATED) {
+        transitionState(process, ProcessState.BLOCKED_MEMORY);
+        Logger.log("[SYNC] Proceso " + process.getPid() + " bloqueado por memoria");
+      }
+      
+      Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
+    }
+  }
+  
+  //Calcula páginas necesarias para la ráfaga
+  private int calculatePagesForBurst(Process process, Burst burst) {
+    /** 
+    int totalPages = process.getRequiredPages();
     int basePages = Math.max(1, (int) Math.ceil(totalPages * 0.4));
     
     if (burst.isCPU()) {
-        return Math.min(basePages, totalPages);
+      return Math.min(basePages, totalPages);
     } else {
-        return Math.min(basePages + 1, totalPages);
+      return Math.min(basePages + 1, totalPages);
     }
+    */
+    return process.getRequiredPages();
   }
-
-
-  private boolean loadRequiredPages(Process process) {
-    memoryLock.lock();
-    try {
-      Logger.debug("[SYNC] Adquiriendo lock de memoria para " + process.getPid());
-      
-      Burst currentBurst = process.getCurrentBurst();
-      if (currentBurst == null){
-        return false;
-      }
-
-      int requiredForBurst = calculatePagesForBurst(process, currentBurst);
-      Logger.debug("Proceso " + process.getPid() + " necesita " + requiredForBurst + " paginas para la rafaga actual");
-
-      int loadedCount = 0;
-      for (int page = 0; page < requiredForBurst; page++) {
-        if(!memoryManager.isPageLoaded(process.getPid(), page)) {
-          Logger.debug("[SYNC] Esperando cargar página " + page + " con lock activo");
-          boolean loaded = memoryManager.loadPage(process, page);
-
-          if (loaded) {
-            loadedCount++;
-            Logger.debug("[SYNC] Página " + page + " cargada exitosamente");
-          } else {
-            Logger.warning("No se pudo cargar pagina " + page + " del proceso " + process.getPid());
-                    return false; // Fallo critico
-          }
-        } else {
-          loadedCount++;
-        }
-      }
-
-      if (loadedCount >= requiredForBurst) {
-        Logger.debug("Proceso " + process.getPid() + " tiene todas las paginas necesarias cargadas");
-        return true;
-      }
-        return false;
-    } finally {
-      memoryLock.unlock();
+  
+  private void transitionState(Process process, ProcessState newState) {
+    ProcessState oldState = process.getState();
+    if (oldState != newState) {
+      Logger.logStateChange(process.getPid(), oldState, newState, scheduler.getCurrentTime());
+      process.setState(newState);
     }
   }
   
-  public void notifyProcessBlocked(Process process, ProcessState blockReason) {
-    globalLock.lock();
-    Logger.debug("[SYNC] ✓ Lock global adquirido para notificar " + process.getPid());
-    try {
-
+  // Notifica que un proceso está listo
+  public void notifyProcessReady(Process process, String reason) {
+    synchronized(coordinationMonitor) {
+      Logger.log("[SYNC] >>> Monitor de COORDINACIÓN adquirido");
+      Logger.log("[SYNC] Proceso " + process.getPid() + " listo (" + reason + ")");
+      
       if (process.getState() == ProcessState.TERMINATED) {
-        Logger.warning("Ignorando notificación para proceso terminado: " + process.getPid());
+        Logger.log("[SYNC] Proceso ya terminado");
+        Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
         return;
       }
       
-      ProcessState previousState = process.getState();
-
-      if (previousState != ProcessState.READY) {
-        Logger.logStateChange(process.getPid(), previousState, ProcessState.READY, scheduler.getCurrentTime());
-        process.setState(ProcessState.READY);
-      }
-
-      Logger.log("Agregando proceso " + process.getPid() + " a la cola del scheduler");
-      scheduler.addProcess(process);
-      Logger.debug("[SYNC] Señalando condición processReady"); 
-      processReady.signalAll(); 
-    } finally {
-      Logger.debug("[SYNC] Liberando lock global");
-      globalLock.unlock();
-    }
-  }
-  
-  public void notifyProcessReady(Process process) {
-    globalLock.lock();
-
-    try {
-      ProcessState previousState = process.getState();
-
-      if (previousState != ProcessState.READY) {
-        Logger.logStateChange(process.getPid(), previousState, ProcessState.READY, scheduler.getCurrentTime());
-        process.setState(ProcessState.READY);
-      }
-
-      Logger.log("Agregando proceso " + process.getPid() + " a la cola del scheduler");
-      scheduler.addProcess(process);
-      processReady.signalAll();
+      transitionState(process, ProcessState.READY);
       
-    } finally {
-      globalLock.unlock();
+      // Agregar a cola del scheduler
+      synchronized(schedulerMonitor) {
+        Logger.log("[SYNC] >>> Monitor de SCHEDULER adquirido");
+        scheduler.addProcess(process);
+        Logger.log("[SYNC] Proceso agregado a cola de listos");
+        Logger.log("[SYNC] <<< Monitor de SCHEDULER liberado");
+      }
+      
+      // Despertar threads esperando
+      coordinationMonitor.notifyAll();
+      Logger.log("[SYNC] notifyAll() ejecutado en coordinationMonitor");
+      Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
     }
   }
   
+  // Espera a que haya procesos listos
   public void waitForReadyProcess() throws InterruptedException {
-    globalLock.lock();
-    try {
-      while (running && !scheduler.hasReadyProcesses()) {
-          processReady.await();
+    synchronized(coordinationMonitor) {
+      Logger.log("[SYNC] >>> Monitor de COORDINACIÓN adquirido para esperar");
+      
+      while (running && !hasReadyProcesses()) {
+        Logger.log("[SYNC] No hay procesos listos, esperando en coordinationMonitor.wait()...");
+        coordinationMonitor.wait(); // Libera el monitor y espera
+        Logger.log("[SYNC] Despertado de coordinationMonitor.wait()");
       }
-    } finally {
-      globalLock.unlock();
+      
+      Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
     }
   }
   
-  public void waitForMemoryAvailable() throws InterruptedException {
-    globalLock.lock();
-    try {
-      while (running && memoryManager.getFreeFrames() == 0) {
-          memoryAvailable.await();
-      }
-    } finally {
-      globalLock.unlock();
+  //  Verifica si hay procesos listos
+  
+  private boolean hasReadyProcesses() {
+    synchronized(schedulerMonitor) {
+      return scheduler.hasReadyProcesses();
     }
   }
   
-  public void notifyMemoryAvailable() {
-    globalLock.lock();
-    try {
-      memoryAvailable.signalAll();
-    } finally {
-      globalLock.unlock();
-    }
-  }
-  
-  public void synchronizeTime(int time) {
-    globalLock.lock();
-    try {
-      scheduler.setCurrentTime(time);
-      memoryManager.setCurrentTime(time);
-    } finally {
-      globalLock.unlock();
-    }
-  }
-  
+  // Libera recursos de un proceso terminado
   public void releaseProcessResources(Process process) {
-    globalLock.lock();
-    try {
-      memoryLock.lock();
-      try {
+    Logger.log("[SYNC] Liberando recursos de proceso " + process.getPid());
+    
+    synchronized(coordinationMonitor) {
+      Logger.log("[SYNC] >>> Monitor de COORDINACIÓN adquirido");
+      
+      // Cambiar estado
+      transitionState(process, ProcessState.TERMINATED);
+      
+      // Liberar memoria
+      synchronized(memoryMonitor) {
+        Logger.log("[SYNC] >>> Monitor de MEMORIA adquirido");
         memoryManager.freeProcessPages(process.getPid());
-        memoryAvailable.signalAll();
-      } finally {
-        memoryLock.unlock();
+        Logger.log("[SYNC] Páginas liberadas");
+        Logger.log("[SYNC] <<< Monitor de MEMORIA liberado");
       }
       
-      process.setState(ProcessState.TERMINATED);
-      scheduler.onProcessComplete(process);
+      // Notificar al scheduler
+      synchronized(schedulerMonitor) {
+        Logger.log("[SYNC] >>> Monitor de SCHEDULER adquirido");
+        scheduler.onProcessComplete(process);
+        Logger.log("[SYNC] <<< Monitor de SCHEDULER liberado");
+      }
       
-      Logger.log("Recursos del proceso " + process.getPid() + " liberados");
-      
-    } finally {
-      globalLock.unlock();
+      // Despertar threads que pueden estar esperando recursos
+      coordinationMonitor.notifyAll();
+      Logger.log("[SYNC] notifyAll() ejecutado - recursos liberados");
+      Logger.log("[SYNC] <<< Monitor de COORDINACIÓN liberado");
     }
   }
   
-  public void start() {
-    globalLock.lock();
-    try {
-      running = true;
-    } finally {
-      globalLock.unlock();
+  public synchronized void synchronizeTime(int time) {
+    synchronized(schedulerMonitor) {
+      scheduler.setCurrentTime(time);
+    }
+    
+    synchronized(memoryMonitor) {
+      memoryManager.setCurrentTime(time);
     }
   }
   
-  public void stop() {
-    globalLock.lock();
-    try {
-      running = false;
-      processReady.signalAll();
-      memoryAvailable.signalAll();
-      Logger.log("SyncController detenido");
-    } finally {
-      globalLock.unlock();
+  public synchronized void start() {
+    running = true;
+  }
+  
+  public synchronized void stop() {
+    running = false;
+    synchronized(coordinationMonitor) {
+      coordinationMonitor.notifyAll();
     }
   }
   
-  public void pause() {
-    globalLock.lock();
-    try {
-      paused = true;
-      Logger.log("Simulacion pausada");
-    } finally {
-      globalLock.unlock();
-    }
-  }
-  
-  public void resume() {
-    globalLock.lock();
-    try {
-      paused = false;
-      processReady.signalAll();
-      Logger.log("Simulacion reanudada");
-    } finally {
-      globalLock.unlock();
-    }
-  }
-  
-  public boolean isRunning() {
+  public synchronized boolean isRunning() {
     return running;
   }
-  
-  public boolean isPaused() {
-    return paused;
-  }
-  
+
   public Scheduler getScheduler() {
     return scheduler;
   }
   
   public MemoryManager getMemoryManager() {
     return memoryManager;
+  }
+  
+  public Object getSchedulerMonitor() {
+    return schedulerMonitor;
+  }
+  
+  public Object getMemoryMonitor() {
+    return memoryMonitor;
+  }
+  
+  public Object getCoordinationMonitor() {
+    return coordinationMonitor;
   }
 }

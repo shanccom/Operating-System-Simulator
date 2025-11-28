@@ -245,6 +245,7 @@ public abstract class MemoryManager {
   
 
   public void printMetrics() {
+      System.out.println();
       Logger.log("[MEM] METRICAS DE MEMORIA - " + getAlgorithmName());
       Logger.log("Total de fallos de pagina: " + pageFaults);
       Logger.log("Total de reemplazos: " + pageReplacements);
@@ -252,6 +253,7 @@ public abstract class MemoryManager {
       Logger.log("Marcos libres: " + getFreeFrames() + "/" + totalFrames);
       Logger.log("Tasa de fallos: " + 
           String.format("%.2f%%", (double) pageFaults / totalPageLoads * 100));
+      System.out.println();
   }
 
   public synchronized void reset() {

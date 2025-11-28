@@ -21,15 +21,11 @@ public class IOManager implements Runnable {
       this.ioBurst = ioBurst;
       this.requestTime = requestTime;
     }
-
-    @Override
-    public String toString() {
-      return String.format("IORequest[%s, duracion=%d]", process.getPid(), ioBurst.getDuration());
-    }
   }
 
   private final BlockingQueue<IORequest> ioQueue;
   private final SyncController syncController;
+  private final Object ioMonitor = new Object();
   private volatile boolean running;
   private Thread ioThread;
   private final AtomicInteger totalIOOperations;
@@ -45,38 +41,40 @@ public class IOManager implements Runnable {
     this.totalIOTime = 0;
   }
 
-
   public void start() {
-    if (running) {
-      Logger.warning("IOManager ya se esta ejecutando");
-      return;
+    synchronized(ioMonitor) {
+      if (running) {
+        Logger.warning("[IOMANAGER] Ya está ejecutándose");
+        return;
+      }
+      
+      running = true;
+      ioThread = new Thread(this, "IOManager-Thread");
+      ioThread.setDaemon(true);
+      ioThread.start();
+      
     }
-    running = true;
-    ioThread = new Thread(this, "IOManager Thread");
-    ioThread.setDaemon(true);
-    ioThread.start();
   }
 
   @Override 
   public void run() {
-    Logger.log("IOManager thread ejecutandose");
-
-    while(running) {
-      try{
+    while(isRunning()) {
+      try {
         IORequest request = ioQueue.take();
         processIORequest(request);
       } catch (InterruptedException e) {
-        if (running) {
-          Logger.warning("IOManager interrumpido inesperadamente");
+        if (isRunning()) {
+          Logger.warning("[IOMANAGER] Interrumpido inesperadamente");
         }
         Thread.currentThread().interrupt();
         break;
       } catch (Exception e) {
-        Logger.error("Error en IOManager: "  + e.getMessage());
+        Logger.error("[IOMANAGER] Error: " + e.getMessage());
         e.printStackTrace();
       }
     }
-    Logger.log("IOManager thread terminado");
+    
+    Logger.log("[IOMANAGER] Thread terminado");
   }
 
   private void processIORequest(IORequest request) throws InterruptedException {
@@ -85,75 +83,84 @@ public class IOManager implements Runnable {
     int duration = ioBurst.getDuration();
 
     if (process.getState() == ProcessState.TERMINATED) {
-      Logger.warning("IOManager ignora solicitud de procesos terminado " + process.getPid());
+      Logger.warning("[IOMANAGER] Ignorando solicitud de proceso terminado: " + process.getPid());
       return;
     }
 
-    Logger.log("[SYNC] IOManager tomó solicitud de cola bloqueante");
-    Logger.log(String.format("IOManager procesando I/O de %s por %d unidades", process.getPid(), duration));
-    
     int currentTime = syncController.getScheduler().getCurrentTime();
     int ioTimeMs = duration * 100;
     int steps = duration;
     int sleepPerStep = ioTimeMs / steps;
 
-    for(int i = 0; i < steps && running; i++){
+    // Simular operación I/O con delays
+    for(int i = 0; i < steps && isRunning(); i++) {
       Thread.sleep(sleepPerStep);
-      Logger.debug(String.format("IOManager: %s I/O progreso %d/%d", process.getPid(), i+1, steps ));
+      Logger.log("[IOMANAGER] " + process.getPid() + " I/O progreso: " + (i+1) + "/" + steps);
       
       if (process.getState() == ProcessState.TERMINATED) {
-        Logger.warning("Proceso " + process.getPid() + " terminó durante I/O, abortando operación");
+        Logger.warning("[IOMANAGER] Proceso terminó durante I/O, abortando");
         return;
       }
-
     }
 
-    if(running && process.getState() != ProcessState.TERMINATED) {
-      ioBurst.execute(duration);
-      process.advanceBurst();
-      completedIOOperations.incrementAndGet();
-      totalIOTime += duration;
+    // I/O completada
+    if(isRunning() && process.getState() != ProcessState.TERMINATED) {
+      synchronized(ioMonitor) {
+        ioBurst.execute(duration);
+        process.advanceBurst();
+        completedIOOperations.incrementAndGet();
+        totalIOTime += duration;
+      }
+      
       int completionTime = syncController.getScheduler().getCurrentTime();
       int waitTime = completionTime - currentTime;
 
-      Logger.log(String.format("IOManager completo I/O de %s (espero %d unidades)", process.getPid(), waitTime));
-      Logger.log("[SYNC] IOManager notificando proceso listo después de I/O");
+      Logger.log("[IOMANAGER] I/O completada para " + process.getPid() + " (duró " + waitTime + " unidades)");
+      Logger.log("[IOMANAGER → SYNC] Notificando que " + process.getPid() + " está listo");
+      
+      // Notificar al SyncController que el proceso volvió a READY
       process.setState(ProcessState.READY);
-      syncController.notifyProcessReady(process);
-      Logger.log(String.format("Proceso %s desbloqueado por I/O, volvió a READY", process.getPid())); 
+      syncController.notifyProcessReady(process, "completó I/O");
+      
+      Logger.log("[SYNC → SCHEDULER] Proceso " + process.getPid() + " agregado a cola READY");
     }
   }
 
   public void requestIO(Process process, Burst ioBurst) {
-    if (!running){
-      Logger.error("No se puede procesar I/O, IOManager no se esta ejecutando");
+    if (!isRunning()) {
+      Logger.error("[IOMANAGER] No puede procesar I/O, no está ejecutándose");
       return;
     }
 
-    if (!ioBurst.isIO()){
-      Logger.error("Se intento enconlar una rafa que no es I/O");
+    if (!ioBurst.isIO()) {
+      Logger.error("[IOMANAGER] Error: ráfaga no es de tipo I/O");
       return;
     }
 
-    int currentTime = syncController.getScheduler().getCurrentTime();
-    IORequest request = new IORequest(process, ioBurst, currentTime);
+    synchronized(ioMonitor) {
+      int currentTime = syncController.getScheduler().getCurrentTime();
+      IORequest request = new IORequest(process, ioBurst, currentTime);
 
-    try {
-      ioQueue.put(request);
-      totalIOOperations.incrementAndGet();
-      Logger.log(String.format("Proceso %s encolo solicitud de IO de %d unidades (Cola %d)", process.getPid(), ioBurst.getDuration(), ioQueue.size()));
-    } catch (InterruptedException e) {
-      Logger.error("Error encolando solictud I/O " + e.getMessage());
-      Thread.currentThread().interrupt();
+      try {
+        ioQueue.put(request);
+        totalIOOperations.incrementAndGet();
+        Logger.log("[THREAD-" + process.getPid() + " → IOMANAGER] Solicitud encolada (cola: " + ioQueue.size() + ")");
+      } catch (InterruptedException e) {
+        Logger.error("[IOMANAGER] Error encolando: " + e.getMessage());
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
   public void stop() {
-    if(!running) {
-      return;
+    synchronized(ioMonitor) {
+      if(!running) {
+        return;
+      }
+      
+      Logger.log("[IOMANAGER] Deteniéndose...");
+      running = false;
     }
-    Logger.log("IOManager detenido");
-    running = false;
 
     if (ioThread != null && ioThread.isAlive()) {
       ioThread.interrupt();
@@ -166,39 +173,48 @@ public class IOManager implements Runnable {
     }
   
     if (!ioQueue.isEmpty()) {
-      Logger.warning("IOManager detenido con " + ioQueue.size() + " solicitudes pendientes");
+      Logger.warning("[IOMANAGER] Detenido con " + ioQueue.size() + " solicitudes pendientes");
     }
     
-    Logger.log("IOManager detenido");
+    Logger.log("[IOMANAGER] Detenido");
   }
 
-  public boolean isRunning() {
+  public synchronized boolean isRunning() {
     return running;
   }
 
-  public int getPendingRequest() {
+  public int getPendingRequests() {
     return ioQueue.size();
   }
 
   public IOStatistics getStatistics() {
-    return new IOStatistics( totalIOOperations.get(), completedIOOperations.get(), totalIOTime, ioQueue.size() );
+    synchronized(ioMonitor) {
+      return new IOStatistics(
+        totalIOOperations.get(), 
+        completedIOOperations.get(), 
+        totalIOTime, 
+        ioQueue.size()
+      );
+    }
   }
 
   public void printMetrics() {
-    Logger.log("Metricas de Entrada y Salida");
+    Logger.log("MÉTRICAS DE ENTRADA/SALIDA (I/O)");
     
-    int total = totalIOOperations.get();
-    int completed = completedIOOperations.get();
-    int pending = ioQueue.size();
-    
-    Logger.log("Total de operaciones I/O: " + total);
-    Logger.log("Operaciones completadas: " + completed);
-    Logger.log("Operaciones pendientes: " + pending);
-    Logger.log("Tiempo total en I/O: " + totalIOTime + " unidades");
-    
-    if (completed > 0) {
-      double avgTime = (double) totalIOTime / completed;
-      Logger.log(String.format("Tiempo promedio I/O: %.2f unidades", avgTime));
+    synchronized(ioMonitor) {
+      int total = totalIOOperations.get();
+      int completed = completedIOOperations.get();
+      int pending = ioQueue.size();
+      
+      Logger.log("Total de operaciones I/O: " + total);
+      Logger.log("Operaciones completadas: " + completed);
+      Logger.log("Operaciones pendientes: " + pending);
+      Logger.log("Tiempo total en I/O: " + totalIOTime + " unidades");
+      
+      if (completed > 0) {
+        double avgTime = (double) totalIOTime / completed;
+        Logger.log(String.format("Tiempo promedio I/O: %.2f unidades", avgTime));
+      }
     }
   }
 
@@ -209,10 +225,10 @@ public class IOManager implements Runnable {
     public final int pendingRequests;
     
     public IOStatistics(int total, int completed, int totalTime, int pending) {
-        this.totalRequests = total;
-        this.completedRequests = completed;
-        this.totalTime = totalTime;
-        this.pendingRequests = pending;
+      this.totalRequests = total;
+      this.completedRequests = completed;
+      this.totalTime = totalTime;
+      this.pendingRequests = pending;
     }
     
     @Override

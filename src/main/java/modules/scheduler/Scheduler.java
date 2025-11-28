@@ -9,10 +9,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-/**
- * Clase abstracta base para todos los algoritmos de planificacion
- * Define la interfaz comun y comportamientos compartidos
- */
 public abstract class Scheduler {
     
     protected final Queue<Process> readyQueue;
@@ -20,7 +16,6 @@ public abstract class Scheduler {
     protected int currentTime;
     protected int contextSwitches;
     
-    // Metricas del sistema
     protected double totalWaitingTime;
     protected double totalTurnaroundTime;
     protected double totalResponseTime;
@@ -41,36 +36,24 @@ public abstract class Scheduler {
         this.idleTime = 0;
     }
     
-    /**
-     * Anade un proceso a la cola de listos (thread-safe)
-     */
+
     public synchronized void addProcess(Process process) {
-
-    // Aceptar procesos que necesiten ir a READY
-        if (process.getState() != ProcessState.TERMINATED && 
-            process.getState() != ProcessState.RUNNING) {
-            
-            process.setState(ProcessState.READY);
-            readyQueue.offer(process);
-            Logger.debug("Proceso " + process.getPid() + " añadido a cola READY");
-            notifyAll();
-
-        }
-        
-        // Validar que no esté ya en la cola (evitar duplicados)
-        if (readyQueue.contains(process)) {
-            Logger.debug("Proceso " + process.getPid() + " ya está en la cola READY");
-            return;
-        }
-        
-        if (process.getState() != ProcessState.READY) {
-            process.setState(ProcessState.READY);
-        }
+      if (process.getState() == ProcessState.TERMINATED || 
+          process.getState() == ProcessState.RUNNING) {
+          Logger.debug("[SCHEDULER] No se puede agregar proceso " + process.getPid() + 
+                      " en estado: " + process.getState());
+          return;
+      }
       
-        readyQueue.offer(process);
-        Logger.debug("Proceso " + process.getPid() + " añadido a cola READY (tamaño: " + 
-                    readyQueue.size() + ")");
-        notifyAll();
+      if (readyQueue.contains(process)) {
+          Logger.debug("[SCHEDULER] Proceso " + process.getPid() + " ya está en cola READY");
+          return;
+      }
+      
+      readyQueue.offer(process);
+      Logger.debug("[SCHEDULER] " + process.getPid() + " agregado (cola: " + readyQueue.size() + ")");
+      
+      notifyAll();
     }
     
     /**
@@ -94,12 +77,15 @@ public abstract class Scheduler {
      * Ejecuta el cambio de contexto
      */
     protected void contextSwitch(Process newProcess) {
-        if (currentProcess != null && currentProcess != newProcess) {
+        if (currentProcess != null && 
+            newProcess != null && 
+            !currentProcess.equals(newProcess) &&
+            currentProcess.getState() != ProcessState.TERMINATED) {
+            
             contextSwitches++;
-            Logger.debug("Context switch: " + 
-                (currentProcess != null ? currentProcess.getPid() : "null") + 
-                " -> " + newProcess.getPid());
+            Logger.log("Context switch: " + currentProcess.getPid() + " -> " + newProcess.getPid());
         }
+        
         currentProcess = newProcess;
     }
     
@@ -159,7 +145,11 @@ public abstract class Scheduler {
     }
     
     public Process getCurrentProcess() {
-        return currentProcess;
+      if (currentProcess != null && currentProcess.getState() == ProcessState.TERMINATED) {
+        currentProcess = null;
+      }
+      
+      return currentProcess;
     }
     
     public synchronized List<Process> getReadyQueueSnapshot() {
@@ -181,7 +171,8 @@ public abstract class Scheduler {
      * Imprime el reporte de metricas
      */
     public void printMetrics() {
-        Logger.log("METRICAS DEL PLANIFICADOR - " + getAlgorithmName());
+        System.out.println();
+        Logger.log("[SCHE] METRICAS DEL PLANIFICADOR - " + getAlgorithmName());
         Logger.log("Procesos completados: " + completedProcesses);
         Logger.log(String.format("Tiempo promedio de espera: %.2f", getAverageWaitingTime()));
         Logger.log(String.format("Tiempo promedio de retorno: %.2f", getAverageTurnaroundTime()));
@@ -190,6 +181,7 @@ public abstract class Scheduler {
         Logger.log("Cambios de contexto: " + contextSwitches);
         Logger.log("Tiempo total de CPU: " + totalCPUTime);
         Logger.log("Tiempo inactivo: " + idleTime);
+        System.out.println();
     }
     
     /**
