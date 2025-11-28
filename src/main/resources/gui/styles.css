@@ -190,6 +190,12 @@
 .text-clear{
   -fx-text-fill: #f5e9ff;
 }
+<<<<<<< HEAD
+
+.logs-panel{
+  -fx-background-color: #0f0a1a;
+}
+=======
 /* ============================================
    FIX PARA QUITAR EL MARCO BLANCO DEL SCROLLPANE
 ============================================ */
@@ -298,3 +304,4 @@
     -fx-background-color: transparent;
     -fx-text-fill: #f5e9ff;
 }
+>>>>>>> 3bfaaeafb149de49ba283bb2f3ef94f3155b6797

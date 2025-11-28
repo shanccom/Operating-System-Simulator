@@ -1,4 +1,4 @@
-package gui;
+package modules.gui;
 
 import model.Config;
 import model.Process;
