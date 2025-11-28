@@ -101,4 +101,32 @@ public class DatosResultados {
         return Collections.unmodifiableList(resumenProcesos);
     }
 
+    public static DatosResultados prueba() {
+        List<ResultadoProceso> procesos = List.of(
+                new ResultadoProceso("P1", 8, 18, 5, 150, 25),
+                new ResultadoProceso("P2", 15, 25, 8, 310, 60),
+                new ResultadoProceso("P3", 22, 40, 11, 220, 42),
+                new ResultadoProceso("P4", 10, 15, 6, 452, 98),
+                new ResultadoProceso("P5", 25, 45, 15, 320, 87)
+        );
+
+        return new DatosResultados(
+                12.5,
+                28.1,
+                10.8,
+                87.0,
+                1452,
+                312,
+                320,
+                48,
+                128,
+                12,
+                procesos,
+                "Algorimo SJF",
+                "Algorítmo FIFO",
+                5
+        );
+    }
 }
+
+

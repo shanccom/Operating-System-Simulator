@@ -30,6 +30,7 @@ public class ResultadosPage extends VBox {
     private final TableView<ResultadoProceso> tablaProcesos = new TableView<>();
 
     public ResultadosPage() {
+        this(DatosResultados.prueba());
     }
 
     public ResultadosPage(DatosResultados datos) {
@@ -54,11 +55,7 @@ public class ResultadosPage extends VBox {
         subtitulo.getStyleClass().add("page-subtitle");
         textos.getChildren().addAll(titulo, subtitulo);
 
-        Button exportar = new Button("Exportar resultados");
-        exportar.getStyleClass().add("secondary-button");
-
         barra.setLeft(textos);
-        barra.setRight(exportar);
         setMargin(barra, new Insets(0, 0, 8, 0));
         getChildren().add(barra);
     }
