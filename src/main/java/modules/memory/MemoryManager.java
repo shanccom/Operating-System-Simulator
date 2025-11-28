@@ -5,7 +5,6 @@ import utils.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
 // Clase base para gestion de memoria virtual
 public abstract class MemoryManager {
   
@@ -64,7 +63,7 @@ public abstract class MemoryManager {
   
   public MemoryManager(int totalFrames) {
       if (totalFrames <= 0) {
-          throw new IllegalArgumentException("Numero de marcos debe ser positivo");
+          throw new IllegalArgumentException("[MEM] Numero de marcos debe ser positivo");
       }
       
       this.totalFrames = totalFrames;
@@ -75,13 +74,10 @@ public abstract class MemoryManager {
       for (int i = 0; i < totalFrames; i++) {
           frames[i] = new Frame();
       }
-      
       this.currentTime = 0;
       this.pageFaults = 0;
       this.pageReplacements = 0;
       this.totalPageLoads = 0;
-      
-      Logger.log("[MEM] MemoryManager inicializado con " + totalFrames + " marcos");
   }
   
   // Intenta cargar una pagina en memoria
@@ -90,7 +86,7 @@ public abstract class MemoryManager {
       
       String pid = process.getPid();
       
-      // Verificar si la pagina ya esta cargada
+      // Verificar si la pagina ya esta cargada, no se proudcira page fault
       if (isPageLoaded(pid, pageNumber)) {
           Logger.debug("[MEM] Pagina " + pageNumber + " del proceso " + pid + " ya esta en memoria");
           accessPage(pid, pageNumber);
@@ -118,7 +114,7 @@ public abstract class MemoryManager {
           replacePage(victimFrame, pid, pageNumber);
           return true;
       }
-      
+      //Para debugguear
       Logger.error("[MEM] No se pudo cargar la pagina " + pageNumber + " del proceso " + pid);
       return false;
   }
@@ -256,8 +252,8 @@ public abstract class MemoryManager {
   
 
   public void printMetrics() {
-      Logger.separator();
-      Logger.section("[MEM] METRICAS DE MEMORIA - " + getAlgorithmName());
+      System.out.println();
+      Logger.log("[MEM] METRICAS DE MEMORIA - " + getAlgorithmName());
       Logger.log("Total de fallos de pagina: " + pageFaults);
       Logger.log("Total de reemplazos: " + pageReplacements);
       Logger.log("Total de cargas de pagina: " + totalPageLoads);
@@ -268,7 +264,6 @@ public abstract class MemoryManager {
       } else {
           Logger.log("Tasa de fallos: N/A");
       }
-      Logger.separator();
   }
 
   public synchronized void reset() {

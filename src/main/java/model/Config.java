@@ -17,14 +17,11 @@ public class Config {
   }
   
   private int totalFrames;
-  private int frameSize;  // Tamaño de cada marco
-  
+  private int frameSize;
   private SchedulerType schedulerType;
   private int quantum;  // Para Round Robin
-  
   private ReplacementType replacementType;
-  
-  private boolean enableIO;
+  private static final boolean ENABLE_IO = true;
   private int timeUnit;
   
   public Config() {
@@ -33,7 +30,6 @@ public class Config {
       this.schedulerType = SchedulerType.FCFS;
       this.quantum = 2;
       this.replacementType = ReplacementType.FIFO;
-      this.enableIO = false;
       this.timeUnit = 100;
   }
   
@@ -93,11 +89,7 @@ public class Config {
   }
   
   public boolean isEnableIO() {
-      return enableIO;
-  }
-  
-  public void setEnableIO(boolean enableIO) {
-      this.enableIO = enableIO;
+      return ENABLE_IO;
   }
   
   public int getTimeUnit() {
@@ -112,7 +104,7 @@ public class Config {
   public String toString() {
       return String.format(
           "Config[Frames=%d, Scheduler=%s, Replacement=%s, Quantum=%d, IO=%s]",
-          totalFrames, schedulerType, replacementType, quantum, enableIO
+          totalFrames, schedulerType, replacementType, quantum
       );
   }
   

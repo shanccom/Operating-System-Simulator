@@ -8,7 +8,6 @@ public class LRU extends MemoryManager {
 
     public LRU(int totalFrames) {
         super(totalFrames);
-        Logger.log("LRU MemoryManager inicializado con " + totalFrames + " marcos");
     }
 
     @Override

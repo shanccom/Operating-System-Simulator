@@ -19,8 +19,10 @@ public class SimulationEngine {
   private final List<ProcessThread> processThreads;
   private final Config config;
   
+  private final Object engineMonitor = new Object();
+  
   private int currentTime;
-  private boolean running;
+  private volatile boolean running;
   
   public SimulationEngine(Scheduler scheduler, MemoryManager memoryManager, List<Process> processes, Config config) {
     this.scheduler = scheduler;
@@ -32,21 +34,19 @@ public class SimulationEngine {
     this.currentTime = 0;
     this.running = false;
     
+    // Crear un thread independiente por cada proceso
     this.processThreads = new ArrayList<>();
     for (Process process : processes) {
-      ProcessThread thread = new ProcessThread(process, syncController, ioManager);
+      ProcessThread thread = new ProcessThread(process, syncController, ioManager, config); // AÑADIR config
       processThreads.add(thread);
     }
-    
-    Logger.log("SimulationEngine creado con " + processes.size() + " procesos");
   }
   
   public void run() {
-    Logger.log("Algoritmo planificación: " + scheduler.getAlgorithmName());
-    Logger.log("Algoritmo memoria: " + memoryManager.getAlgorithmName());
-    Logger.log("Total procesos: " + allProcesses.size());
+    synchronized(engineMonitor) {
+      running = true;
+    }
     
-    running = true;
     syncController.start();
     ioManager.start();
     startAllThreads();
@@ -58,82 +58,130 @@ public class SimulationEngine {
   }
   
   private void startAllThreads() {
-    Logger.log("Iniciando " + processThreads.size() + " threads de procesos...");
-    
+    ioManager.start();
+    sleep(50);
     for (ProcessThread thread : processThreads) {
       thread.start();
-      Logger.debug("Thread iniciado: " + thread.getName());
+      Logger.log("  Thread creado: " + thread.getName());
+      sleep(10);
     }
-    
-    Logger.log("Todos los threads iniciados");
   }
 
   private void notifyTimeAdvance() {
-    for (ProcessThread thread : processThreads) {
-      Process process = thread.getProcess();
-      synchronized(process) {
-        process.notifyAll();
+    synchronized(engineMonitor) {
+      // Despertar todos los threads de procesos para que verifiquen su tiempo de llegada
+      for (ProcessThread thread : processThreads) {
+        Process process = thread.getProcess();
+        synchronized(process) {
+          process.notifyAll();
+        }
       }
     }
   }
   
-  private void coordinationLoop() {
-      
-    while (running && !allProcessesCompleted()) {
+  private void coordinationLoop() { 
+    while (isRunning() && !allProcessesCompleted()) {
       notifyTimeAdvance();
       
-      for (Process p : allProcesses) {
-        if (p.getState() == ProcessState.READY) {
-          p.incrementWaitingTime();
+      // Incrementar tiempo de espera de procesos READY
+      synchronized(engineMonitor) {
+        for (Process p : allProcesses) {
+          if (p.getState() == ProcessState.READY) {
+            p.incrementWaitingTime();
+          }
         }
       }
 
-      if (currentTime % 5 == 0) {
+      // Coordinar con el planificador para seleccionar proceso
+      coordinateScheduler();
+
+      synchronized(engineMonitor) {
+        for (ProcessThread thread : processThreads) {
+          Process p = thread.getProcess();
+          if (p.getState() == ProcessState.BLOCKED_IO) {
+            synchronized(p) {
+              p.notifyAll(); // Despertar para que verifiquen si su I/O terminó
+            }
+          }
+        }
+      }
+
+      if (getCurrentTime() % 5 == 0) {
         printSystemState();
       }
       
-      syncController.synchronizeTime(currentTime);
-      coordinateScheduler();
-      currentTime++;
-      scheduler.incrementTime();
+      // Sincronizar tiempo global
+      syncController.synchronizeTime(getCurrentTime());
+      
+      synchronized(engineMonitor) {
+        currentTime++;
+        scheduler.setCurrentTime(currentTime);
+      }
+      
       sleep(config.getTimeUnit());
     }
-    
-    Logger.log("Bucle de coordinación terminado");
   }
-  
+
   private void coordinateScheduler() {
     Process nextProcess = scheduler.selectNextProcess();
     
     if (nextProcess == null) {
-      Logger.debug("CPU IDLE - No hay procesos listos");
-      scheduler.recordIdleTime(1);
-      return;
+        scheduler.recordIdleTime(1);
+        return;
     }
     
-    boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
+    Process currentRunning = scheduler.getCurrentProcess();
     
-    if (canExecute) {
-      Logger.debug("Proceso " + nextProcess.getPid() + " seleccionado y preparado");
-      wakeUpThread(nextProcess);
-      scheduler.recordCPUTime(1);
-    } else {
-      Logger.debug("Proceso " + nextProcess.getPid() + " bloqueado");
+    // Context switch necesario
+    if (currentRunning != nextProcess) {
+        if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
+            synchronized(syncController.getCoordinationMonitor()) {
+                currentRunning.setState(ProcessState.READY);
+            }
+        }
+        
+        // Preparar nuevo proceso
+        boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
+        
+        if (canExecute) {
+            scheduler.confirmProcessSelection(nextProcess); 
+            wakeUpThread(nextProcess);
+            scheduler.recordCPUTime(1);
+        } else {
+            scheduler.recordIdleTime(1);
+        }
+    } 
+    // El mismo proceso continúa
+    else {
+        if (nextProcess.getState() == ProcessState.RUNNING) {
+            Logger.log("FCFS continúa con: " + nextProcess.getPid());
+            wakeUpThread(nextProcess);
+            scheduler.recordCPUTime(1);
+        } else {
+            boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
+            
+            if (canExecute) {
+                wakeUpThread(nextProcess);
+                scheduler.recordCPUTime(1);
+            } else {
+                scheduler.recordIdleTime(1);
+            }
+        }
     }
   }
   
   private void wakeUpThread(Process process) {
-    for (ProcessThread thread : processThreads) {
-      if (thread.getProcess() == process) {
-        thread.wakeUp();
-        break;
+    synchronized(engineMonitor) {
+      for (ProcessThread thread : processThreads) {
+        if (thread.getProcess() == process) {
+          thread.wakeUp();
+          break;
+        }
       }
     }
   }
   
   private void waitForAllThreads() {
-    Logger.log("Esperando a que todos los threads terminen...");
-    
     for (ProcessThread thread : processThreads) {
       try {
         thread.join();
@@ -142,19 +190,21 @@ public class SimulationEngine {
         Thread.currentThread().interrupt();
       }
     }
-    
-    Logger.log("Todos los threads han terminado");
   }
   
   private boolean allProcessesCompleted() {
-    return allProcesses.stream().allMatch(p -> p.getState() == model.ProcessState.TERMINATED);
+    synchronized(engineMonitor) {
+      return allProcesses.stream().allMatch(p -> p.getState() == ProcessState.TERMINATED);
+    }
   }
   
   private void printSystemState() {
+    Logger.log("ESTADO DEL SISTEMA (t=" + getCurrentTime() + ")");
+    
     List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
     Logger.log("Cola READY: " + readyQueue.size() + " procesos");
     for (Process p : readyQueue) {
-      Logger.log("  • " + p.getPid() + " (Espera: " + p.getWaitingTime() + ")");
+      Logger.log("     " + p.getPid() + " (Espera: " + p.getWaitingTime() + ")");
     }
     
     Process running = scheduler.getCurrentProcess();
@@ -162,32 +212,35 @@ public class SimulationEngine {
       model.Burst burst = running.getCurrentBurst();
       Logger.log("EJECUTANDO: " + running.getPid() + " - " + (burst != null ? burst.getType() : "NULL"));
     } else {
-        Logger.log("EJECUTANDO: [CPU IDLE]");
+      Logger.log("EJECUTANDO: [CPU IDLE]");
     }
     
-    long blocked = allProcesses.stream().filter(p -> p.getState().isBlocked()).count();
-    Logger.log("BLOQUEADOS: " + blocked + " procesos");
+    synchronized(engineMonitor) {
+      long blocked = allProcesses.stream().filter(p -> p.getState().isBlocked()).count();
+      Logger.log("BLOQUEADOS: " + blocked + " procesos");
+    }
+    
     Logger.log("MEMORIA: " + memoryManager.getFreeFrames() + "/" + memoryManager.getTotalFrames() + " marcos libres");
   }
   
   private void showResults() {
-    Logger.separator();
     scheduler.printMetrics();
     memoryManager.printMetrics();
     
-    Logger.separator();
-    Logger.section("MÉTRICAS POR PROCESO");
-    for (Process p : allProcesses) {
-      Logger.log(String.format(
-        "%s: Espera=%d, Retorno=%d, Respuesta=%d, PageFaults=%d",
-        p.getPid(),
-        p.getWaitingTime(),
-        p.getTurnaroundTime(),
-        p.getResponseTime(),
-        p.getPageFaults()
-      ));
+    Logger.log("MÉTRICAS POR PROCESO");
+    
+    synchronized(engineMonitor) {
+      for (Process p : allProcesses) {
+        Logger.log(String.format(
+          "%s: Espera=%d, Retorno=%d, Respuesta=%d, PageFaults=%d",
+          p.getPid(),
+          p.getWaitingTime(),
+          p.getTurnaroundTime(),
+          p.getResponseTime(),
+          p.getPageFaults()
+        ));
+      }
     }
-    Logger.separator();
   }
   
   private void sleep(int ms) {
@@ -201,13 +254,24 @@ public class SimulationEngine {
   }
   
   public void stop() {
-    running = false;
+    synchronized(engineMonitor) {
+      running = false;
+    }
+    
     for (ProcessThread thread : processThreads) {
       thread.stopThread();
     }
   }
   
-  public int getCurrentTime() { return currentTime; }
-  public boolean isRunning() { return running; }
-  public SyncController getSyncController() { return syncController; }
+  public synchronized int getCurrentTime() { 
+    return currentTime; 
+  }
+  
+  public synchronized boolean isRunning() { 
+    return running; 
+  }
+  
+  public SyncController getSyncController() { 
+    return syncController; 
+  }
 }

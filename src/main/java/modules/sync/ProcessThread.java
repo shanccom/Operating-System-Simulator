@@ -4,56 +4,73 @@ import model.Burst;
 import model.Process;
 import model.ProcessState;
 import utils.Logger;
+import model.Config;
 
 public class ProcessThread extends Thread {
 
   private final Process process;
   private final SyncController syncController;
+  private final IOManager ioManager;
+  private final Object threadMonitor = new Object();
   private volatile boolean running;
-  private final IOManager IoManager;
+  private final Config config;
 
-  public ProcessThread (Process process, SyncController syncController, IOManager IoManager) {
+  public ProcessThread(Process process, SyncController syncController, IOManager ioManager, Config config) {
     super("Thread-" + process.getPid());
-
     this.process = process;
     this.syncController = syncController;
-    this.IoManager = IoManager;
+    this.ioManager = ioManager;
     this.running = true;
+    this.config = config;
+  }
 
-    Logger.log("Thread creado para proceso " + process.getPid());
+  @Override 
+  public void run() {
+    try {
+      waitForArrival();
+      arriveAtSystem();
+      mainExecutionLoop();
+      
+    } catch (InterruptedException e) {
+      Logger.warning("[THREAD-" + process.getPid() + "] Interrumpido");
+      Thread.currentThread().interrupt();
+    }
   }
 
   private void waitForArrival() throws InterruptedException {
     int arrivalTime = process.getArrivalTime();
-    Logger.debug("Proceso " + process.getPid() + " esperando hasta tiempo " + arrivalTime);
-
-    synchronized(process) {
-        while(running && syncController.getScheduler().getCurrentTime() < arrivalTime) {
-            process.wait(50);
-        }
+    
+    synchronized(threadMonitor) {
+      while(running && syncController.getScheduler().getCurrentTime() < arrivalTime) {
+        threadMonitor.wait(50);
+      }
     }
-
-    Logger.debug("Proceso " + process.getPid() + " alcanzo su tiempo de llegada");
+    Logger.log("LLEGADA: " + process.getPid() + " alcanzo su tiempo (t=" + arrivalTime + ")");
   }
 
-  private void arriveAtSystem() {
-    Logger.log("Proceso " + process.getPid() + " llego al sistema");
-    process.setState(ProcessState.READY);
-    syncController.notifyProcessReady(process);
+  private void arriveAtSystem() {    
+    synchronized(threadMonitor) {
+      process.setState(ProcessState.READY);
+    }
+    
+    syncController.notifyProcessReady(process, "llegada al sistema");
+    
   }
 
-  private void mainExecutionLoop() throws InterruptedException{
+  private void mainExecutionLoop() throws InterruptedException {
+    
     while (running && !process.isCompleted()) {
+      // El thread espera hasta que el Scheduler lo seleccione
       waitForRunningState();
 
-      if (!running || process.getState() == ProcessState.TERMINATED){
+      if (!running || process.getState() == ProcessState.TERMINATED) {
         break;
       }
 
       Burst currentBurst = process.getCurrentBurst();
 
       if (currentBurst == null) {
-        Logger.log("Proceso " + process.getPid() + " no tinee mas rafagas");
+        Logger.log("[THREAD-" + process.getPid() + "] No hay mas rafagas, terminando");
         break;
       }
 
@@ -63,97 +80,92 @@ public class ProcessThread extends Thread {
         executeIOBurst(currentBurst);
       }
 
-      if (currentBurst.isCompleted()) {
-        process.advanceBurst();
-        Logger.debug("Proceso " + process.getPid() + " avanzo a la siguiente rafaga");
+      synchronized(threadMonitor) {
+        if (currentBurst.isCompleted()) {
+          process.advanceBurst();
+        }
       }
     }
+    
     terminateProcess();
   }
 
   private void waitForRunningState() throws InterruptedException {
-    synchronized(process) {
-      while(running && process.getState() != ProcessState.RUNNING && process.getState() != ProcessState.TERMINATED){
-        Logger.debug("Proceso " + process.getPid() + " esperando turno (estado: " + process.getState() + ")");
-        process.wait();
+    synchronized(threadMonitor) {
+      while(running && process.getState() != ProcessState.RUNNING && process.getState() != ProcessState.TERMINATED) {
+        threadMonitor.wait();
       }
-      Logger.debug("Proceso " + process.getPid() + " desperto (estado: " + process.getState() + ")");
     }
   }
 
   private void executeCPUBurst(Burst burst) throws InterruptedException {
-    int currentTime = syncController.getScheduler().getCurrentTime();
-    process.markFirstExecution(currentTime);
-    
-    Logger.log(" Proceso " + process.getPid() + " ejecutando CPU (restane " + burst.getRemainingTime() + ")");
 
-    while (!burst.isCompleted() && process.getState() == ProcessState.RUNNING){
-      burst.execute(1);
+    if (process.getResponseTime() == -1) {
+        process.markFirstExecution(syncController.getScheduler().getCurrentTime());
+    }
 
-      Logger.debug("Proceso " + process.getPid() + " ejecuto 1 unidad CPU (restante " + burst.getRemainingTime() + ")");
-      Thread.sleep(50);
+    while (!burst.isCompleted() && process.getState() == ProcessState.RUNNING) {
+      synchronized(threadMonitor) {
+        // Esperar señal del motor
+        threadMonitor.wait();
+      }
 
-      if (process.getState() != ProcessState.RUNNING) {
-        Logger.log("Proceso " + process.getPid() + " fue preemptive");
-        break;
-      } 
+      if (process.getState() == ProcessState.RUNNING && !burst.isCompleted()) {
+        burst.execute(1); // Ejecutar 1 unidad
+        int currentTime = syncController.getScheduler().getCurrentTime();
+        Logger.log("[T=" + currentTime + "] [THREAD-" + process.getPid() + "] CPU avanzó 1 unidad (restante: " + burst.getRemainingTime() + ")");
+      }
     }
 
     if (burst.isCompleted()) {
-      Logger.log("Proceso " + process.getPid() + " completo rafaga CPU");
+      Logger.log("[THREAD-" + process.getPid() + "] Rafaga CPU completada");
     }
   }
 
   private void executeIOBurst(Burst burst) throws InterruptedException {
-    Logger.log("Proceso " + process.getPid() + " inicia I/O por " + burst.getDuration() + " unidades");
-    syncController.notifyProcessBlocked(process, ProcessState.BLOCKED_IO);
-
-    IoManager.requestIO(process, burst);
-  }
-
-  @Override 
-  public void run() {
-    try {
-      Logger.log("Thread del proceso " + process.getPid() + " iniciado");
-
-      waitForArrival();
-      arriveAtSystem();
-      mainExecutionLoop();
-
-      Logger.log("Thread del proceso " + process.getPid() + " terminado");
-
-    } catch (InterruptedException e) {
-      Logger.warning("Thread del proceso " + process.getPid() + "interrumpido");
-      Thread.currentThread().interrupt();
+    Logger.log("[THREAD-" + process.getPid() + "] Iniciando I/O (" + burst.getDuration() + " unidades)");
+    
+    synchronized(threadMonitor) {
+      process.setState(ProcessState.BLOCKED_IO);
     }
+    
+    ioManager.requestIO(process, burst);
+    
   }
 
   private void terminateProcess() {
-    int currentTime = syncController.getScheduler().getCurrentTime();
-    process.setCompletionTime(currentTime);
-
-    Logger.log("Proceso " + process.getPid() + " completado en t = " + currentTime);
-    Logger.log("Proceso " + process.getPid() + " TERMINADO" );
-    process.setState(ProcessState.TERMINATED);
-
+    
+    synchronized(threadMonitor) {
+      int currentTime = syncController.getScheduler().getCurrentTime();
+      process.setCompletionTime(currentTime);
+      process.setState(ProcessState.TERMINATED);
+    }
+    
+    
     syncController.releaseProcessResources(process);
-
-    Logger.log("Proceso " + process.getPid() + " TERMINADO - Métricas:");
-    Logger.log("    Tiempo de espera: " + process.getWaitingTime());
-    Logger.log("    Tiempo de retorno: " + process.getTurnaroundTime());
-    Logger.log("    Fallos de página: " + process.getPageFaults());
-    running = false;
+    System.out.println();
+    Logger.log("[THREAD-" + process.getPid() + "] METRICAS FINALES:");
+    Logger.log("  Tiempo de espera: " + process.getWaitingTime());
+    Logger.log("  Tiempo de retorno: " + process.getTurnaroundTime());
+    Logger.log("  Fallos de página: " + process.getPageFaults());
+    
+    synchronized(threadMonitor) {
+      running = false;
+    }
+    System.out.println();
   }
 
   public void wakeUp() {
-    synchronized (process) {
-      process.notifyAll();
+    synchronized(threadMonitor) {
+      threadMonitor.notifyAll();
     }
   }
 
   public void stopThread() {
-    running = false;
-    wakeUp();
+    synchronized(threadMonitor) {
+      running = false;
+      threadMonitor.notifyAll();
+    }
   }
 
   public Process getProcess() {

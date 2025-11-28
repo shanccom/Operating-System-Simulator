@@ -11,17 +11,30 @@ public class FCFS extends Scheduler {
     
     public FCFS() {
         super();
-        Logger.log("Planificador FCFS inicializado");
     }
     
     @Override
     public synchronized Process selectNextProcess() {
-        // FCFS simplemente toma el primer proceso de la cola
-        Process next = readyQueue.poll();
+        if (currentProcess != null && 
+          currentProcess.getState() == model.ProcessState.RUNNING &&
+          currentProcess.getCurrentBurst() != null &&
+          !currentProcess.getCurrentBurst().isCompleted()) {
+          return currentProcess; 
+        }
         
+        
+        if (currentProcess != null && 
+          (currentProcess.getState() == model.ProcessState.TERMINATED ||
+          (currentProcess.getCurrentBurst() != null && currentProcess.getCurrentBurst().isCompleted()))) {
+          currentProcess = null;
+        }
+        
+      
+        Process next = readyQueue.peek();
         if (next != null) {
-            contextSwitch(next);
-            Logger.debug("FCFS seleccionó: " + next.getPid());
+          if (next != currentProcess) {
+            Logger.log("FCFS seleccionó: " + next.getPid());
+          }
         }
         
         return next;

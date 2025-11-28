@@ -1,7 +1,0 @@
-frames=3
-frameSize=4096
-replacement=LRU
-scheduler=FCFS
-quantum=2
-enableIO=false
-timeUnit=100
