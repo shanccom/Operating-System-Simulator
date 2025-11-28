@@ -2,10 +2,13 @@ package modules.sync;
 
 import model.Config;
 import model.Process;
+import model.ResultadoProceso;
+import model.DatosResultados;
 import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
 import utils.Logger;
 import model.ProcessState;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +21,9 @@ public class SimulationEngine {
   private final IOManager ioManager;
   private final List<ProcessThread> processThreads;
   private final Config config;
-  
+  //Objeto que contendra los resultados finales
+  private DatosResultados datosFinales;
+
   private final Object engineMonitor = new Object();
   
   private int currentTime;
@@ -41,7 +46,7 @@ public class SimulationEngine {
       processThreads.add(thread);
     }
   }
-  
+  /* 
   public void run() {
     synchronized(engineMonitor) {
       running = true;
@@ -55,8 +60,30 @@ public class SimulationEngine {
     ioManager.stop();
     syncController.stop();
     showResults();
-  }
+  }*/
   
+  private DatosResultados construirResultados() {
+    Map<String, Integer> reemplazos = memoryManager.getReemplazosPorProceso();
+    List<ResultadoProceso> resumen = new ArrayList<>();
+
+    for (Process p : allProcesses) {
+      resumen.add(new ResultadoProceso(p.getPid(),p.getWaitingTime(),p.getTurnaroundTime(),p.getResponseTime(),p.getPageFaults(),reemplazos.getOrDefault(p.getPid(), 0)));
+    }
+
+    return new DatosResultados(
+        scheduler.getAverageWaitingTime(),
+        scheduler.getAverageTurnaroundTime(),
+        scheduler.getAverageResponseTime(),
+        scheduler.getCPUUtilization(),
+        memoryManager.getPageFaults(),
+        memoryManager.getPageReplacements(),
+        scheduler.getTotalCPUTime(),
+        scheduler.getIdleTime(),
+        memoryManager.getTotalFrames(),
+        memoryManager.getFreeFrames(),
+        resumen
+    );
+  }
   private void startAllThreads() {
     ioManager.start();
     sleep(50);
