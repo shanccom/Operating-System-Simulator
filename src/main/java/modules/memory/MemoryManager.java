@@ -231,6 +231,7 @@ public abstract class MemoryManager {
       return pageReplacements;
   }
 
+  //Para la pagina de Resultados
   public Map<String, Integer> getReemplazosPorProceso() {
       return new HashMap<>(reemplazosPorProceso);
   }
