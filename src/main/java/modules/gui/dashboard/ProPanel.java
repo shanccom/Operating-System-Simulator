@@ -1,4 +1,4 @@
-package modules.gui.components;
+package modules.gui.dashboard;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
