@@ -85,7 +85,8 @@ public class ProPanel extends VBox {
 
     // MÉTODOS PARA ACTUALIZAR COLAS
     public void updateReadyQueue(List<Process> processes) {
-        System.out.println("[UI] ------------------------------------------------***************************READY recibido: " + processes.size());
+        
+        //System.out.println("[UI] ------------------------------------------------***************************READY recibido: " + processes.size());
         for (Process p : processes) {
             System.out.println("   READY -> " + p.getPid() + " | state=" + p.getState());
         }
