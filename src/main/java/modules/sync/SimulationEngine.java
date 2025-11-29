@@ -116,12 +116,9 @@ public class SimulationEngine {
     while (isRunning() && !allProcessesCompleted()) {
         // SINCRONIZAR TIEMPO PRIMERO (antes de hacer nada)
         syncController.synchronizeTime(getCurrentTime());
-        
         notifyTimeAdvance();
-
         // Coordinar con el planificador (ANTES de incrementar tiempo de espera)
         coordinateScheduler();
-
         sleep(config.getTimeUnit());
 
         // Incrementar tiempo de espera SOLO para procesos que permanecen en READY
@@ -154,7 +151,6 @@ public class SimulationEngine {
                 }
             }
         }
-      }
 
       if (getCurrentTime() % 5 == 0) {
         printSystemState();
@@ -171,7 +167,6 @@ public class SimulationEngine {
         scheduler.setCurrentTime(currentTime);
       }
       
-      sleep(config.getTimeUnit());
     }
   }
 

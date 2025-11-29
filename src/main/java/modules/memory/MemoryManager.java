@@ -13,136 +13,137 @@ import utils.Logger;
 // NUEVO SI - Atributos necesarios para realizar NRU y optimal
 // Clase base para gestion de memoria virtual
 public abstract class MemoryManager {
-  
-  protected static class Frame { //Desripcion diagrama de clases
-      private String processId; //ownerPID
-      private int pageNumber; 
-      private int loadTime;
-      private int lastAccessTime; //Para NRU y LRU
+
+    // FRAME ____________________________________________________________________________
+    public static class Frame { // CADA FRAME
+        private String processId;  // ownerPID
+        private int pageNumber;    // numero de pagina cargada
+        private int loadTime;
+        private int lastAccessTime; // Para NRU y LRU
         private boolean referenced; // BIT R
         private boolean modified;   // BIT M
-      private boolean isOccupied;
-      
-      public Frame() {
-          this.isOccupied = false;
-          this.referenced = false;
-          this.modified = false;
-      }
-      
-      public void load(String pid, int page, int time) {
-          this.processId = pid;
-          this.pageNumber = page;
-          this.loadTime = time;
-          this.lastAccessTime = time;
-          this.isOccupied = true;
-          this.referenced = true;
+        private boolean isOccupied;
+
+        public Frame() {
+            this.isOccupied = false;
+            this.referenced = false;
             this.modified = false;
-      }
-      
-      public void unload() {
-          this.processId = null;
-          this.pageNumber = -1;
-          this.isOccupied = false;
-          this.referenced = false;
-          this.modified = false;
-      }
-      
-      public void access(int time) {
-          this.lastAccessTime = time;
-          this.referenced = true;
-      }
-      public void markRead() { this.referenced = true; }
-      public void markWrite() { this.modified = true; this.referenced = true; }
-      public void resetReferenced() { this.referenced = false; }
-
-      //Falta clear, isFree, touch
-      // Getters
-      public String getProcessId() { return processId; }
-      public int getPageNumber() { return pageNumber; }
-      public int getLoadTime() { return loadTime; }
-      public int getLastAccessTime() { return lastAccessTime; }
-      public boolean isOccupied() { return isOccupied; }
-      
-      public boolean isReferenced() { return referenced; }
-      public boolean isModified() { return modified; }
-      
-      @Override
-        public String toString() {
-          return isOccupied ?
-            String.format("[%s:P%d R=%b M=%b]", processId, pageNumber, referenced, modified)
-            : "[FREE]";
         }
-  }
-  
-  protected final int totalFrames;
-  protected final Frame[] frames;
-  protected final Map<String, Set<Integer>> processPageMap; // PID Paginas cargadas
-  
-  protected int currentTime;
-  protected int pageFaults;
-  protected int pageReplacements;
-  protected int totalPageLoads;
-  
-  public MemoryManager(int totalFrames) {
-      if (totalFrames <= 0) {
-          throw new IllegalArgumentException("[MEM] Numero de marcos debe ser positivo");
-      }
-      
-      this.totalFrames = totalFrames;
-      this.frames = new Frame[totalFrames];
-      this.processPageMap = new ConcurrentHashMap<>();
-      
-      for (int i = 0; i < totalFrames; i++) {
-          frames[i] = new Frame();
-      }
-      this.currentTime = 0;
-      this.pageFaults = 0;
-      this.pageReplacements = 0;
-      this.totalPageLoads = 0;
-  }
-  
-  // *** CARGA DE PaGINA PRINCIPAL (EVENTO DE ACESO) ***
-  public synchronized boolean loadPage(Process process, int pageNumber) {
-      currentTime++;
-      
-      String pid = process.getPid();
-      
-      // Verificar si la pagina ya esta cargada, no se proudcira page fault
-      if (isPageLoaded(pid, pageNumber)) {
-          Logger.debug("[MEM] Pagina " + pageNumber + " del proceso " + pid + " ya esta en memoria");
-          accessPage(pid, pageNumber);
-          Logger.memSnapshot(frames);
-          return true;
-      }
-      
-      // Page fault
-      pageFaults++;
-      process.incrementPageFaults();
-      Logger.logPageFault(pid, pageNumber, currentTime);
-      Logger.memFault(pid, pageNumber);
-      
-      // Buscar marco libre
-      int freeFrame = findFreeFrame();
-      
-      if (freeFrame != -1) {
-          // Hay marco libre
-          loadPageToFrame(freeFrame, pid, pageNumber);
-          return true;
-      }
-      
-      // Si no hay marcos libres → elegir víctima
-      int victimFrame = selectVictimFrame(process, pageNumber);
-      
-      if (victimFrame != -1) {
-          replacePage(victimFrame, pid, pageNumber);
-          return true;
-      }
-      //Para debugguear
-      Logger.error("[MEM] ERROR: No se pudo cargar la pagina " + pageNumber + " del proceso " + pid);
-      return false;
-  }
 
-  // Metodo añadido para obtener el frame real donde esta una pagina
+        public void load(String pid, int page, int time) {
+            this.processId = pid;
+            this.pageNumber = page;
+            this.loadTime = time;
+            this.lastAccessTime = time;
+            this.isOccupied = true;
+            this.referenced = true;
+            this.modified = false;
+        }
+
+        public void unload() {
+            this.processId = null;
+            this.pageNumber = -1;
+            this.isOccupied = false;
+            this.referenced = false;
+            this.modified = false;
+        }
+
+        public void access(int time) {
+            this.lastAccessTime = time;
+            this.referenced = true;
+        }
+
+        // Metodos adicionales para NRU
+        public void markRead() { this.referenced = true; }
+        public void markWrite() { this.modified = true; this.referenced = true; }
+        public void resetReferenced() { this.referenced = false; }
+
+        // Getters
+        public String getProcessId() { return processId; }
+        public int getPageNumber() { return pageNumber; }
+        public int getLoadTime() { return loadTime; }
+        public int getLastAccessTime() { return lastAccessTime; }
+        public boolean isOccupied() { return isOccupied; }
+        public boolean isReferenced() { return referenced; }
+        public boolean isModified() { return modified; }
+
+        @Override
+        public String toString() {
+            return isOccupied ?
+                    String.format("[%s:P%d R=%b M=%b]", processId, pageNumber, referenced, modified)
+                    : "[FREE]";
+        }
+    }
+    // FIN FRAME ________________________________________________________________________
+
+
+    protected final int totalFrames;
+    protected final Frame[] frames;
+    protected final Map<String, Set<Integer>> processPageMap; // PID -> paginas cargadas
+
+    protected int currentTime;
+    protected int pageFaults;
+    protected int pageReplacements;
+    protected int totalPageLoads;
+
+    public MemoryManager(int totalFrames) {
+        if (totalFrames <= 0) {
+            throw new IllegalArgumentException("[MEM] Numero de marcos debe ser positivo");
+        }
+
+        this.totalFrames = totalFrames;
+        this.frames = new Frame[totalFrames];
+        this.processPageMap = new ConcurrentHashMap<>();
+
+        for (int i = 0; i < totalFrames; i++) {
+            frames[i] = new Frame();
+        }
+        this.currentTime = 0;
+        this.pageFaults = 0;
+        this.pageReplacements = 0;
+        this.totalPageLoads = 0;
+    }
+
+
+    // *** CARGA DE PaGINA PRINCIPAL (EVENTO DE ACESO) ***
+    public synchronized boolean loadPage(Process process, int pageNumber) {
+
+        currentTime++;
+        String pid = process.getPid();
+
+        // Caso: la pagina YA esta en memoria (HIT)
+        if (isPageLoaded(pid, pageNumber)) {
+            Logger.memHit(pid, pageNumber, findFrame(pid, pageNumber));
+            accessPage(pid, pageNumber);
+            Logger.memSnapshot(frames);
+            return true;
+        }
+
+        // PAGE FAULT
+        pageFaults++;
+        process.incrementPageFaults();
+        Logger.memFault(pid, pageNumber);
+
+        // Intentar cargar en frame libre
+        int freeFrame = findFreeFrame();
+        if (freeFrame != -1) {
+            loadPageToFrame(freeFrame, pid, pageNumber);
+            return true;
+        }
+
+        // Si no hay marcos libres → elegir víctima
+        int victimFrame = selectVictimFrame(process, pageNumber);
+        if (victimFrame != -1) {
+            replacePage(victimFrame, pid, pageNumber);
+            return true;
+        }
+
+        Logger.error("[MEM] ERROR: No se pudo cargar la pagina " + pageNumber + " del proceso " + pid);
+        return false;
+    }
+
+
+    // Metodo añadido para obtener el frame real donde esta una pagina
     private int findFrame(String pid, int page) {
         for (int i = 0; i < totalFrames; i++) {
             if (frames[i].isOccupied()
@@ -153,45 +154,45 @@ public abstract class MemoryManager {
         }
         return -1;
     }
-  
-  // Selecciona el marco victima para reemplazo
-  protected abstract int selectVictimFrame(Process requestingProcess, int requestedPage);
-  
-  protected void accessPage(String pid, int pageNumber) {
-    for (int i = 0; i < totalFrames; i++) {
-      Frame frame = frames[i];
-      if (frame.isOccupied()
-            && frame.getProcessId().equals(pid)
-            && frame.getPageNumber() == pageNumber) {
-        frame.access(currentTime);
-        return;
-      }
+
+
+    protected abstract int selectVictimFrame(Process requestingProcess, int requestedPage);
+
+
+    protected void accessPage(String pid, int pageNumber) {
+        for (int i = 0; i < totalFrames; i++) {
+            Frame frame = frames[i];
+            if (frame.isOccupied()
+                    && frame.getProcessId().equals(pid)
+                    && frame.getPageNumber() == pageNumber) {
+                frame.access(currentTime);
+                return;
+            }
+        }
     }
-  }
-  
-  // Busca un marco libre
-  protected int findFreeFrame() {
-      for (int i = 0; i < totalFrames; i++) {
-          if (!frames[i].isOccupied()) {
-              return i;
-          }
-      }
-      return -1;
-  }
-  
-  // Carga una pagina en un marco especifico
-  protected void loadPageToFrame(int frameIndex, String pid, int pageNumber) {
-      frames[frameIndex].load(pid, pageNumber, currentTime);
-      
-      processPageMap.computeIfAbsent(pid, k -> new HashSet<>()).add(pageNumber);
-      
-      totalPageLoads++;
-      Logger.memLoad(pid, pageNumber, frameIndex);
+
+
+    protected int findFreeFrame() {
+        for (int i = 0; i < totalFrames; i++) {
+            if (!frames[i].isOccupied()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
+    protected void loadPageToFrame(int frameIndex, String pid, int pageNumber) {
+        frames[frameIndex].load(pid, pageNumber, currentTime);
+        processPageMap.computeIfAbsent(pid, k -> new HashSet<>()).add(pageNumber);
+        totalPageLoads++;
+
+        Logger.memLoad(pid, pageNumber, frameIndex);
         Logger.memSnapshot(frames);
-  }
-  
-  // Reemplaza una pagina en un marco
-protected void replacePage(int frameIndex, String newPid, int newPage) {
+    }
+
+
+    protected void replacePage(int frameIndex, String newPid, int newPage) {
 
         Frame old = frames[frameIndex];
         String oldPid = old.getProcessId();
@@ -211,88 +212,74 @@ protected void replacePage(int frameIndex, String newPid, int newPage) {
         Logger.memSnapshot(frames);
     }
 
-  
-  // Verifica si una pagina esta cargada
-  public synchronized boolean isPageLoaded(String pid, int pageNumber) {
-      return processPageMap.containsKey(pid) && 
-              processPageMap.get(pid).contains(pageNumber);
-  }
-  
-  // Obtiene todas las paginas cargadas de un proceso
-  public synchronized Set<Integer> getLoadedPages(String pid) {
-      return new HashSet<>(processPageMap.getOrDefault(pid, new HashSet<>()));
-  }
-  
-  // Libera todas las paginas de un proceso
-  public synchronized void freeProcessPages(String pid) {
-      for (int i = 0; i < totalFrames; i++) {
-          if (frames[i].isOccupied() && frames[i].getProcessId().equals(pid)) {
-              frames[i].unload();
-          }
-      }
-      processPageMap.remove(pid);
-      Logger.debug("[MEM] Paginas del proceso " + pid + " liberadas");
-      Logger.memSnapshot(frames);
-  }
-  
-  // Obtiene el estado actual de los marcos
-  public synchronized String getMemorySnapshotCompact() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("MEMORIA FISICA  \n");
-      for (int i = 0; i < totalFrames; i++) {
-          if (frames[i].isOccupied()) {
-              sb.append(String.format("\tFrame%d=[%s:P%d]\n",
-                      i, frames[i].getProcessId(), frames[i].getPageNumber()));
-          } else {
-              sb.append(String.format("\tFrame%d=[FREE]\n", i));
-          }
-      }
-      sb.append("                                 \n");
 
-      sb.append("Paginas de Proceso: ");
-      for (Map.Entry<String, Set<Integer>> e : processPageMap.entrySet()) {
-          Set<Integer> pages = new TreeSet<>(e.getValue());
-          sb.append(String.format("%s=%s; ", e.getKey(), pages));
-      }
-      return sb.toString();
+    public synchronized boolean isPageLoaded(String pid, int pageNumber) {
+        return processPageMap.containsKey(pid)
+                && processPageMap.get(pid).contains(pageNumber);
     }
-  
-  // Obtiene marcos libres
-  public synchronized int getFreeFrames() {
-    int count = 0;
-    for (Frame frame : frames) {
-        if (!frame.isOccupied()) count++;
+
+
+    public synchronized Set<Integer> getLoadedPages(String pid) {
+        return new HashSet<>(processPageMap.getOrDefault(pid, new HashSet<>()));
     }
-    return count;
-  }
-  
-  // MeTRICAS
-  public int getPageFaults() {
-      return pageFaults;
-  }
-  
-  public int getPageReplacements() {
-      return pageReplacements;
-  }
-  
-  public int getTotalPageLoads() {
-      return totalPageLoads;
-  }
-  
-  public int getTotalFrames() {
-      return totalFrames;
-  }
-  
-  public int getCurrentTime() {
-      return currentTime;
-  }
-  
-  public void setCurrentTime(int time) {
-      this.currentTime = time;
-  }
-  
-  public abstract String getAlgorithmName();
-  
+
+
+    public synchronized void freeProcessPages(String pid) {
+        for (int i = 0; i < totalFrames; i++) {
+            if (frames[i].isOccupied()
+                    && frames[i].getProcessId().equals(pid)) {
+                frames[i].unload();
+            }
+        }
+        processPageMap.remove(pid);
+        Logger.debug("[MEM] Paginas del proceso " + pid + " liberadas");
+        Logger.memSnapshot(frames);
+    }
+
+
+    public synchronized String getMemorySnapshotCompact() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("MEMORIA FISICA ================================================================================\n");
+        for (int i = 0; i < totalFrames; i++) {
+            if (frames[i].isOccupied()) {
+                sb.append(String.format("\tFrame%d=[%s:P%d]\n",
+                        i, frames[i].getProcessId(), frames[i].getPageNumber()));
+            } else {
+                sb.append(String.format("\tFrame%d=[FREE]\n", i));
+            }
+        }
+        sb.append("=================================================================================================\n");
+
+        sb.append("Paginas de Proceso: ");
+        for (Map.Entry<String, Set<Integer>> e : processPageMap.entrySet()) {
+            Set<Integer> pages = new TreeSet<>(e.getValue());
+            sb.append(String.format("%s=%s; ", e.getKey(), pages));
+        }
+        return sb.toString();
+    }
+
+
+    public synchronized int getFreeFrames() {
+        int count = 0;
+        for (Frame frame : frames) {
+            if (!frame.isOccupied()) count++;
+        }
+        return count;
+    }
+
+    // MeTRICAS
+    public int getPageFaults() { return pageFaults; }
+    public int getPageReplacements() { return pageReplacements; }
+    public int getTotalPageLoads() { return totalPageLoads; }
+    public int getTotalFrames() { return totalFrames; }
+    public int getCurrentTime() { return currentTime; }
+
+    public void setCurrentTime(int time) {
+        this.currentTime = time;
+    }
+
+    public abstract String getAlgorithmName();
+
 
     public void printMetrics() {
         Logger.log("[MEM] METRICAS - " + getAlgorithmName());
