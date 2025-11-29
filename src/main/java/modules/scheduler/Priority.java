@@ -50,8 +50,8 @@ public class Priority extends Scheduler {
         }
         
         if (highestPriority != null) {
-            readyQueue.remove(highestPriority);
-            contextSwitch(highestPriority);
+            //readyQueue.remove(highestPriority);
+            //contextSwitch(highestPriority);
             Logger.debug("Priority seleccionó: " + highestPriority.getPid() + 
                         " con prioridad " + bestPriority);
         }

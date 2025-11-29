@@ -26,13 +26,10 @@ public class RoundRobin extends Scheduler {
     
     @Override
     public synchronized Process selectNextProcess() {
-        Process next = readyQueue.poll();
+        Process next = readyQueue.peek();
         
         if (next != null) {
-            // Asignar quantum completo al nuevo proceso
-            currentQuantumRemaining = quantum;
-            contextSwitch(next);
-            
+            // Resetear quantum completo al nuevo proceso (se asignará en confirmProcessSelection)
             Logger.debug(String.format("RR seleccionó: %s (quantum=%d)", 
                         next.getPid(), quantum));
         }
@@ -68,6 +65,16 @@ public class RoundRobin extends Scheduler {
     //Reinicia el quantum para un nuevo proceso
     public void resetQuantum() {
         this.currentQuantumRemaining = quantum;
+    }
+    
+    // Override para resetear el quantum cuando se confirma la selección
+    @Override
+    public synchronized void confirmProcessSelection(Process process) {
+        if (process != null && readyQueue.remove(process)) {
+            // Resetear quantum cuando se confirma la selección de un nuevo proceso
+            currentQuantumRemaining = quantum;
+            contextSwitch(process);
+        }
     }
     
     @Override

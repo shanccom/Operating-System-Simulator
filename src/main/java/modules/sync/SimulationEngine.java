@@ -4,6 +4,7 @@ import model.Config;
 import model.Process;
 import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
+import modules.scheduler.RoundRobin;
 import utils.Logger;
 import model.ProcessState;
 import java.util.ArrayList;
@@ -171,18 +172,11 @@ public class SimulationEngine {
   }
 
   private void coordinateScheduler() {
-    Process nextProcess = scheduler.selectNextProcess();
-    
-    if (nextProcess == null) {
-        scheduler.recordIdleTime(1);
-        return;
-    }
-    
     Process currentRunning = scheduler.getCurrentProcess();
     
+    // Limpiar procesos en estados inválidos
     if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
       if (!syncController.hasRequiredPages(currentRunning)) {
-
         Logger.log("[ENGINE] " + currentRunning.getPid() + " perdió páginas durante ejecución");
         currentRunning.setState(ProcessState.READY);
         scheduler.addProcess(currentRunning);
@@ -205,42 +199,121 @@ public class SimulationEngine {
       scheduler.setCurrentProcess(null);
       currentRunning = null;
     }
-    // Cuando el scheduler selecciona un proceso diferente al actual,
-    // se realiza un cambio de contexto lógico:
-    if (currentRunning != nextProcess) {
-        // Cambiar proceso actual de RUNNING a READY
-        if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
-            synchronized(syncController.getCoordinationMonitor()) {
-                currentRunning.setState(ProcessState.READY);
+    
+    // Manejar quantum de RoundRobin si el proceso está ejecutando
+    boolean shouldContinueRunning = false;
+    if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
+        if (scheduler instanceof RoundRobin) {
+            RoundRobin rr = (RoundRobin) scheduler;
+            rr.decrementaQuantum();
+            
+            // Si el quantum se agotó, forzar expropiación
+            if (rr.isQuantumAgotado()) {
+                Logger.debug("[ENGINE] Quantum agotado para " + currentRunning.getPid() + ", expropiando");
+                synchronized(syncController.getCoordinationMonitor()) {
+                    currentRunning.setState(ProcessState.READY);
+                }
+                scheduler.addProcess(currentRunning);
+                scheduler.setCurrentProcess(null);
+                currentRunning = null;
+            } else {
+                // Verificar expropiación por candidatos en la cola
+                List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
+                boolean wasPreempted = false;
+                for (Process candidate : readyQueue) {
+                    if (scheduler.shouldPreempt(currentRunning, candidate)) {
+                        Logger.debug("[ENGINE] Expropiando " + currentRunning.getPid() + " por " + candidate.getPid());
+                        synchronized(syncController.getCoordinationMonitor()) {
+                            currentRunning.setState(ProcessState.READY);
+                        }
+                        scheduler.addProcess(currentRunning);
+                        scheduler.setCurrentProcess(null);
+                        currentRunning = null;
+                        wasPreempted = true;
+                        break;
+                    }
+                }
+                // Si no hubo expropiación, el proceso continúa ejecutando
+                if (!wasPreempted) {
+                    shouldContinueRunning = true;
+                }
             }
-            // El thread de currentRunning se bloqueará en su próximo wait()
+        } else {
+            // Para otros algoritmos, verificar expropiación
+            List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
+            boolean wasPreempted = false;
+            for (Process candidate : readyQueue) {
+                if (scheduler.shouldPreempt(currentRunning, candidate)) {
+                    Logger.debug("[ENGINE] Expropiando " + currentRunning.getPid() + " por " + candidate.getPid());
+                    synchronized(syncController.getCoordinationMonitor()) {
+                        currentRunning.setState(ProcessState.READY);
+                    }
+                    scheduler.addProcess(currentRunning);
+                    scheduler.setCurrentProcess(null);
+                    currentRunning = null;
+                    wasPreempted = true;
+                    break;
+                }
+            }
+            // Si no hubo expropiación, el proceso continúa ejecutando
+            if (!wasPreempted) {
+                shouldContinueRunning = true;
+            }
         }
-        
-        // Preparar nuevo proceso (verificar memoria)
-        boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
-        
+    }
+    
+    // Si el proceso actual debe continuar ejecutando, no seleccionar uno nuevo
+    if (shouldContinueRunning && currentRunning != null) {
+        boolean canExecute = syncController.canProcessExecute(currentRunning);
         if (canExecute) {
-            // Confirmar selección y registrar cambio de contexto
-            scheduler.confirmProcessSelection(nextProcess);  // Incrementa contextSwitches
-            // Despertar thread del nuevo proceso
-            wakeUpThread(nextProcess);  // El thread sale de wait() y continúa
+            wakeUpThread(currentRunning);
             scheduler.recordCPUTime(1);
         } else {
-            // Proceso no puede ejecutarse (falta memoria), queda en READY
-            scheduler.recordIdleTime(1);
-            scheduler.addProcess(nextProcess);
-        }
-    } 
-    // El mismo proceso continúa
-    else if (nextProcess != null) {
-        boolean canExecute = syncController.canProcessExecute(nextProcess);
-        
-        if (canExecute) {
-            wakeUpThread(nextProcess);
-            scheduler.recordCPUTime(1);
-        } else {
+            // Perdió memoria durante ejecución
             scheduler.setCurrentProcess(null);
             scheduler.recordIdleTime(1);
+            if (!scheduler.getReadyQueueSnapshot().contains(currentRunning)) {
+                scheduler.addProcess(currentRunning);
+            }
+        }
+        return;
+    }
+    
+    // Seleccionar siguiente proceso
+    Process nextProcess = scheduler.selectNextProcess();
+    
+    if (nextProcess == null) {
+        scheduler.recordIdleTime(1);
+        return;
+    }
+    
+    // Cambiar al nuevo proceso (currentRunning ya fue manejado arriba, así que puede ser null)
+    if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
+        // Cambiar proceso actual de RUNNING a READY
+        synchronized(syncController.getCoordinationMonitor()) {
+            currentRunning.setState(ProcessState.READY);
+        }
+        // Solo agregar a la cola si no está ya allí (por si ya fue agregado por expropiación)
+        if (!scheduler.getReadyQueueSnapshot().contains(currentRunning)) {
+            scheduler.addProcess(currentRunning);
+        }
+        // El thread de currentRunning se bloqueará en su próximo wait()
+    }
+    
+    // Preparar nuevo proceso (verificar memoria)
+    boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
+    
+    if (canExecute) {
+        // Confirmar selección y registrar cambio de contexto
+        scheduler.confirmProcessSelection(nextProcess);  // Remueve de cola y registra context switch
+        // Despertar thread del nuevo proceso
+        wakeUpThread(nextProcess);  // El thread sale de wait() y continúa
+        scheduler.recordCPUTime(1);
+    } else {
+        // Proceso no puede ejecutarse (falta memoria), queda en READY
+        scheduler.recordIdleTime(1);
+        // No agregar nuevamente si ya está en la cola
+        if (!scheduler.getReadyQueueSnapshot().contains(nextProcess)) {
             scheduler.addProcess(nextProcess);
         }
     }
