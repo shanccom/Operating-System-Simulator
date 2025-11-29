@@ -1,21 +1,24 @@
 package modules.gui;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import model.Config;
 import model.Process;
+import modules.gui.pages.DashboardPage; 
 import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
 import modules.sync.SimulationEngine;
 import modules.sync.SimulationStateListener;
-import modules.gui.dashboard.ProPanel;
 import utils.FileParser;
 import utils.Logger;
 import utils.SimulationFactory;
 
+
 public class SimulationRunner {
 
-    public static void runSimulation(Config config, String processPath, ProPanel proPanel) throws Exception {
+    public static void runSimulation(Config config, String processPath, DashboardPage dashboardPage) throws Exception {
         
         if (!config.validate()) {
             throw new IllegalArgumentException("Configuracion invalida");
@@ -34,26 +37,51 @@ public class SimulationRunner {
         );
         
         //REGISTRAR EL LISTENER ANTES DE INICIAR
-        if (proPanel != null) {
+        if (dashboardPage  != null) {
             System.out.println("[SimulationRunner] Registrando listener en el engine...");
             
             engine.setStateListener(new SimulationStateListener() {
+
+                //para el diagrama de Gantt
+                private Map<String, Integer> executionStarts = new HashMap<>();
+
+                @Override
+                public void onProcessExecutionStarted(String pid, int startTime) {
+                    executionStarts.put(pid, startTime);
+                    dashboardPage.getExePanel().setCurrentTime(startTime);
+                }
+
+                @Override
+                public void onProcessExecutionEnded(String pid, int endTime) {
+                    Integer start = executionStarts.get(pid);
+                    if (start != null) {
+                        dashboardPage.getExePanel().addExecution(pid, start, endTime);
+                    }
+                }
+
+                @Override
+                public void onContextSwitch() {
+                    dashboardPage.getExePanel().incrementContextSwitch();
+                }
+                
+
+                //para las colas de procesos
                 @Override
                 public void onReadyQueueChanged(List<Process> readyQueue) {
                     System.out.println("[SimulationRunner]  Ready queue actualizada: " + readyQueue.size());
-                    proPanel.updateReadyQueue(readyQueue);
+                    dashboardPage.getProPanel().updateReadyQueue(readyQueue);
                 }
 
                 @Override
                 public void onBlockedIOChanged(List<Process> blockedIO) {
                     System.out.println("[SimulationRunner]  Blocked I/O actualizada: " + blockedIO.size());
-                    proPanel.updateBlockedIO(blockedIO);
+                    dashboardPage.getProPanel().updateBlockedIO(blockedIO);
                 }
 
                 @Override
                 public void onBlockedMemoryChanged(List<Process> blockedMemory) {
                     System.out.println("[SimulationRunner]  Blocked Memory actualizada: " + blockedMemory.size());
-                    proPanel.updateBlockedMemory(blockedMemory);
+                    dashboardPage.getProPanel().updateBlockedMemory(blockedMemory);
                 }
 
                 @Override

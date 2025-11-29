@@ -309,7 +309,7 @@ public class ConfigPage extends VBox {
             SimulationRunner.runSimulation(
                 currentConfig, 
                 processFile.getAbsolutePath(),
-                dashboardPage != null ? dashboardPage.getProPanel() : null
+                dashboardPage != null ? dashboardPage : null
             );
 
             labelStatus.setText("Simulación iniciada correctamente.");
