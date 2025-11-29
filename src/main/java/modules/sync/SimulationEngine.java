@@ -81,12 +81,16 @@ public class SimulationEngine {
   
   private void coordinationLoop() { 
     while (isRunning() && !allProcessesCompleted()) {
-        // 1. SINCRONIZAR TIEMPO PRIMERO (antes de hacer nada)
+        // SINCRONIZAR TIEMPO PRIMERO (antes de hacer nada)
         syncController.synchronizeTime(getCurrentTime());
         
         notifyTimeAdvance();
+
+        // Coordinar con el planificador (ANTES de incrementar tiempo de espera)
+        coordinateScheduler();
         
-        // 2. Incrementar tiempo de espera de procesos READY
+        // Incrementar tiempo de espera SOLO para procesos que permanecen en READY
+        // después de que el scheduler haya seleccionado procesos
         synchronized(engineMonitor) {
             for (Process p : allProcesses) {
                 if (p.getState() == ProcessState.READY) {
@@ -95,10 +99,7 @@ public class SimulationEngine {
             }
         }
 
-        // 3. Coordinar con el planificador
-        coordinateScheduler();
-
-        // 4. Notificar procesos bloqueados en I/O
+        // Notificar procesos bloqueados en I/O
         synchronized(engineMonitor) {
             for (ProcessThread thread : processThreads) {
                 Process p = thread.getProcess();
@@ -119,12 +120,12 @@ public class SimulationEngine {
             }
         }
 
-        // 5. Imprimir estado del sistema cada 5 unidades
+        // Imprimir estado del sistema cada 5 unidades
         if (getCurrentTime() % 5 == 0) {
             printSystemState();
         }
         
-        // 6. INCREMENTAR TIEMPO AL FINAL
+        // INCREMENTAR TIEMPO AL FINAL
         synchronized(engineMonitor) {
             currentTime++;
             scheduler.setCurrentTime(currentTime);
@@ -169,23 +170,28 @@ public class SimulationEngine {
       scheduler.setCurrentProcess(null);
       currentRunning = null;
     }
-
-    // Context switch necesario
+    // Cuando el scheduler selecciona un proceso diferente al actual,
+    // se realiza un cambio de contexto lógico:
     if (currentRunning != nextProcess) {
+        // Cambiar proceso actual de RUNNING a READY
         if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
             synchronized(syncController.getCoordinationMonitor()) {
                 currentRunning.setState(ProcessState.READY);
             }
+            // El thread de currentRunning se bloqueará en su próximo wait()
         }
         
-        // Preparar nuevo proceso
+        // Preparar nuevo proceso (verificar memoria)
         boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
         
         if (canExecute) {
-            scheduler.confirmProcessSelection(nextProcess); 
-            wakeUpThread(nextProcess);
+            // Confirmar selección y registrar cambio de contexto
+            scheduler.confirmProcessSelection(nextProcess);  // Incrementa contextSwitches
+            // Paso 4: Despertar thread del nuevo proceso
+            wakeUpThread(nextProcess);  // El thread sale de wait() y continúa
             scheduler.recordCPUTime(1);
         } else {
+            // Proceso no puede ejecutarse (falta memoria), queda en READY
             scheduler.recordIdleTime(1);
             scheduler.addProcess(nextProcess);
         }
@@ -209,7 +215,7 @@ public class SimulationEngine {
     synchronized(engineMonitor) {
       for (ProcessThread thread : processThreads) {
         if (thread.getProcess() == process) {
-          thread.wakeUp();
+          thread.wakeUp();  // Internamente hace notifyAll() en threadMonitor
           break;
         }
       }
@@ -234,7 +240,6 @@ public class SimulationEngine {
   }
   
   private void printSystemState() {
-    /** 
     Logger.log("ESTADO DEL SISTEMA (t=" + getCurrentTime() + ")");
     
     List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
@@ -252,12 +257,25 @@ public class SimulationEngine {
     }
     
     synchronized(engineMonitor) {
-      long blocked = allProcesses.stream().filter(p -> p.getState().isBlocked()).count();
-      Logger.log("BLOQUEADOS: " + blocked + " procesos");
+      long blockedMem = allProcesses.stream()
+        .filter(p -> p.getState() == ProcessState.BLOCKED_MEMORY)
+        .count();
+      long blockedIO = allProcesses.stream()
+        .filter(p -> p.getState() == ProcessState.BLOCKED_IO)
+        .count();
+      
+      Logger.log("BLOQUEADOS MEMORIA: " + blockedMem + " procesos");
+      allProcesses.stream()
+        .filter(p -> p.getState() == ProcessState.BLOCKED_MEMORY)
+        .forEach(p -> Logger.log("     [MEM] " + p.getPid()));
+      
+      Logger.log("BLOQUEADOS I/O: " + blockedIO + " procesos");
+      allProcesses.stream()
+        .filter(p -> p.getState() == ProcessState.BLOCKED_IO)
+        .forEach(p -> Logger.log("     [I/O] " + p.getPid()));
     }
     
     Logger.log("MEMORIA: " + memoryManager.getFreeFrames() + "/" + memoryManager.getTotalFrames() + " marcos libres");
-    */
   }
   
   private void showResults() {
