@@ -24,6 +24,8 @@ public class SimulationEngine {
   private int currentTime;
   private volatile boolean running;
   
+  private SimulationStateListener stateListener;
+
   public SimulationEngine(Scheduler scheduler, MemoryManager memoryManager, List<Process> processes, Config config) {
     this.scheduler = scheduler;
     this.memoryManager = memoryManager;
@@ -41,6 +43,37 @@ public class SimulationEngine {
       processThreads.add(thread);
     }
   }
+
+  // ✅ NUEVO: Método para registrar el listener
+  public void setStateListener(SimulationStateListener listener) {
+    this.stateListener = listener;
+  }
+  
+  // ✅ NUEVO: Notificar cambios a la UI
+  private void notifyUIUpdate() {
+    if (stateListener != null) {
+      List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
+      
+      List<Process> blockedIO;
+      List<Process> blockedMemory;
+      
+      synchronized(engineMonitor) {
+        blockedIO = allProcesses.stream()
+          .filter(p -> p.getState() == ProcessState.BLOCKED_IO)
+          .toList();
+        
+        blockedMemory = allProcesses.stream()
+          .filter(p -> p.getState() == ProcessState.BLOCKED_MEMORY)
+          .toList();
+      }
+      
+      stateListener.onReadyQueueChanged(readyQueue);
+      stateListener.onBlockedIOChanged(blockedIO);
+      stateListener.onBlockedMemoryChanged(blockedMemory);
+      stateListener.onTimeChanged(currentTime);
+    }
+  }
+
   
   public void run() {
     synchronized(engineMonitor) {
@@ -121,18 +154,24 @@ public class SimulationEngine {
                 }
             }
         }
+      }
 
-        // Imprimir estado del sistema cada 5 unidades
-        if (getCurrentTime() % 5 == 0) {
-            printSystemState();
-        }
-        
-        // INCREMENTAR TIEMPO AL FINAL
-        synchronized(engineMonitor) {
-            currentTime++;
-            scheduler.setCurrentTime(currentTime);
-        }
-        
+      if (getCurrentTime() % 5 == 0) {
+        printSystemState();
+      }
+      
+      // Sincronizar tiempo global
+      syncController.synchronizeTime(getCurrentTime());
+      
+      System.out.println("[Engine] Notificando UI en tiempo: " + currentTime);
+      notifyUIUpdate();
+      
+      synchronized(engineMonitor) {
+        currentTime++;
+        scheduler.setCurrentTime(currentTime);
+      }
+      
+      sleep(config.getTimeUnit());
     }
   }
 

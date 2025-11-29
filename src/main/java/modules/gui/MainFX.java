@@ -21,6 +21,9 @@ public class MainFX extends Application {
 
     private final Map<String, VBox> pages = new LinkedHashMap<>();
     private final Map<String, Button> navButtons = new LinkedHashMap<>();
+    
+    private DashboardPage dashboardPage;
+    private ConfigPage configPage;
 
     @Override
     public void start(Stage stage) {
@@ -46,9 +49,18 @@ public class MainFX extends Application {
     }
 
     private void crearPaginas(Stage stage) {
-        pages.put("config", new ConfigPage(stage));
-        pages.put("dashboard", new DashboardPage());
+        dashboardPage = new DashboardPage();
+        
+        configPage = new ConfigPage(stage, dashboardPage);
+        dashboardPage.setConfigPage(configPage);
+        
+        pages.put("config", configPage);
+        pages.put("dashboard", dashboardPage);
         pages.put("resultados", new ResultadosPage());
+        //deubug
+        //System.out.println("[MainFX] DashboardPage creado: " + dashboardPage);
+        //System.out.println("[MainFX] ConfigPage creado: " + configPage);
+        //System.out.println("[MainFX] ProPanel disponible: " + dashboardPage.getProPanel());
     }
 
     private HBox crearNavbar() {
