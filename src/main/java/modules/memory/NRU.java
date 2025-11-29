@@ -13,7 +13,7 @@ public class NRU extends MemoryManager {
 
     public NRU(int totalFrames) {
         super(totalFrames);
-        Logger.log("NRU MemoryManager inicializado con " + totalFrames + " marcos");
+        Logger.memLog("NRU MemoryManager inicializado con " + totalFrames + " marcos");
     }
 
     @Override //Clases 4 
@@ -53,7 +53,7 @@ public class NRU extends MemoryManager {
             why = "ultimo, por no existencias en las anteriores categorias prioritarias...es elegido";
         }
 
-        Logger.debug("NRU selecciono marco " + victim + " como victima por " + why);
+        Logger.memLog("NRU selecciono marco " + victim + " como victima por " + why);
         return victim;
     }
 
@@ -78,7 +78,7 @@ public class NRU extends MemoryManager {
 
    
     public void printClassState() {
-        Logger.log(getClassState());
+        Logger.memLog(getClassState());
        
     }
 }

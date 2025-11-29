@@ -23,7 +23,7 @@ public class LRU extends MemoryManager {
             }
         }
 
-        Logger.debug("LRU selecciono marco " + victimIndex + " como victima");
+        Logger.memLog("LRU selecciono marco " + victimIndex + " como victima");
 
         return victimIndex;
     }
@@ -45,7 +45,7 @@ public class LRU extends MemoryManager {
 
 
     public void printAccessState() {
-        Logger.log(getAccessState());
+        Logger.memLog(getAccessState());
         // GUI: dibujar heatmap de lastAccessTime
     }
 }

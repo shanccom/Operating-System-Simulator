@@ -180,7 +180,7 @@ public abstract class MemoryManager {
             return true;
         }
 
-        Logger.error("[MEM] ERROR: No se pudo cargar la pagina " + pageNumber + " del proceso " + pid);
+        Logger.memLog("[MEM] ERROR: No se pudo cargar la pagina " + pageNumber + " del proceso " + pid);
         return false;
     }
 
@@ -274,7 +274,7 @@ public abstract class MemoryManager {
             }
         }
         processPageMap.remove(pid);
-        Logger.debug("[MEM] Paginas del proceso " + pid + " liberadas");
+        Logger.memLog("[MEM] Paginas del proceso " + pid + " liberadas");
         Logger.memSnapshot(frames);
     }
 
@@ -324,11 +324,11 @@ public abstract class MemoryManager {
 
 
     public void printMetrics() {
-        Logger.log("[MEM] METRICAS - " + getAlgorithmName());
-        Logger.log("Fallos de pagina: " + pageFaults);
-        Logger.log("Reemplazos: " + pageReplacements);
-        Logger.log("Cargas totales: " + totalPageLoads);
-        Logger.log("Marcos libres: " + getFreeFrames() + "/" + totalFrames);
+        Logger.memLog("[MEM] METRICAS - " + getAlgorithmName());
+        Logger.memLog("Fallos de pagina: " + pageFaults);
+        Logger.memLog("Reemplazos: " + pageReplacements);
+        Logger.memLog("Cargas totales: " + totalPageLoads);
+        Logger.memLog("Marcos libres: " + getFreeFrames() + "/" + totalFrames);
     }
 
 
@@ -341,6 +341,6 @@ public abstract class MemoryManager {
         pageFaults = 0;
         pageReplacements = 0;
         totalPageLoads = 0;
-        Logger.log("[MEM] Memoria reseteada");
+        Logger.memLog("[MEM] Memoria reseteada");
     }
 }

@@ -4,6 +4,7 @@ import javafx.animation.FillTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -25,9 +26,12 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     }
 
     public void initialize(int totalFrames) {
-        // Limpia si ya existía algo
-        getChildren().clear();
-
+       
+        getChildren().clear(); // Limpia si ya existía algo
+        getStyleClass().add("card-mem");
+        Label title = new Label("Memoria");
+        title.getStyleClass().add("card-title");
+        
         framesRow = new HBox(12);
         framesRow.setAlignment(Pos.CENTER);
 
@@ -54,7 +58,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             card.getChildren().addAll(r, label);
             framesRow.getChildren().add(card);
         }
-
+        getChildren().add(title);
         getChildren().add(framesRow);
     }
 
@@ -111,10 +115,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         // opcional: podrías mostrar un panel lateral
     }
 
-    // =============================
-    //      ANIMACIONES
-    // =============================
-
+    // ANIMACIONES
     private void animateColor(int frameIndex, Color color) {
         Rectangle r = frameRects[frameIndex];
         FillTransition ft = new FillTransition(Duration.millis(300), r);

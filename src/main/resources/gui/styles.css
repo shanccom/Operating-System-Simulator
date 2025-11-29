@@ -74,6 +74,49 @@
   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 16, 0.16, 0, 8);
 }
 
+
+.card-mem:exe{
+  -fx-background-color: #b4218d2d;
+    -fx-border-width: 4;
+  -fx-background-radius: 16;
+  -fx-border-radius: 16;
+  -fx-border-color: rgb(255, 0, 161);
+  -fx-padding: 18;
+  -fx-spacing: 10;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.119), 16, 0.16, 0, 8);
+}
+.card-mem{
+  -fx-background-radius: 16;
+  -fx-border-width: 2;
+  -fx-border-radius: 16;
+  -fx-border-color: #ff5edfff;
+  -fx-padding: 18;
+  -fx-spacing: 10;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.119), 16, 0.16, 0, 8);
+}
+.card-proc{
+  -fx-background-radius: 16;
+  -fx-border-width: 2;
+  -fx-border-radius: 16;
+  -fx-border-color: #9bfdcaff;
+  -fx-padding: 18;
+  -fx-spacing: 10;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.119), 16, 0.16, 0, 8);
+}
+.card-exe{
+  -fx-background-radius: 16;
+  -fx-border-width: 2;
+  -fx-border-radius: 16;
+  -fx-border-color: #9d94fdff;
+  -fx-padding: 18;
+  -fx-spacing: 10;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.119), 16, 0.16, 0, 8);
+}
+.card-title-mem {
+  -fx-text-fill: #ff41e6;
+  -fx-font-size: 16px;
+  -fx-font-weight: 800;
+}
 .card-title {
   -fx-text-fill: #f5e9ff;
   -fx-font-size: 16px;

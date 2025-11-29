@@ -22,7 +22,7 @@ public class FIFO extends MemoryManager {
         // FIFO: seleccionar el marco que fue cargado primero (mas antiguo)
 
         if (frameQueue.isEmpty()) {
-          Logger.warning("Cola FIFO vacía, no hay víctimas disponibles");
+          Logger.memLog("Cola FIFO vacía, no hay víctimas disponibles");
           return -1;
         }
 
@@ -46,7 +46,7 @@ public class FIFO extends MemoryManager {
       
       if (!frameQueue.contains(frameIndex)) {
           frameQueue.offer(frameIndex);
-          Logger.debug("Marco " + frameIndex + " agregado a cola FIFO (nuevo)");
+          Logger.memLog("Marco " + frameIndex + " agregado a cola FIFO (nuevo)");
       }
     }
 
@@ -55,7 +55,7 @@ public class FIFO extends MemoryManager {
       super.replacePage(frameIndex, newPid, newPage);
   
       if (!frameQueue.remove(frameIndex)) {
-          Logger.warning("Marco " + frameIndex + " no estaba en cola FIFO");
+          Logger.memLog("Marco " + frameIndex + " no estaba en cola FIFO");
       }
       frameQueue.offer(frameIndex);
        
@@ -70,7 +70,7 @@ public class FIFO extends MemoryManager {
     public synchronized void reset() {
         super.reset();
         frameQueue.clear();
-        Logger.log("Cola FIFO limpiada");
+        Logger.memLog("Cola FIFO limpiada");
        
     }
 
@@ -96,10 +96,10 @@ public class FIFO extends MemoryManager {
 
 
     public void printQueueState() {
-        Logger.log("Estado actual de la cola FIFO:");
+        Logger.memLog("Estado actual de la cola FIFO:");
         for (Integer frameIndex : frameQueue) {
             Frame f = frames[frameIndex];
-            Logger.log(" -> Marco " + frameIndex + ": " + f.toString());
+            Logger.memLog(" -> Marco " + frameIndex + ": " + f.toString());
         }
         
     }

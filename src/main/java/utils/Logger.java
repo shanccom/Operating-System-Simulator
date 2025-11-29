@@ -60,7 +60,12 @@ public class Logger {
       WARNING,
       ERROR,
       DEBUG,
-      EVENT
+      EVENT,
+      MEM,
+      EXE,
+      SYNC,
+      PROC,
+
   }
 
   public static void log(String message) {
@@ -83,34 +88,16 @@ public class Logger {
       notifyListeners(entry);
   }
   
-  //Log para cambio de estado de un proceso
+  //Log para cambio de estado de un proceso sergio
   public static void logStateChange(String pid, ProcessState oldState, 
                                     ProcessState newState, int time) {
       String message = String.format(
           "[T=%d] Proceso %s: %s → %s",
           time, pid, oldState, newState
       );
-      log(message, LogLevel.EVENT);
+      log(message, LogLevel.PROC);
   }
   
-  // Log para fallo de pagina
-  public static void logPageFault(String pid, int pageNumber, int time) {
-      String message = String.format(
-          "[T=%d] PAGE FAULT - Proceso %s necesita SU pagina %d",
-          time, pid, pageNumber
-      );
-      log(message, LogLevel.WARNING);
-  }
-  
-  // Log de reemplazo de pagina
-  public static void logPageReplacement(String victimPid, int victimPage,
-                                        String newPid, int newPage, int time) {
-      String message = String.format(
-          "[T=%d] REEMPLAZO - Proceso %s pagina %d → Proceso %s pagina %d",
-          time, victimPid, victimPage, newPid, newPage
-      );
-      log(message, LogLevel.EVENT);
-  }
   
   // Log de ejecucion de una rafaga
   public static void logBurstExecution(String pid, String burstType, 
@@ -119,7 +106,7 @@ public class Logger {
           "[T=%d] Proceso %s ejecutando rafaga %s por %d unidades",
           time, pid, burstType, duration
       );
-      log(message, LogLevel.DEBUG);
+      log(message, LogLevel.EXE);
   }
   
   public static void error(String message) {
@@ -133,7 +120,20 @@ public class Logger {
   public static void debug(String message) {
       log(message, LogLevel.DEBUG);
   }
- 
+ //Para tipos
+  public static void memLog(String message) {
+      log(message, LogLevel.MEM);
+  }
+  public static void syncLog(String message) {
+      log(message, LogLevel.SYNC);
+  }
+  public static void procLog(String message) {
+      log(message, LogLevel.PROC);
+  }
+  public static void exeLog(String message) {
+      log(message, LogLevel.EXE);
+  }
+
   public static List<LogEntry> getAllLogs() {
       return new ArrayList<>(logs);
   }
@@ -207,38 +207,39 @@ public class Logger {
     public static void setLogFilePath(String path) {
         logFilePath = path;
     }
+
     ///memoria
     public static void memLoad(String pid, int page, int frame) {
         log(String.format(
             "[MEM][LOAD] Se carga la pagina %d del proceso %s en el marco %d",
             page, pid, frame
-        ), LogLevel.EVENT);
+        ), LogLevel.MEM);
     }
 
     public static void memHit(String pid, int page, int frame) {
         log(String.format(
             "[MEM][HIT] La pagina %d del proceso %s ya estaba cargada (marco %d)",
             page, pid, frame
-        ), LogLevel.DEBUG);
+        ), LogLevel.MEM);
     }
 
     public static void memFault(String pid, int page) {
         log(String.format(
             "[MEM][PAGE FAULT] El proceso %s pidio la pagina %d, pero NO estaba en memoria",
             pid, page
-        ), LogLevel.WARNING);
+        ), LogLevel.MEM);
     }
 
     public static void memReplace(String oldPid, int oldPage, String newPid, int newPage, int frame, String reason) {
         log(String.format(
             "[MEM][REPLACE] Se reemplazo %s:P%d por %s:P%d en el marco %d | Motivo: %s",
             oldPid, oldPage, newPid, newPage, frame, reason
-        ), LogLevel.EVENT);
+        ), LogLevel.MEM);
     }
 
     public static void memSnapshot(Frame[] frames) {
         StringBuilder sb = new StringBuilder();
-        sb.append("\nMEMORIA FISICA =====================================\n");
+        sb.append("\nMEMORIA FISICA ____________________________________\n");
         for (int i = 0; i < frames.length; i++) {
             Frame f = frames[i];
             if (!f.isOccupied()) {
@@ -250,7 +251,7 @@ public class Logger {
                 ));
             }
         }
-        sb.append("=====================================================\n");
-        log(sb.toString(), LogLevel.DEBUG);
+        sb.append("_____________________________________________________\n");
+        log(sb.toString(), LogLevel.MEM);
     }
 }

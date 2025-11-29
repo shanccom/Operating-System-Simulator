@@ -52,7 +52,7 @@ public class ProcessThread extends Thread {
         threadMonitor.wait(50);
       }
     }
-    Logger.log(String.format("[T=%d] [%s]    Proceso llego al sistema", arrivalTime, process.getPid()));
+    Logger.procLog(String.format("[T=%d] [%s]    Proceso llego al sistema", arrivalTime, process.getPid()));
   }
 
   private void arriveAtSystem() {
@@ -84,7 +84,7 @@ public class ProcessThread extends Thread {
       Burst currentBurst = process.getCurrentBurst();
 
       if (currentBurst == null) {
-        Logger.log("[THREAD-" + process.getPid() + "] No hay mas rafagas, terminando");
+        Logger.syncLog("[THREAD-" + process.getPid() + "] No hay mas rafagas, terminando");
         break;
       }
 
@@ -133,7 +133,7 @@ public class ProcessThread extends Thread {
         // Verificar páginas requeridas (fuera de locks para evitar deadlocks)
         if (!syncController.hasRequiredPages(process)) {
             int currentTime = syncController.getScheduler().getCurrentTime();
-            Logger.log(String.format("[T=%d] [%s]   Falta memoria proceso será bloqueado por MEMORIA", 
+            Logger.syncLog(String.format("[T=%d] [%s]   Falta memoria proceso será bloqueado por MEMORIA", 
                 currentTime, process.getPid()));
             // Bloquear explícitamente por memoria y forzar cambio de contexto
             syncController.blockProcessForMemory(process);
@@ -150,7 +150,7 @@ public class ProcessThread extends Thread {
             // así cada unidad de CPU se asocia a una única t.
             int remaining = burst.getRemainingTime();
             int progress = burst.getDuration() - remaining;
-            Logger.log(String.format("[T=%d] [%s] Ejecutando CPU: %d/%d unidades completadas (restante: %d)", 
+            Logger.exeLog(String.format("[T=%d] [%s] Ejecutando CPU: %d/%d unidades completadas (restante: %d)", 
                 currentTime, process.getPid(), progress, burst.getDuration(), remaining));
         }
         
@@ -167,7 +167,7 @@ public class ProcessThread extends Thread {
 
     if (burst.isCompleted()) {
       int currentTime = syncController.getScheduler().getCurrentTime();
-      Logger.log(String.format("[T=%d] [%s]   Rafaga CPU completada (%d unidades)", 
+      Logger.exeLog(String.format("[T=%d] [%s]   Rafaga CPU completada (%d unidades)", 
           currentTime, process.getPid(), burst.getDuration()));
     }
   }
@@ -175,7 +175,7 @@ public class ProcessThread extends Thread {
 
   private void executeIOBurst(Burst burst) throws InterruptedException {
     int currentTime = syncController.getScheduler().getCurrentTime();
-    Logger.log(String.format("[T=%d] [%s] → Solicita operacion I/O (duracion: %d unidades)", 
+    Logger.procLog(String.format("[T=%d] [%s] → Solicita operacion I/O (duracion: %d unidades)", 
         currentTime, process.getPid(), burst.getDuration()));
     
     // Cambiar estado a BLOCKED_IO
@@ -208,10 +208,10 @@ public class ProcessThread extends Thread {
     syncController.releaseProcessResources(process);
     
     System.out.println();
-    Logger.log("[THREAD-" + process.getPid() + "] METRICAS FINALES:");
-    Logger.log("  Tiempo de espera: " + process.getWaitingTime());
-    Logger.log("  Tiempo de retorno: " + process.getTurnaroundTime());
-    Logger.log("  Fallos de página: " + process.getPageFaults());
+    Logger.syncLog("[THREAD-" + process.getPid() + "] METRICAS FINALES DE THREADS:");
+    Logger.syncLog("  Tiempo de espera: " + process.getWaitingTime());
+    Logger.syncLog("  Tiempo de retorno: " + process.getTurnaroundTime());
+    Logger.syncLog("  Fallos de página: " + process.getPageFaults());
     System.out.println();
   }
 

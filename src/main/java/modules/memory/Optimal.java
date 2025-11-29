@@ -12,7 +12,7 @@ public class Optimal extends MemoryManager {
 
     public Optimal(int totalFrames) {
         super(totalFrames);
-        Logger.log("Optimal MemoryManager inicializado con " + totalFrames + " marcos");
+        Logger.memLog("Optimal MemoryManager inicializado con " + totalFrames + " marcos");
     }
 
     // Configura accesos futuros para un proceso
@@ -42,7 +42,7 @@ public class Optimal extends MemoryManager {
             }
         }
 
-        Logger.debug("Optimal seleccionó marco " + victim + " como víctima (distancia futura: " + farthest + ")");
+        Logger.memLog("Optimal seleccionó marco " + victim + " como víctima (distancia futura: " + farthest + ")");
 
         
         return victim;
@@ -73,7 +73,6 @@ public class Optimal extends MemoryManager {
     }
 
     public void printFutureState(String pid) {
-        Logger.log(getFutureState(pid));
-        // GUI: dibujar distancias al próximo uso
+        Logger.memLog(getFutureState(pid));
     }
 }

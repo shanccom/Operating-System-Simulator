@@ -100,21 +100,21 @@ public class SimulationRunner {
     
     private static void printSystemConfiguration(Config config, List<Process> processes, Scheduler scheduler, MemoryManager memoryManager) {
         
-        System.out.println();
-        Logger.log("CONFIGURACION DEL SISTEMA:");
-        Logger.log("Recuerda:  Cada proceso tiene sus propias paginas y no se mezclan, solo se comparte la memoria fisica(Frames)");
+        System.out.println(); //ESte si imprime 
+        Logger.syncLog("CONFIGURACION DEL SISTEMA:");
+        Logger.syncLog("Recuerda:  Cada proceso tiene sus propias paginas y no se mezclan, solo se comparte la memoria fisica(Frames)");
     //Una pagina solo necesita un frame libre donde colocarse. La tabla de paginas es la que guarda esa relacion.
-        Logger.log("    Algoritmo de planificacion: " + scheduler.getAlgorithmName());
-        Logger.log("    Algoritmo de reemplazo: " + memoryManager.getAlgorithmName());
-        Logger.log("    Marcos de memoria: " + config.getTotalFrames());
-        Logger.log("    Tamaño de marco: " + config.getFrameSize() + " bytes");
-        Logger.log("    Quantum (RR): " + config.getQuantum() + " unidades");
-        Logger.log("    Unidad de tiempo: " + config.getTimeUnit() + " ms");
-        Logger.log("    Numero de procesos: " + processes.size() + "\n");
+        Logger.syncLog("    Algoritmo de planificacion: " + scheduler.getAlgorithmName());
+        Logger.syncLog("    Algoritmo de reemplazo: " + memoryManager.getAlgorithmName());
+        Logger.syncLog("    Marcos de memoria: " + config.getTotalFrames());
+        Logger.syncLog("    Tamaño de marco: " + config.getFrameSize() + " bytes");
+        Logger.syncLog("    Quantum (RR): " + config.getQuantum() + " unidades");
+        Logger.syncLog("    Unidad de tiempo: " + config.getTimeUnit() + " ms");
+        Logger.syncLog("    Numero de procesos: " + processes.size() + "\n");
         
-        Logger.log("PROCESOS CARGADOS:");
+        Logger.syncLog("PROCESOS CARGADOS:");
         for (Process process : processes) {
-            Logger.log(String.format(
+            Logger.syncLog(String.format(
                 "   %s: Llegada = %d, Prioridad = %d, Rafagas = %d, Memoria = %d paginas",
                 process.getPid(),
                 process.getArrivalTime(),

@@ -96,7 +96,7 @@ public class SimulationEngine {
     sleep(50);
     for (ProcessThread thread : processThreads) {
       thread.start();
-      Logger.log("  Thread creado: " + thread.getName());
+      Logger.syncLog("  Thread creado: " + thread.getName());
       sleep(10);
     }
   }
@@ -177,7 +177,7 @@ public class SimulationEngine {
     // Limpiar procesos en estados inválidos
     if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
       if (!syncController.hasRequiredPages(currentRunning)) {
-        Logger.log("[ENGINE] " + currentRunning.getPid() + " perdió páginas durante ejecución");
+        Logger.syncLog("[ENGINE] " + currentRunning.getPid() + " perdió páginas durante ejecución");
         currentRunning.setState(ProcessState.READY);
         scheduler.addProcess(currentRunning);
         scheduler.setCurrentProcess(null);
@@ -209,7 +209,7 @@ public class SimulationEngine {
             
             // Si el quantum se agotó, forzar expropiación
             if (rr.isQuantumAgotado()) {
-                Logger.debug("[ENGINE] Quantum agotado para " + currentRunning.getPid() + ", expropiando");
+                Logger.exeLog("[ENGINE] Quantum agotado para " + currentRunning.getPid() + ", expropiando");
                 synchronized(syncController.getCoordinationMonitor()) {
                     currentRunning.setState(ProcessState.READY);
                 }
@@ -222,7 +222,7 @@ public class SimulationEngine {
                 boolean wasPreempted = false;
                 for (Process candidate : readyQueue) {
                     if (scheduler.shouldPreempt(currentRunning, candidate)) {
-                        Logger.debug("[ENGINE] Expropiando " + currentRunning.getPid() + " por " + candidate.getPid());
+                        Logger.exeLog("[ENGINE] Expropiando " + currentRunning.getPid() + " por " + candidate.getPid());
                         synchronized(syncController.getCoordinationMonitor()) {
                             currentRunning.setState(ProcessState.READY);
                         }
@@ -244,7 +244,7 @@ public class SimulationEngine {
             boolean wasPreempted = false;
             for (Process candidate : readyQueue) {
                 if (scheduler.shouldPreempt(currentRunning, candidate)) {
-                    Logger.debug("[ENGINE] Expropiando " + currentRunning.getPid() + " por " + candidate.getPid());
+                    Logger.exeLog("[ENGINE] Expropiando " + currentRunning.getPid() + " por " + candidate.getPid());
                     synchronized(syncController.getCoordinationMonitor()) {
                         currentRunning.setState(ProcessState.READY);
                     }
@@ -348,20 +348,20 @@ public class SimulationEngine {
   }
   
   private void printSystemState() {
-    Logger.log("ESTADO DEL SISTEMA (t=" + getCurrentTime() + ")");
+    Logger.syncLog("ESTADO DEL SISTEMA (t=" + getCurrentTime() + ")");
     
     List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
-    Logger.log("Cola READY: " + readyQueue.size() + " procesos");
+    Logger.procLog("Cola READY: " + readyQueue.size() + " procesos");
     for (Process p : readyQueue) {
-      Logger.log("     " + p.getPid() + " (Espera: " + p.getWaitingTime() + ")");
+      Logger.procLog("     " + p.getPid() + " (Espera: " + p.getWaitingTime() + ")");
     }
     
     Process running = scheduler.getCurrentProcess();
     if (running != null) {
       model.Burst burst = running.getCurrentBurst();
-      Logger.log("EJECUTANDO: " + running.getPid() + " - " + (burst != null ? burst.getType() : "NULL"));
+      Logger.procLog("EJECUTANDO: " + running.getPid() + " - " + (burst != null ? burst.getType() : "NULL"));
     } else {
-      Logger.log("EJECUTANDO: [CPU IDLE]");
+      Logger.procLog("EJECUTANDO: [CPU IDLE]");
     }
     
     synchronized(engineMonitor) {
@@ -372,29 +372,29 @@ public class SimulationEngine {
         .filter(p -> p.getState() == ProcessState.BLOCKED_IO)
         .count();
       
-      Logger.log("BLOQUEADOS MEMORIA: " + blockedMem + " procesos");
+      Logger.procLog("BLOQUEADOS MEMORIA: " + blockedMem + " procesos");
       allProcesses.stream()
         .filter(p -> p.getState() == ProcessState.BLOCKED_MEMORY)
         .forEach(p -> Logger.log("     [MEM] " + p.getPid()));
       
-      Logger.log("BLOQUEADOS I/O: " + blockedIO + " procesos");
+      Logger.procLog("BLOQUEADOS I/O: " + blockedIO + " procesos");
       allProcesses.stream()
         .filter(p -> p.getState() == ProcessState.BLOCKED_IO)
-        .forEach(p -> Logger.log("     [I/O] " + p.getPid()));
+        .forEach(p -> Logger.procLog("     [I/O] " + p.getPid()));
     }
     
-    Logger.log("MEMORIA: " + memoryManager.getFreeFrames() + "/" + memoryManager.getTotalFrames() + " marcos libres");
+    Logger.memLog("[MEM] " + memoryManager.getFreeFrames() + "/" + memoryManager.getTotalFrames() + " marcos libres");
   }
   
   private void showResults() {
     scheduler.printMetrics();
     memoryManager.printMetrics();
     
-    Logger.log("MÉTRICAS POR PROCESO");
+    Logger.syncLog("MÉTRICAS POR PROCESO");
     
     synchronized(engineMonitor) {
       for (Process p : allProcesses) {
-        Logger.log(String.format(
+        Logger.syncLog(String.format(
           "%s: Espera=%d, Retorno=%d, Respuesta=%d, PageFaults=%d",
           p.getPid(),
           p.getWaitingTime(),

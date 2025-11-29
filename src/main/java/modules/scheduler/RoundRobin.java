@@ -21,7 +21,7 @@ public class RoundRobin extends Scheduler {
         this.quantum = quantum;
         this.currentQuantumRemaining = 0;
         
-        Logger.log("Planificador Round Robin inicializado (quantum=" + quantum + ")");
+        Logger.exeLog("Planificador Round Robin inicializado (quantum=" + quantum + ")");
     }
     
     @Override
@@ -30,7 +30,7 @@ public class RoundRobin extends Scheduler {
         
         if (next != null) {
             // Resetear quantum completo al nuevo proceso (se asignará en confirmProcessSelection)
-            Logger.debug(String.format("RR seleccionó: %s (quantum=%d)", 
+            Logger.procLog(String.format("RR selecciono: %s (quantum=%d)", 
                         next.getPid(), quantum));
         }
         
@@ -41,7 +41,7 @@ public class RoundRobin extends Scheduler {
     public boolean shouldPreempt(Process current, Process candidate) {
         // Round Robin debe interrumpir cuando el quantum se agota
         if (currentQuantumRemaining <= 0) {
-            Logger.debug("Quantum agotado para proceso " + current.getPid());
+            Logger.exeLog("Quantum agotado para proceso " + current.getPid());
             return true;
         }
         return false;

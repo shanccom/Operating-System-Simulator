@@ -13,7 +13,7 @@ public class MemPanel extends VBox {
 
     public MemPanel() {
         setSpacing(10);
-        setPadding(new Insets(15));
+        setPadding(new Insets(10));
         setAlignment(Pos.TOP_CENTER);
     }
 

@@ -93,7 +93,7 @@ public class SyncController {
     synchronized (coordinationMonitor) {
       if (process.getState() != ProcessState.TERMINATED) {
         transitionState(process, ProcessState.BLOCKED_MEMORY);
-        Logger.log("[SYNC] Proceso " + process.getPid() + " bloqueado por memoria");
+        Logger.procLog("[SYNC] Proceso " + process.getPid() + " bloqueado por memoria");
         scheduler.forceContextSwitch();
       }
     }
@@ -128,7 +128,7 @@ public class SyncController {
       ProcessState previousState = process.getState();
 
       if (process.getState() == ProcessState.TERMINATED) {
-        Logger.log("[SYNC] Proceso ya terminado");
+        Logger.procLog("[SYNC] Proceso ya terminado");
         return;
       }
       
@@ -139,7 +139,7 @@ public class SyncController {
       
       // Notificación explícita cuando pasa de BLOQUEADO -> READY
       if (previousState.isBlocked() && process.getState() == ProcessState.READY) {
-        Logger.log(String.format(
+        Logger.procLog(String.format(
           "[SYNC] Proceso %s pasa de BLOQUEADO (%s) a READY (razón: %s)",
           process.getPid(), previousState, reason
         ));

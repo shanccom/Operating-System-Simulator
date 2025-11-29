@@ -1,7 +1,6 @@
 package modules.scheduler;
 
 import model.Process;
-import utils.Logger;
 
 /**
  * First Come First Served (FCFS)

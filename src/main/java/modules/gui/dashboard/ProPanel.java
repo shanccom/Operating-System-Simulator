@@ -19,7 +19,7 @@ public class ProPanel extends VBox {
     public ProPanel() {
         setSpacing(10);
         setPadding(new Insets(16));
-        getStyleClass().add("card");
+        getStyleClass().add("card-proc");
 
         Label title = new Label("Colas de Procesos");
         title.getStyleClass().add("card-title");

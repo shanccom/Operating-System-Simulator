@@ -63,12 +63,12 @@ public class IOManager implements Runnable {
         processIORequest(request);
       } catch (InterruptedException e) {
         if (isRunning()) {
-          Logger.warning("[IOMANAGER] Interrumpido inesperadamente");
+          Logger.warning("WARNING [IOMANAGER] Interrumpido inesperadamente");
         }
         Thread.currentThread().interrupt();
         break;
       } catch (Exception e) {
-        Logger.error("[IOMANAGER] Error: " + e.getMessage());
+        Logger.error("ERROR [IOMANAGER] Error: " + e.getMessage());
         e.printStackTrace();
       }
     }
@@ -88,7 +88,7 @@ public class IOManager implements Runnable {
     int startTime = syncController.getScheduler().getCurrentTime();
     int endTime = startTime + duration;
 
-    Logger.log(String.format("[T=%d] [I/O] Iniciando operacion I/O para %s (duracion: %d unidades, completara en t=%d)", 
+    Logger.procLog(String.format("[T=%d] [I/O] Iniciando operacion I/O para %s (duracion: %d unidades, completara en t=%d)", 
         startTime, process.getPid(), duration, endTime));
 
     // Espera sincronizada con el tiempo simulado
@@ -126,7 +126,7 @@ public class IOManager implements Runnable {
       // Notificar fuera del lock para evitar deadlocks con SyncController
       if (process.getState() != ProcessState.TERMINATED) {
         int completionTime = syncController.getScheduler().getCurrentTime();
-        Logger.log(String.format("[T=%d] [I/O]    Operacion I/O completada para %s (duracion: %d unidades)", 
+        Logger.procLog(String.format("[T=%d] [I/O]    Operacion I/O completada para %s (duracion: %d unidades)", 
             completionTime, process.getPid(), duration));
         
         // Notificar al SyncController que el proceso volvió a READY
@@ -152,7 +152,7 @@ public class IOManager implements Runnable {
       try {
         ioQueue.put(request);
         totalIOOperations.incrementAndGet();
-        Logger.log(String.format("[T=%d] [%s → I/O] Solicitud encolada (solicitudes pendientes: %d)", 
+        Logger.procLog(String.format("[T=%d] [%s → I/O] Solicitud encolada (solicitudes pendientes: %d)", 
             currentTime, process.getPid(), ioQueue.size()));
       } catch (InterruptedException e) {
         Logger.error("[IOMANAGER] Error encolando: " + e.getMessage());
@@ -182,7 +182,7 @@ public class IOManager implements Runnable {
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        Logger.error("[IOMANAGER] Interrumpido durante stop");
+        Logger.exeLog("[IOMANAGER] Interrumpido durante stop");
       }
     }
     

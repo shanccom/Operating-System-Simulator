@@ -11,7 +11,7 @@ public class SJF extends Scheduler {
     
     public SJF() {
         super();
-        Logger.log("Planificador SJF inicializado");
+        Logger.exeLog("Planificador SJF inicializado");
     }
     
     @Override
@@ -40,7 +40,7 @@ public class SJF extends Scheduler {
         if(shortest != null){
             //readyQueue.remove(shortest);
             //contextSwitch(shortest);
-            Logger.debug("SJF seleccionó: " + shortest.getPid() + " con ráfaga restante " + shortestBurstTime);
+            Logger.procLog("SJF seleccionó: " + shortest.getPid() + " con ráfaga restante " + shortestBurstTime);
         }
         
         

@@ -13,7 +13,7 @@ public class LogsPanel extends VBox {
     private final ListView<Logger.LogEntry> list = new ListView<>();
 
     public LogsPanel() {
-        setSpacing(10);
+        setSpacing(9);
         setPadding(new Insets(16));
         getStyleClass().add("card");
 
@@ -51,14 +51,16 @@ public class LogsPanel extends VBox {
             setText(item.toString());
 
             String color = switch (item.getLevel()) {
-                case ERROR -> "#ef4444";
-                case WARNING -> "#f59e0b";
-                case DEBUG -> "#e0e9fbff";
-                case EVENT -> "#10b981";
+                case MEM -> "#ff5edfff";
+                case EXE -> "#9d94fdff";
+                case PROC -> "#9bfdcaff";
+                case SYNC -> "#fff7beff";
+                case ERROR -> "#fd0000ff";
+                case WARNING -> "#fd7600ff";
                 default -> "#9fa5acff";
             };
 
-            setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Consolas';" + "-fx-background-color: #0f0a1a; " + "-fx-font-size: 13px;");
+            setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Consolas';" + "-fx-background-color: #0f0a1a; " + "-fx-font-size: 13.5px;");
         }
     }
 }

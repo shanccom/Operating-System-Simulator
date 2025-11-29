@@ -25,7 +25,7 @@ public class SRT extends Scheduler {
     
     public SRT() {
         super();
-        Logger.log("Planificador SRT inicializado (SJF expropiativo)");
+        Logger.exeLog("Planificador SRT inicializado (SJF expropiativo)");
     }
     
     @Override
@@ -54,7 +54,7 @@ public class SRT extends Scheduler {
         if (shortest != null) {
             //readyQueue.remove(shortest);
             //contextSwitch(shortest);
-            Logger.debug("SRTF seleccionó: " + shortest.getPid() + 
+            Logger.procLog("SRTF seleccionó: " + shortest.getPid() + 
                         " con tiempo restante " + shortestRemainingTime);
         }
         
@@ -80,7 +80,7 @@ public class SRT extends Scheduler {
         int candidateRemaining = candidateBurst.getRemainingTime();
         
         if (candidateRemaining < currentRemaining) {
-            Logger.debug("SRT: Expropiando " + current.getPid() + 
+            Logger.exeLog("SRT: Expropiando " + current.getPid() + 
                         " (restante=" + currentRemaining + ") por " + 
                         candidate.getPid() + " (restante=" + candidateRemaining + ")");
             return true;
