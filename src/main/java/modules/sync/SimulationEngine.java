@@ -88,7 +88,9 @@ public class SimulationEngine {
 
         // Coordinar con el planificador (ANTES de incrementar tiempo de espera)
         coordinateScheduler();
-        
+
+        sleep(config.getTimeUnit());
+
         // Incrementar tiempo de espera SOLO para procesos que permanecen en READY
         // después de que el scheduler haya seleccionado procesos
         synchronized(engineMonitor) {
@@ -131,7 +133,6 @@ public class SimulationEngine {
             scheduler.setCurrentTime(currentTime);
         }
         
-        sleep(config.getTimeUnit());
     }
   }
 
@@ -147,7 +148,7 @@ public class SimulationEngine {
     
     if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
       if (!syncController.hasRequiredPages(currentRunning)) {
-        // Proceso perdió páginas durante su ejecución
+
         Logger.log("[ENGINE] " + currentRunning.getPid() + " perdió páginas durante ejecución");
         currentRunning.setState(ProcessState.READY);
         scheduler.addProcess(currentRunning);
@@ -187,7 +188,7 @@ public class SimulationEngine {
         if (canExecute) {
             // Confirmar selección y registrar cambio de contexto
             scheduler.confirmProcessSelection(nextProcess);  // Incrementa contextSwitches
-            // Paso 4: Despertar thread del nuevo proceso
+            // Despertar thread del nuevo proceso
             wakeUpThread(nextProcess);  // El thread sale de wait() y continúa
             scheduler.recordCPUTime(1);
         } else {

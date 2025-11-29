@@ -144,14 +144,14 @@ public class ProcessThread extends Thread {
         
         // Verificar estado antes de ejecutar
         if (process.getState() == ProcessState.RUNNING && !burst.isCompleted() && running) {
-            burst.execute(1);
-
             int currentTime = syncController.getScheduler().getCurrentTime();
-            int logTime = Math.max(0, currentTime - 1);
+            burst.execute(1);
+            // Usar directamente el tiempo actual del scheduler para el log,
+            // así cada unidad de CPU se asocia a una única t.
             int remaining = burst.getRemainingTime();
             int progress = burst.getDuration() - remaining;
             Logger.log(String.format("[T=%d] [%s] Ejecutando CPU: %d/%d unidades completadas (restante: %d)", 
-                logTime, process.getPid(), progress, burst.getDuration(), remaining));
+                currentTime, process.getPid(), progress, burst.getDuration(), remaining));
         }
         
         // Esperar siguiente ciclo si la ráfaga no está completa
