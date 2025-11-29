@@ -52,8 +52,8 @@ public class SRT extends Scheduler {
         }
         
         if (shortest != null) {
-            readyQueue.remove(shortest);
-            contextSwitch(shortest);
+            //readyQueue.remove(shortest);
+            //contextSwitch(shortest);
             Logger.debug("SRTF seleccionó: " + shortest.getPid() + 
                         " con tiempo restante " + shortestRemainingTime);
         }

@@ -87,8 +87,8 @@ public class DashboardPage extends VBox {
     // para conectar con ConfigPage (llamado desde MainFX)
     public void setConfigPage(ConfigPage configPage) {
         this.configPage = configPage;
-        System.out.println("[DashboardPage]  ConfigPage conectado: " + configPage);
         memPanel.setConfig(configPage.getCurrentConfig());
+        //System.out.println("[DashboardPage] ConfigPage conectado: " + configPage);
     }
 
     //MÉTODO para iniciar la simulación

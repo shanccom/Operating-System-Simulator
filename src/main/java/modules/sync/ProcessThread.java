@@ -40,21 +40,35 @@ public class ProcessThread extends Thread {
   private void waitForArrival() throws InterruptedException {
     int arrivalTime = process.getArrivalTime();
     
+    // Esperar hasta que llegue el tiempo de llegada
+    // No mantener lock mientras se accede al scheduler para evitar deadlocks
     synchronized(threadMonitor) {
-      while(running && syncController.getScheduler().getCurrentTime() < arrivalTime) {
+      while(running) {
+        // Leer tiempo fuera del lock para evitar deadlocks
+        int currentTime = syncController.getScheduler().getCurrentTime();
+        if (currentTime >= arrivalTime) {
+          break;
+        }
         threadMonitor.wait(50);
       }
     }
-    Logger.log("LLEGADA: " + process.getPid() + " alcanzo su tiempo (t=" + arrivalTime + ")");
+    Logger.log(String.format("[T=%d] [%s]    Proceso llego al sistema", arrivalTime, process.getPid()));
   }
 
-  private void arriveAtSystem() {    
+  private void arriveAtSystem() {
+    // Cambiar estado del proceso
+    // Luego notificar fuera del lock para evitar deadlocks con SyncController
     synchronized(threadMonitor) {
-      process.setState(ProcessState.READY);
+      if (process.getState() != ProcessState.TERMINATED) {
+        process.setState(ProcessState.READY);
+      }
     }
     
-    syncController.notifyProcessReady(process, "llegada al sistema");
-    
+    // Notificar fuera del threadMonitor para evitar deadlocks
+    // syncController usa coordinationMonitor, no threadMonitor
+    if (process.getState() != ProcessState.TERMINATED) {
+      syncController.notifyProcessReady(process, "llegada al sistema");
+    }
   }
 
   private void mainExecutionLoop() throws InterruptedException {
@@ -80,9 +94,25 @@ public class ProcessThread extends Thread {
         executeIOBurst(currentBurst);
       }
 
+      // Avanzar ráfaga y manejar transiciones de estado
+      Burst nextBurst = null;
       synchronized(threadMonitor) {
-        if (currentBurst.isCompleted()) {
+        if (currentBurst.isCompleted() && process.getState() != ProcessState.TERMINATED) {
           process.advanceBurst();
+          nextBurst = process.getCurrentBurst();
+        }
+      }
+      
+      // Notificar fuera del lock para evitar deadlocks
+      if (nextBurst != null && process.getState() != ProcessState.TERMINATED) {
+        if (nextBurst.isIO()) {
+          // Si la siguiente es I/O, no necesitamos volver a READY
+          // El executeIOBurst ya se encargará
+        } else if (nextBurst.isCPU()) {
+          // Si la siguiente es CPU, volver a READY y notificar
+          if (process.getState() != ProcessState.RUNNING) {
+            syncController.notifyProcessReady(process, "siguiente ráfaga CPU");
+          }
         }
       }
     }
@@ -99,65 +129,95 @@ public class ProcessThread extends Thread {
   }
 
   private void executeCPUBurst(Burst burst) throws InterruptedException {
-
-    if (process.getResponseTime() == -1) {
-        process.markFirstExecution(syncController.getScheduler().getCurrentTime());
-    }
-
-    while (!burst.isCompleted() && process.getState() == ProcessState.RUNNING) {
-      synchronized(threadMonitor) {
-        // Esperar señal del motor
-        threadMonitor.wait();
-      }
-
-      if (process.getState() == ProcessState.RUNNING && !burst.isCompleted()) {
-        burst.execute(1); // Ejecutar 1 unidad
-        int currentTime = syncController.getScheduler().getCurrentTime();
-        Logger.log("[T=" + currentTime + "] [THREAD-" + process.getPid() + "] CPU avanzó 1 unidad (restante: " + burst.getRemainingTime() + ")");
-      }
+    while (!burst.isCompleted() && process.getState() == ProcessState.RUNNING && running) {
+        // Verificar páginas requeridas (fuera de locks para evitar deadlocks)
+        if (!syncController.hasRequiredPages(process)) {
+            int currentTime = syncController.getScheduler().getCurrentTime();
+            Logger.log(String.format("[T=%d] [%s]   Falta memoria proceso será bloqueado por MEMORIA", 
+                currentTime, process.getPid()));
+            // Bloquear explícitamente por memoria y forzar cambio de contexto
+            syncController.blockProcessForMemory(process);
+            // El scheduler ya no debe considerar este proceso como actual
+            syncController.getScheduler().setCurrentProcess(null);
+            return;
+        }
+        
+        // Verificar estado antes de ejecutar
+        if (process.getState() == ProcessState.RUNNING && !burst.isCompleted() && running) {
+            int currentTime = syncController.getScheduler().getCurrentTime();
+            burst.execute(1);
+            // Usar directamente el tiempo actual del scheduler para el log,
+            // así cada unidad de CPU se asocia a una única t.
+            int remaining = burst.getRemainingTime();
+            int progress = burst.getDuration() - remaining;
+            Logger.log(String.format("[T=%d] [%s] Ejecutando CPU: %d/%d unidades completadas (restante: %d)", 
+                currentTime, process.getPid(), progress, burst.getDuration(), remaining));
+        }
+        
+        // Esperar siguiente ciclo si la ráfaga no está completa
+        if (!burst.isCompleted() && process.getState() == ProcessState.RUNNING && running) {
+            synchronized(threadMonitor) {
+                // Verificar nuevamente dentro del lock
+                if (process.getState() == ProcessState.RUNNING && !burst.isCompleted() && running) {
+                    threadMonitor.wait();
+                }
+            }
+        }
     }
 
     if (burst.isCompleted()) {
-      Logger.log("[THREAD-" + process.getPid() + "] Rafaga CPU completada");
+      int currentTime = syncController.getScheduler().getCurrentTime();
+      Logger.log(String.format("[T=%d] [%s]   Rafaga CPU completada (%d unidades)", 
+          currentTime, process.getPid(), burst.getDuration()));
     }
   }
 
+
   private void executeIOBurst(Burst burst) throws InterruptedException {
-    Logger.log("[THREAD-" + process.getPid() + "] Iniciando I/O (" + burst.getDuration() + " unidades)");
+    int currentTime = syncController.getScheduler().getCurrentTime();
+    Logger.log(String.format("[T=%d] [%s] → Solicita operacion I/O (duracion: %d unidades)", 
+        currentTime, process.getPid(), burst.getDuration()));
     
+    // Cambiar estado a BLOCKED_IO
     synchronized(threadMonitor) {
-      process.setState(ProcessState.BLOCKED_IO);
+      if (process.getState() != ProcessState.TERMINATED) {
+        process.setState(ProcessState.BLOCKED_IO);
+      }
     }
     
-    ioManager.requestIO(process, burst);
-    
+    // Actualizar scheduler y solicitar I/O fuera del lock para evitar deadlocks
+    if (process.getState() == ProcessState.BLOCKED_IO) {
+      syncController.getScheduler().setCurrentProcess(null);
+      ioManager.requestIO(process, burst);
+    }
   }
 
   private void terminateProcess() {
+    // Obtener tiempo de finalización antes de cambiar estado
+    int currentTime = syncController.getScheduler().getCurrentTime();
     
+    // Cambiar estado a TERMINATED
     synchronized(threadMonitor) {
-      int currentTime = syncController.getScheduler().getCurrentTime();
       process.setCompletionTime(currentTime);
       process.setState(ProcessState.TERMINATED);
+      running = false;
     }
     
-    
+    // Liberar recursos fuera del lock para evitar deadlocks
+    // syncController.releaseProcessResources usa coordinationMonitor
     syncController.releaseProcessResources(process);
+    
     System.out.println();
     Logger.log("[THREAD-" + process.getPid() + "] METRICAS FINALES:");
     Logger.log("  Tiempo de espera: " + process.getWaitingTime());
     Logger.log("  Tiempo de retorno: " + process.getTurnaroundTime());
     Logger.log("  Fallos de página: " + process.getPageFaults());
-    
-    synchronized(threadMonitor) {
-      running = false;
-    }
     System.out.println();
   }
 
   public void wakeUp() {
     synchronized(threadMonitor) {
-      threadMonitor.notifyAll();
+      threadMonitor.notifyAll();  // Despierta el thread que está en wait()
     }
   }
 

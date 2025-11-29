@@ -58,9 +58,9 @@ public class MainFX extends Application {
         pages.put("dashboard", dashboardPage);
         pages.put("resultados", new ResultadosPage());
         //deubug
-        System.out.println("[MainFX] ✅ DashboardPage creado: " + dashboardPage);
-        System.out.println("[MainFX] ✅ ConfigPage creado: " + configPage);
-        System.out.println("[MainFX] ✅ ProPanel disponible: " + dashboardPage.getProPanel());
+        //System.out.println("[MainFX] DashboardPage creado: " + dashboardPage);
+        //System.out.println("[MainFX] ConfigPage creado: " + configPage);
+        //System.out.println("[MainFX] ProPanel disponible: " + dashboardPage.getProPanel());
     }
 
     private HBox crearNavbar() {

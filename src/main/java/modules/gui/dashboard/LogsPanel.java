@@ -58,7 +58,7 @@ public class LogsPanel extends VBox {
                 default -> "#9fa5acff";
             };
 
-            setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Consolas';" + "-fx-background-color: #0f0a1a;");
+            setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Consolas';" + "-fx-background-color: #0f0a1a; " + "-fx-font-size: 13px;");
         }
     }
 }
