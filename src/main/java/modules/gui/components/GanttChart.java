@@ -86,7 +86,7 @@ public class GanttChart extends Pane {
         canvas.setHeight(height);
         
         // Fondo
-        gc.setFill(Color.web("#2d2d2d"));
+        gc.setFill(Color.web("#171025"));
         gc.fillRect(0, 0, width, height);
         
         // Dibujar header con línea de tiempo
@@ -126,7 +126,7 @@ public class GanttChart extends Pane {
         gc.fillText(pid, 10, y + 25);
         
         // Fondo de la fila
-        gc.setFill(Color.web("#3d3d3d"));
+        gc.setFill(Color.web("#171025"));
         gc.fillRect(labelWidth, y, maxTime * cellWidth, rowHeight - 5);
         
         // Dibujar grid lines

@@ -47,6 +47,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onProcessExecutionStarted(String pid, int startTime) {
+                    System.out.println("[SimulationRunner]INICIO de ejecución → PID=" + pid + ", t=" + startTime);
                     executionStarts.put(pid, startTime);
                     dashboardPage.getExePanel().setCurrentTime(startTime);
                 }
@@ -54,6 +55,7 @@ public class SimulationRunner {
                 @Override
                 public void onProcessExecutionEnded(String pid, int endTime) {
                     Integer start = executionStarts.get(pid);
+                    System.out.println("[SimulationRunner]FIN de ejecución → PID=" + pid +", inicio=" + start + ", fin=" + endTime);
                     if (start != null) {
                         dashboardPage.getExePanel().addExecution(pid, start, endTime);
                     }
@@ -61,6 +63,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onContextSwitch() {
+                    System.out.println("[SimulationRunner] Context Switch detectado");
                     dashboardPage.getExePanel().incrementContextSwitch();
                 }
                 
