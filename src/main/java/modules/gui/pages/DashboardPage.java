@@ -8,6 +8,7 @@ import javafx.scene.layout.*;
 import modules.gui.SimulationRunner;
 import modules.gui.pages.ConfigPage;
 import modules.gui.dashboard.*;
+import model.Config;
 
 public class DashboardPage extends VBox {
 
@@ -70,7 +71,9 @@ public class DashboardPage extends VBox {
 
         exePanel = new ExePanel();
         proPanel = new ProPanel();
-        memPanel = new MemPanel();
+        memPanel = new MemPanel(); // sin config
+
+
         logsPanel = new LogsPanel();
 
         grid.add(exePanel, 0, 0);
@@ -84,7 +87,8 @@ public class DashboardPage extends VBox {
     // para conectar con ConfigPage (llamado desde MainFX)
     public void setConfigPage(ConfigPage configPage) {
         this.configPage = configPage;
-        System.out.println("[DashboardPage] ✅ ConfigPage conectado: " + configPage);
+        System.out.println("[DashboardPage]  ConfigPage conectado: " + configPage);
+        memPanel.setConfig(configPage.getCurrentConfig());
     }
 
     //MÉTODO para iniciar la simulación
