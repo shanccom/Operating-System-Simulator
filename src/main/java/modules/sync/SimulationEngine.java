@@ -7,7 +7,9 @@ import modules.scheduler.Scheduler;
 import utils.Logger;
 import model.ProcessState;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SimulationEngine {
   
@@ -25,6 +27,8 @@ public class SimulationEngine {
   private volatile boolean running;
   
   private SimulationStateListener stateListener;
+  //para gant chart
+  private final Map<String, Integer> executionStartTimes = new HashMap<>();
 
   public SimulationEngine(Scheduler scheduler, MemoryManager memoryManager, List<Process> processes, Config config) {
     this.scheduler = scheduler;
@@ -44,12 +48,12 @@ public class SimulationEngine {
     }
   }
 
-  // ✅ NUEVO: Método para registrar el listener
+  // metodo para registrar el listener
   public void setStateListener(SimulationStateListener listener) {
     this.stateListener = listener;
   }
   
-  // ✅ NUEVO: Notificar cambios a la UI
+  // Notificar cambios a la UI
   private void notifyUIUpdate() {
     if (stateListener != null) {
       List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
@@ -170,7 +174,24 @@ public class SimulationEngine {
     // Context switch necesario
     if (currentRunning != nextProcess) {
         if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
-            synchronized(syncController.getCoordinationMonitor()) {
+          
+          //para gant
+          String pid = currentRunning.getPid();
+          Integer startTime = executionStartTimes.get(pid);
+          if (startTime != null) {
+              System.out.println("[Engine] Proceso " + pid + " termina ejecución en t=" + currentTime + 
+                                " (inicio: " + startTime + ")");
+              
+              // notificar fin de ejecucion al gant 
+              if (stateListener != null) {
+                  stateListener.onProcessExecutionEnded(pid, currentTime);
+              }
+              
+              executionStartTimes.remove(pid);
+          }
+          //fin
+
+          synchronized(syncController.getCoordinationMonitor()) {
                 currentRunning.setState(ProcessState.READY);
             }
         }
@@ -179,11 +200,22 @@ public class SimulationEngine {
         boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
         
         if (canExecute) {
-            scheduler.confirmProcessSelection(nextProcess); 
-            wakeUpThread(nextProcess);
-            scheduler.recordCPUTime(1);
+          //para gant
+          String pid = nextProcess.getPid();
+          System.out.println("[Engine] Proceso " + pid + " inicia ejecución en t=" + currentTime);
+          // notificar inicio de ejecucion al gant 
+          if (stateListener != null) {
+              stateListener.onProcessExecutionStarted(pid, currentTime);
+              stateListener.onContextSwitch();
+          }
+          executionStartTimes.put(pid, currentTime);
+          //fin
+
+          scheduler.confirmProcessSelection(nextProcess); 
+          wakeUpThread(nextProcess);
+          scheduler.recordCPUTime(1);
         } else {
-            scheduler.recordIdleTime(1);
+          scheduler.recordIdleTime(1);
         }
     } 
     // El mismo proceso continúa
@@ -196,10 +228,24 @@ public class SimulationEngine {
             boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
             
             if (canExecute) {
-                wakeUpThread(nextProcess);
-                scheduler.recordCPUTime(1);
+              //para gant
+              String pid = nextProcess.getPid();
+                
+              System.out.println("[Engine]  Proceso " + pid + " reanuda ejecución en t=" + currentTime);
+              
+              // notificar inicio de ejecucion al gant  si no estab rsatreado
+              if (!executionStartTimes.containsKey(pid)) {
+                  if (stateListener != null) {
+                      stateListener.onProcessExecutionStarted(pid, currentTime);
+                  }
+                  executionStartTimes.put(pid, currentTime);
+              }
+              //fin
+
+              wakeUpThread(nextProcess);
+              scheduler.recordCPUTime(1);
             } else {
-                scheduler.recordIdleTime(1);
+              scheduler.recordIdleTime(1);
             }
         }
     }
@@ -217,6 +263,22 @@ public class SimulationEngine {
   }
   
   private void waitForAllThreads() {
+
+    //para gant
+    // notificar fin de ejecucio de procesos que terminaron 
+    synchronized(engineMonitor) {
+      for (String pid : new ArrayList<>(executionStartTimes.keySet())) {
+        Integer startTime = executionStartTimes.get(pid);
+        if (startTime != null && stateListener != null) {
+          System.out.println("[Engine] 🏁 Proceso " + pid + " completado en t=" + currentTime);
+          stateListener.onProcessExecutionEnded(pid, currentTime);
+        }
+      }
+      executionStartTimes.clear();
+    }
+
+    //fin
+
     for (ProcessThread thread : processThreads) {
       try {
         thread.join();

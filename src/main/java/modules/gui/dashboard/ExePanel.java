@@ -18,12 +18,18 @@ public class ExePanel extends VBox {
     private VBox contextSwitchLabel;
     private VBox avgWaitLabel;
 
+    // Metricas
+    private int totalCPUTime = 0;
+    private int totalIdleTime = 0;
+    private int contextSwitches = 0;
+    private double avgWaitTime = 0.0;
+
     public ExePanel() {
         setSpacing(10);
         setPadding(new Insets(16));
         getStyleClass().add("card");
 
-        Label title = new Label("Diagrama de Gantt - Ejecución");
+        Label title = new Label("Diagrama de Gantt - Ejecucion");
         title.getStyleClass().add("card-title");
 
         // Contenedor con scroll para el Gantt
@@ -35,7 +41,7 @@ public class ExePanel extends VBox {
         scrollPane.setContent(ganttChart);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
-        // Panel de métricas
+        // Panel de metricas
         HBox metricsPanel = createMetricsPanel();
 
         getChildren().addAll(title, scrollPane, metricsPanel);
@@ -46,11 +52,11 @@ public class ExePanel extends VBox {
         panel.setAlignment(Pos.CENTER);
         panel.setPadding(new Insets(10, 0, 0, 0));
 
-        //cpuUtilLabel = createMetricBox("CPU Utilization", "0%", "#4CAF50");
-        //contextSwitchLabel = createMetricBox("Context Switches", "0", "#2196F3");
-        //avgWaitLabel = createMetricBox("Avg Wait Time", "0u", "#FF9800");
+        cpuUtilLabel = createMetricBox("CPU Utilization", "0%", "#4CAF50");
+        contextSwitchLabel = createMetricBox("Context Switches", "0", "#2196F3");
+        avgWaitLabel = createMetricBox("Avg Wait Time", "0u", "#FF9800");
 
-        //panel.getChildren().addAll(cpuUtilLabel, contextSwitchLabel, avgWaitLabel);
+        panel.getChildren().addAll(cpuUtilLabel, contextSwitchLabel, avgWaitLabel);
         return panel;
     }
 
@@ -77,11 +83,13 @@ public class ExePanel extends VBox {
         return box;
     }
 
-    // MÉTODOS PÚBLICOS PARA ACTUALIZAR EL GANTT
+    // metodos publico para actualizar gantt y metricas
     
     public void addExecution(String pid, int startTime, int endTime) {
         System.out.println("[ExePanel] ✅ addExecution llamado: " + pid + " [" + startTime + "-" + endTime + "]");
         ganttChart.addExecution(pid, startTime, endTime);
+        totalCPUTime += (endTime - startTime);
+        updateMetrics();
     }
 
     public void setCurrentTime(int time) {
@@ -89,4 +97,44 @@ public class ExePanel extends VBox {
         ganttChart.setCurrentTime(time);
     }
 
+    public void incrementContextSwitch() {
+        System.out.println("[ExePanel]✅  incrementContextSwitch llamado");
+        contextSwitches++;
+        updateMetrics();
+    }
+
+    public void setIdleTime(int idleTime) {
+        this.totalIdleTime = idleTime;
+        updateMetrics();
+    }
+
+    public void setAvgWaitTime(double waitTime) {
+        this.avgWaitTime = waitTime;
+        updateMetrics();
+    }
+
+    public void clearGantt() {
+        ganttChart.clear();
+        totalCPUTime = 0;
+        totalIdleTime = 0;
+        contextSwitches = 0;
+        avgWaitTime = 0.0;
+        updateMetrics();
+    }
+
+    private void updateMetrics() {
+        Platform.runLater(() -> {
+            int totalTime = totalCPUTime + totalIdleTime;
+            double cpuUtil = totalTime > 0 ? (totalCPUTime * 100.0 / totalTime) : 0;
+            
+            Label cpuValue = (Label) ((VBox) cpuUtilLabel).getChildren().get(1);
+            cpuValue.setText(String.format("%.1f%%", cpuUtil));
+            
+            Label csValue = (Label) ((VBox) contextSwitchLabel).getChildren().get(1);
+            csValue.setText(String.valueOf(contextSwitches));
+            
+            Label waitValue = (Label) ((VBox) avgWaitLabel).getChildren().get(1);
+            waitValue.setText(String.format("%.1fu", avgWaitTime));
+        });
+    }
 }
