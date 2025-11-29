@@ -45,12 +45,10 @@ public class SimulationEngine {
     }
   }
 
-  // ✅ NUEVO: Método para registrar el listener
   public void setStateListener(SimulationStateListener listener) {
     this.stateListener = listener;
   }
-  
-  // ✅ NUEVO: Notificar cambios a la UI
+
   private void notifyUIUpdate() {
     if (stateListener != null) {
       List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
