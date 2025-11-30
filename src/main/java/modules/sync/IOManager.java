@@ -16,13 +16,11 @@ public class IOManager implements Runnable {
   private static class IORequest {
     final Process process;
     final Burst ioBurst;
-    final int requestTime;
     
 
     IORequest(Process process, Burst ioBurst, int requestTime) {
       this.process = process;
       this.ioBurst = ioBurst;
-      this.requestTime = requestTime;
     }
   }
 
@@ -52,7 +50,6 @@ public class IOManager implements Runnable {
   }
 
   public void start() {
-    // Usar compareAndSet para garantizar que solo se inicie una vez
     if (!running.compareAndSet(false, true)) {
       Logger.warning("[IOMANAGER] Ya está en ejecución");
       return;
@@ -71,14 +68,13 @@ public class IOManager implements Runnable {
     
     while(isRunning()) {
       try {
-        // Esperar solicitud (bloquea hasta que haya una)
+        // BlockingQueue.take() es thread-safe, espera indefinidamente
         IORequest request = ioQueue.take();
         
         // Procesar la solicitud
         processIORequest(request);
         
       } catch (InterruptedException e) {
-        // Si fue interrumpido y aún está corriendo, es inesperado
         if (isRunning()) {
           Logger.warning("[IOMANAGER] Interrumpido inesperadamente");
         }
@@ -86,7 +82,6 @@ public class IOManager implements Runnable {
         break;
         
       } catch (Exception e) {
-        // Capturar cualquier otra excepción para no detener el thread
         Logger.error("[IOMANAGER] Error procesando I/O: " + e.getMessage());
         e.printStackTrace();
       }
@@ -96,24 +91,20 @@ public class IOManager implements Runnable {
   }
 
   public void stop() {
-    // Cambiar estado a no running
     if (!running.compareAndSet(true, false)) {
-      return; // Ya estaba detenido
+      return;
     }
     
     Logger.syncLog("[IOMANAGER] Deteniendo...");
     
-    // Despertar el thread si está esperando
     synchronized(ioMonitor) {
       ioMonitor.notifyAll();
     }
     
-    // Interrumpir el thread
     if (ioThread != null && ioThread.isAlive()) {
       ioThread.interrupt();
       
       try {
-        // Esperar a que termine (máximo 2 segundos)
         ioThread.join(2000);
         
         if (ioThread.isAlive()) {
@@ -125,46 +116,42 @@ public class IOManager implements Runnable {
       }
     }
     
-    // Reportar solicitudes pendientes
     int pending = ioQueue.size();
     if (pending > 0) {
       Logger.warning("[IOMANAGER] Detenido con " + pending + " solicitudes pendientes");
     } else {
-      Logger.syncLog("[IOMANAGER] Detenido correctamente (sin solicitudes pendientes)");
+      Logger.syncLog("[IOMANAGER] Detenido correctamente");
     }
   }
 
   public void requestIO(Process process, Burst ioBurst) {
-    // Verificar que esté corriendo
     if (!isRunning()) {
       Logger.warning("[IOMANAGER] Ignorando solicitud (no está corriendo)");
       return;
     }
 
-    // Verificar que sea una ráfaga I/O válida
     if (!ioBurst.isIO()) {
       Logger.warning("[IOMANAGER] Ráfaga no es de tipo I/O");
       return;
     }
 
-    int currentTime = syncController.getScheduler().getCurrentTime();
+    int currentTime;
+    synchronized(syncController.getCoordinationMonitor()) {
+      currentTime = syncController.getCurrentTime();
+    }
     
     int systemCallOverhead = config.getSystemCallOverhead();
     int endTime = currentTime + systemCallOverhead;
 
-    process.setSystemCallEndTime(endTime);
+    synchronized(syncController.getCoordinationMonitor()) {
+      process.setSystemCallEndTime(endTime);
+    }
     
-    Logger.procLog(String.format("[T=%d] [SYSTEM CALL] Iniciando para %s (overhead: %d ciclos, termina en t=%d)", 
-        currentTime, process.getPid(), systemCallOverhead, endTime));
-
-    // Crear solicitud
     IORequest request = new IORequest(process, ioBurst, currentTime);
     
     try {
-      // Encolar solicitud (BlockingQueue es thread-safe)
+      // BlockingQueue.put() es thread-safe
       ioQueue.put(request);
-      
-      // Incrementar contador (AtomicInteger es thread-safe)
       totalIOOperations.incrementAndGet();
       
       Logger.procLog(String.format("[T=%d] [%s] I/O encolada (pendientes: %d)", 
@@ -181,101 +168,118 @@ public class IOManager implements Runnable {
     Burst ioBurst = request.ioBurst;
     int duration = ioBurst.getDuration();
 
-    // Verificar que el proceso aún esté activo
-    if (process.getState() == ProcessState.TERMINATED) {
-      Logger.warning("[IOMANAGER] Proceso " + process.getPid() + " ya terminó, ignorando I/O");
-      return;
+    synchronized(syncController.getCoordinationMonitor()) {
+      if (process.getState() == ProcessState.TERMINATED) {
+        Logger.warning("[IOMANAGER] Proceso " + process.getPid() + " ya terminó");
+        return;
+      }
     }
 
+    // Esperar que system call complete
     waitForSystemCallCompletion(process);
 
-    // Calcular tiempos
-    int startTime = syncController.getScheduler().getCurrentTime();
+    int startTime;
+    synchronized(syncController.getCoordinationMonitor()) {
+      startTime = syncController.getCurrentTime();
+    }
     int endTime = startTime + duration;
 
     Logger.procLog(String.format("[T=%d] [I/O] Procesando I/O para %s (duración: %d, fin: t=%d)", 
       startTime, process.getPid(), duration, endTime));
 
-    // Esperar hasta el tiempo de finalización
+    // Esperar hasta que el tiempo simulado alcance endTime
     waitUntilIOCompletes(process, endTime);
 
-    // Completar la operación I/O
+    // Completar la operación
     completeIOOperation(process, ioBurst, duration);
   }
 
   private void waitUntilIOCompletes(Process process, int endTime) throws InterruptedException {
-    while(isRunning() && process.getState() != ProcessState.TERMINATED) {
-      int currentSimTime = syncController.getScheduler().getCurrentTime();
+    while(isRunning()) {
+      int currentSimTime;
+      ProcessState processState;
       
-      // Verificar si ya completó
-      if (currentSimTime >= endTime) {
+      synchronized(syncController.getCoordinationMonitor()) {
+        currentSimTime = syncController.getCurrentTime();
+        processState = process.getState();
+      }
+      
+      // Si el proceso fue terminado o el tiempo ya pasó
+      if (processState == ProcessState.TERMINATED || currentSimTime >= endTime) {
         break;
       }
       
+      // Esperar un poco (polling aceptable en simulación)
       synchronized(ioMonitor) {
-        // Doble verificación dentro del lock
-        if (isRunning() && 
-            process.getState() != ProcessState.TERMINATED && 
-            syncController.getScheduler().getCurrentTime() < endTime) {
-          ioMonitor.wait(50); // Polling cada 50ms
-        } else {
-          break;
-        }
+        ioMonitor.wait(50);
       }
     }
   }
 
   private void completeIOOperation(Process process, Burst ioBurst, int duration) {
-    // Verificar que el proceso siga activo
-    if (!isRunning() || process.getState() == ProcessState.TERMINATED) {
-      return;
+    synchronized(syncController.getCoordinationMonitor()) {
+      ProcessState state = process.getState();
+      
+      if (!isRunning() || state == ProcessState.TERMINATED) {
+        return;
+      }
+      
+      // Marcar la ráfaga como ejecutada
+      ioBurst.execute(duration);
+      
+      // Avanzar a la siguiente ráfaga
+      process.advanceBurst();
+      
+      // Obtener tiempo actual
+      int completionTime = syncController.getCurrentTime();
+      
+      Logger.procLog(String.format("[T=%d] [I/O] I/O completada para %s (duración: %d unidades)", 
+        completionTime, process.getPid(), duration));
+      
+      // Actualizar estadísticas (AtomicInteger es thread-safe)
+      completedIOOperations.incrementAndGet();
+      totalIOTime.addAndGet(duration);
     }
-    
-    // Ejecutar burst (marca como completado)
-    ioBurst.execute(duration);
-    
-    // Avanzar a siguiente ráfaga
-    process.advanceBurst();
-    
-    // Actualizar estadísticas (thread-safe con AtomicInteger)
-    completedIOOperations.incrementAndGet();
-    totalIOTime.addAndGet(duration);
-    
-    // Obtener tiempo actual
-    int completionTime = syncController.getScheduler().getCurrentTime();
-    
-    Logger.procLog(String.format("[T=%d] [I/O] I/O completada para %s (duración: %d unidades)", 
-      completionTime, process.getPid(), duration));
     
     syncController.notifyProcessReady(process, "completó I/O");
   }
 
   private void waitForSystemCallCompletion(Process process) throws InterruptedException {
-    if (!process.isInSystemCall()) {
-        return;  // No hay system call pendiente
-    }
-    
-    int endTime = process.getSystemCallEndTime();
-    
-    while(isRunning() && process.getState() != ProcessState.TERMINATED) {
-      int currentSimTime = syncController.getScheduler().getCurrentTime();
+    while(isRunning()) {
+      boolean inSystemCall;
+      int endTime;
+      int currentSimTime;
+      ProcessState processState;
       
-      // Verificar si ya completó el system call
-      if (currentSimTime >= endTime) {
-        Logger.procLog(String.format("[T=%d] [SYSTEM CALL] %s completó system call", 
-            currentSimTime, process.getPid()));
-        process.clearSystemCall();
+      synchronized(syncController.getCoordinationMonitor()) {
+        inSystemCall = process.isInSystemCall();
+        endTime = process.getSystemCallEndTime();
+        currentSimTime = syncController.getCurrentTime();
+        processState = process.getState();
+      }
+      
+      // Si no hay system call pendiente, salir
+      if (!inSystemCall) {
         break;
       }
       
-      synchronized(ioMonitor) {
-        if (isRunning() && 
-            process.getState() != ProcessState.TERMINATED && 
-            syncController.getScheduler().getCurrentTime() < endTime) {
-          ioMonitor.wait(50);
-        } else {
-          break;
+      // Si el proceso fue terminado
+      if (processState == ProcessState.TERMINATED) {
+        break;
+      }
+      
+      // Si el system call ya completó
+      if (currentSimTime >= endTime) {
+
+        synchronized(syncController.getCoordinationMonitor()) {
+          process.clearSystemCall();
         }
+        break;
+      }
+      
+      // Esperar un poco
+      synchronized(ioMonitor) {
+        ioMonitor.wait(50);
       }
     }
   }
@@ -289,7 +293,6 @@ public class IOManager implements Runnable {
   }
 
   public IOStatistics getStatistics() {
-    // AtomicInteger.get() es thread-safe, no necesita locks
     return new IOStatistics(
       totalIOOperations.get(), 
       completedIOOperations.get(), 

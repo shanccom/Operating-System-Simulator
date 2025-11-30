@@ -6,13 +6,19 @@ public enum ProcessState {
   RUNNING,
   BLOCKED_MEMORY,
   BLOCKED_IO,
+  CONTEXT_SWITCHING,
   TERMINATED;
 
   public boolean isBlocked() {
-    return this == BLOCKED_MEMORY || this == BLOCKED_IO;
+    return this == BLOCKED_IO || this == BLOCKED_MEMORY || 
+           this == CONTEXT_SWITCHING; 
+  }
+  
+  public boolean isAvailable() {
+    return this == NEW || this == READY;
   }
   
   public boolean isActive() {
-    return this != TERMINATED;
+    return this == RUNNING || this == CONTEXT_SWITCHING;
   }
 }

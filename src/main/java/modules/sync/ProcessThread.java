@@ -11,7 +11,6 @@ public class ProcessThread extends Thread {
   private final Process process;
   private final SyncController syncController;
   private final IOManager ioManager;
-  private final Config config;
   
   // Monitor local para sincronización interna del thread
   private final Object threadMonitor = new Object();
@@ -23,29 +22,24 @@ public class ProcessThread extends Thread {
     this.process = process;
     this.syncController = syncController;
     this.ioManager = ioManager;
-    this.config = config;
     this.running = true;
   }
 
   @Override 
   public void run() {
     try {
-      // 1. Esperar hasta el tiempo de llegada
       waitForArrival();
-      
-      // 2. Notificar llegada al sistema
       arriveAtSystem();
-      
-      // 3. Loop principal: ejecutar ráfagas hasta completar
       mainExecutionLoop();
       
     } catch (InterruptedException e) {
       Logger.warning("[THREAD-" + process.getPid() + "] Interrumpido");
       Thread.currentThread().interrupt();
     } finally {
-      // Asegurar que el proceso termine correctamente
-      if (process.getState() != ProcessState.TERMINATED) {
-        terminateProcess();
+      synchronized(syncController.getCoordinationMonitor()) {
+        if (process.getState() != ProcessState.TERMINATED) {
+          terminateProcess();
+        }
       }
     }
   }
@@ -53,17 +47,17 @@ public class ProcessThread extends Thread {
   private void waitForArrival() throws InterruptedException {
     int arrivalTime = process.getArrivalTime();
     
-    synchronized(threadMonitor) {
-      while(running) {
-        // Leer tiempo fuera del monitor para evitar deadlocks
-        int currentTime = syncController.getScheduler().getCurrentTime();
+    while(running) {
+      synchronized(syncController.getCoordinationMonitor()) {
+        int currentTime = syncController.getCurrentTime();
         
         if (currentTime >= arrivalTime) {
-          break; // Ya llegó el momento
+          break;
         }
-        
-        // Esperar un poco y volver a verificar
-        threadMonitor.wait(50);
+      }
+      
+      synchronized(threadMonitor) {
+        threadMonitor.wait(50); // Polling cada 50ms es aceptable en simulación
       }
     }
     
@@ -72,107 +66,113 @@ public class ProcessThread extends Thread {
   }
 
   private void arriveAtSystem() {
-    // Cambiar estado localmente (sin locks externos)
-    if (process.getState() != ProcessState.TERMINATED) {
-      process.setState(ProcessState.READY);
-    }
-    
-    if (process.getState() == ProcessState.READY) {
-      syncController.notifyProcessReady(process, "llegada al sistema");
+    synchronized(syncController.getCoordinationMonitor()) {
+      if (process.getState() != ProcessState.TERMINATED) {
+        process.setState(ProcessState.READY);
+        syncController.notifyProcessReady(process, "llegada al sistema");
+      }
     }
   }
 
   private void mainExecutionLoop() throws InterruptedException {
-    while (running && !process.isCompleted()) {
-      // Esperar a ser seleccionado por el scheduler
+    while (running) {
+      synchronized(syncController.getCoordinationMonitor()) {
+        if (process.isCompleted() || process.getState() == ProcessState.TERMINATED) {
+          break;
+        }
+      }
+      
       waitForRunningState();
       
-      // Verificar si debemos terminar
-      ProcessState currentState = process.getState();
-      if (!running || currentState == ProcessState.TERMINATED) {
-        break;
+      synchronized(syncController.getCoordinationMonitor()) {
+        ProcessState state = process.getState();
+        if (!running || state == ProcessState.TERMINATED) {
+          break;
+        }
+        
+        if (state != ProcessState.RUNNING) {
+          continue; // Volver a esperar
+        }
       }
       
       // Obtener ráfaga actual
       Burst currentBurst = process.getCurrentBurst();
-      
       if (currentBurst == null) {
-        // No hay más ráfagas, terminar
         break;
       }
       
-      // Ejecutar la ráfaga según su tipo
+      // Ejecutar según tipo
       if (currentBurst.isCPU()) {
         executeCPUBurst(currentBurst);
       } else {
         executeIOBurst(currentBurst);
       }
       
-      // Avanzar a la siguiente ráfaga si la actual terminó
       handleBurstCompletion(currentBurst);
     }
     
-    // Terminar el proceso
     terminateProcess();
   }
 
   private void waitForRunningState() throws InterruptedException {
     synchronized(threadMonitor) {
       while(running) {
-        ProcessState state = process.getState();
+        ProcessState state;
+        synchronized(syncController.getCoordinationMonitor()) {
+          state = process.getState();
+        }
         
-        // Salir si ya está en RUNNING o TERMINATED
         if (state == ProcessState.RUNNING || state == ProcessState.TERMINATED) {
           break;
         }
         
-        // Esperar a ser despertado
-        threadMonitor.wait();
+        threadMonitor.wait(); // Esperar sin timeout
       }
     }
   }
 
   private void executeCPUBurst(Burst burst) throws InterruptedException {
     while (!burst.isCompleted() && running) {
-      ProcessState state = process.getState();
-      
-      // Solo ejecutar si está en RUNNING
-      if (state != ProcessState.RUNNING) {
-        break;
+      ProcessState state;
+      synchronized(syncController.getCoordinationMonitor()) {
+        state = process.getState();
+        
+        if (state != ProcessState.RUNNING) {
+          break;
+        }
+        
+        if (!syncController.hasAllRequiredPages(process)) {
+          handleMemoryLack();
+          return;
+        }
       }
       
-      // Verificar memoria ANTES de ejecutar
-      if (!syncController.hasAllRequiredPages(process)) {
-        handleMemoryLack();
-        return; // Salir de la ejecución
-      }
-      
-      // Ejecutar 1 unidad de CPU
       executeOneCPUUnit(burst);
       
-      if (process.getState() == ProcessState.RUNNING) {
-        waitForNextCycle();
+      synchronized(threadMonitor) {
+        threadMonitor.wait();
       }
     }
     
-    // Log de ráfaga completada
     if (burst.isCompleted()) {
-      int currentTime = syncController.getScheduler().getCurrentTime();
+      int currentTime;
+      synchronized(syncController.getCoordinationMonitor()) {
+        currentTime = syncController.getCurrentTime();
+      }
       Logger.exeLog(String.format("[T=%d] [%s] Rafaga CPU completada (%d unidades)", 
         currentTime, process.getPid(), burst.getDuration()));
     }
   }
 
   private void executeOneCPUUnit(Burst burst) {
-    int currentTime = syncController.getScheduler().getCurrentTime();
+    int currentTime;
+    synchronized(syncController.getCoordinationMonitor()) {
+      currentTime = syncController.getCurrentTime();
+      process.markFirstExecution(currentTime);
+    }
 
-    process.markFirstExecution(currentTime);
-
-    // Ejecutar 1 unidad
     burst.execute(1);
-
     
-    // Log del progreso
     int progress = burst.getDuration() - burst.getRemainingTime();
     int remaining = burst.getRemainingTime();
     
@@ -180,90 +180,67 @@ public class ProcessThread extends Thread {
       currentTime, process.getPid(), progress, burst.getDuration(), remaining));
   }
 
-  private void waitForNextCycle() throws InterruptedException {
-    synchronized(threadMonitor) {
-      // Verificar estado dentro del lock
-      if (process.getState() == ProcessState.RUNNING && running) {
-        threadMonitor.wait(); // Esperar señal del motor
+  private void handleMemoryLack() {
+    synchronized(syncController.getCoordinationMonitor()) {
+      int currentTime = syncController.getCurrentTime();
+      Logger.syncLog(String.format("[T=%d] [%s] Falta memoria BLOCKED_MEMORY", 
+        currentTime, process.getPid()));
+      
+      syncController.blockProcessForMemory(process);
+    }
+  }
+
+  private void executeIOBurst(Burst burst) throws InterruptedException {
+    int currentTime;
+    synchronized(syncController.getCoordinationMonitor()) {
+      currentTime = syncController.getCurrentTime();
+      Logger.procLog(String.format("[T=%d] [%s] Solicita I/O (duración: %d unidades)", 
+        currentTime, process.getPid(), burst.getDuration()));
+      
+      if (process.getState() != ProcessState.TERMINATED) {
+        process.setState(ProcessState.BLOCKED_IO);
+      }
+    }
+    
+    // Notificar cambio de contexto
+    syncController.triggerReschedule();
+    
+    // Solicitar I/O (IOManager manejará la sincronización)
+    ioManager.requestIO(process, burst);
+  }
+
+  private void handleBurstCompletion(Burst currentBurst) {
+    synchronized(syncController.getCoordinationMonitor()) {
+      if (!currentBurst.isCompleted()) {
+        return;
+      }
+      
+      ProcessState state = process.getState();
+      if (state == ProcessState.TERMINATED) {
+        return;
+      }
+      
+      process.advanceBurst();
+      Burst nextBurst = process.getCurrentBurst();
+      
+      if (nextBurst != null && nextBurst.isCPU() && state != ProcessState.RUNNING) {
+        syncController.notifyProcessReady(process, "siguiente ráfaga CPU");
       }
     }
   }
 
 
-  private void handleMemoryLack() {
-    int currentTime = syncController.getScheduler().getCurrentTime();
-    Logger.syncLog(String.format("[T=%d] [%s] Falta memoria → BLOCKED_MEMORY", 
-      currentTime, process.getPid()));
-    
-    // Bloquear proceso (SyncController usa su propio lock)
-    syncController.blockProcessForMemory(process);
-    
-    // Forzar que el scheduler libere este proceso
-    syncController.getScheduler().setCurrentProcess(null);
-  }
-
-  private void executeIOBurst(Burst burst) throws InterruptedException {
-    int currentTime = syncController.getScheduler().getCurrentTime();
-    Logger.procLog(String.format("[T=%d] [%s] → Solicita I/O (duración: %d unidades)", 
-      currentTime, process.getPid(), burst.getDuration()));
-    
-    // Cambiar estado a BLOCKED_IO (sin locks externos)
-    if (process.getState() != ProcessState.TERMINATED) {
-      process.setState(ProcessState.BLOCKED_IO);
-    }
-    
-
-    if (process.getState() == ProcessState.BLOCKED_IO) {
-      syncController.getScheduler().setCurrentProcess(null);
-      ioManager.requestIO(process, burst);
-
-      syncController.triggerReschedule();
-    }
-
-  }
-
-  private void handleBurstCompletion(Burst currentBurst) {
-    if (!currentBurst.isCompleted()) {
-      return; // Ráfaga aún no termina
-    }
-    
-    ProcessState state = process.getState();
-    if (state == ProcessState.TERMINATED) {
-      return; // Proceso ya terminó
-    }
-    
-    // Avanzar a siguiente ráfaga
-    process.advanceBurst();
-    Burst nextBurst = process.getCurrentBurst();
-    
-    if (nextBurst == null) {
-      return; // No hay más ráfagas
-    }
-    
-    if (nextBurst.isCPU() && state != ProcessState.RUNNING) {
-      syncController.notifyProcessReady(process, "siguiente ráfaga CPU");
-    }
-  }
-
-
   private void terminateProcess() {
-    // Obtener tiempo de finalización
-    int currentTime = syncController.getScheduler().getCurrentTime();
-    
-    // Cambiar estado localmente
-    synchronized(threadMonitor) {
+    synchronized(syncController.getCoordinationMonitor()) {
+      int currentTime = syncController.getCurrentTime();
       process.setCompletionTime(currentTime);
       process.setState(ProcessState.TERMINATED);
-      running = false;
+      
+      syncController.releaseProcessResources(process);
     }
     
-    // Liberar recursos (fuera del lock local)
-    syncController.releaseProcessResources(process);
-    
-    // Mostrar métricas finales
     printFinalMetrics();
   }
-
 
   private void printFinalMetrics() {
     System.out.println();
