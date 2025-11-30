@@ -61,7 +61,7 @@ private final Label algPlanLabel = new Label();
     
     private void construirEncabezado() {
         BorderPane barra = new BorderPane();
-        barra.setPadding(new Insets(0, 0, 8, 0));
+        barra.setPadding(new Insets(0, 0, 3, 0));
 
         VBox textos = new VBox(4);
         Label titulo = new Label("Resultados de Simulación");
@@ -69,7 +69,7 @@ private final Label algPlanLabel = new Label();
         textos.getChildren().addAll(titulo);
 
         barra.setLeft(textos);
-        setMargin(barra, new Insets(0, 0, 8, 0));
+        setMargin(barra, new Insets(0, 0, 3, 0));
         getChildren().add(barra);
     }
 
@@ -282,7 +282,7 @@ private Node construirBloqueMetricasJuntas() {
 
     private VBox crearDatoResumido(String titulo, Label valor) {
         Label etiqueta = new Label(titulo);
-        etiqueta.getStyleClass().add("metric-title");
+        etiqueta.getStyleClass().add("card-subtitle");
         valor.getStyleClass().add("metric-value");
 
         VBox caja = new VBox(4, etiqueta, valor);
