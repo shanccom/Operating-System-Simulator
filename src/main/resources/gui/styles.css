@@ -83,8 +83,75 @@
   -fx-spacing: 10;
   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 16, 0.16, 0, 8);
 }
+/*Descripcion nueva*/
 
 
+.module-card {
+  -fx-background-radius: 14;
+  -fx-background-insets: 2;
+  -fx-border-width: 3;
+  -fx-border-radius: 14;
+  -fx-padding: 18;
+  -fx-spacing: 8;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 16, 0.18, 0, 6);
+  -fx-transition: all 0.3s ease;
+  -fx-min-height: 180px;
+}
+
+.module-card:hover {
+  -fx-translate-y: -4;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0.22, 0, 8);
+}
+
+
+.module-memory {
+  -fx-background-color: rgba(180, 33, 141, 0.08);
+  -fx-border-color: #ff5edfff;
+}
+
+.module-memory:hover {
+  -fx-background-color: rgba(180, 33, 141, 0.15);
+  -fx-border-width: 4;
+}
+
+
+.module-process {
+  -fx-background-color: rgba(155, 253, 202, 0.05);
+  -fx-border-color: #9bfdcaff;
+}
+
+.module-process:hover {
+  -fx-background-color: rgba(155, 253, 202, 0.12);
+  -fx-border-width: 4;
+}
+
+
+.module-execution {
+  -fx-background-color: rgba(157, 148, 253, 0.05);
+  -fx-border-color: #9d94fdff;
+}
+
+.module-execution:hover {
+  -fx-background-color: rgba(157, 148, 253, 0.12);
+  -fx-border-width: 4;
+}
+
+
+.module-title {
+  -fx-font-size: 15px;
+  -fx-font-weight: bold;
+  -fx-text-fill: rgba(240, 225, 255, 0.95);
+  -fx-padding: 0 0 6 0;
+}
+
+
+.module-content {
+  -fx-text-fill: rgba(240, 225, 255, 0.78);
+  -fx-font-size: 13px;
+  -fx-line-spacing: 0.3em;
+  -fx-wrap-text: true;
+}
+/*Cartas de paneles de simulacion*/
 .card-mem {
   -fx-background-color: rgba(180, 33, 141, 0.12); 
   -fx-background-radius: 16;
@@ -98,6 +165,7 @@
   -fx-transition: all 0.3s ease;
 }
 
+/*Cambiar los hover a que sean durante la ejeuci+on*/
 .card-mem:hover {
   -fx-background-color: rgba(180, 33, 141, 0.22);
   -fx-effect: dropshadow(gaussian, rgba(255, 94, 223, 0.35), 22, 0.25, 0, 10);

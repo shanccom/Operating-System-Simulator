@@ -29,7 +29,7 @@ public class DashboardPage extends VBox {
         HBox topBar = new HBox(10);
         topBar.setAlignment(Pos.CENTER_LEFT);
 
-        Label title = new Label("Simulacion");
+        Label title = new Label("Simulación");
         title.getStyleClass().add("page-title");
 
         Region spacer = new Region();
@@ -120,7 +120,7 @@ public class DashboardPage extends VBox {
     }
 
 
-    // ✅ GETTERS PARA LOS PANELES
+    // GETTERS PARA LOS PANELES
     public ProPanel getProPanel() {
         return proPanel;
     }
