@@ -334,7 +334,7 @@ public class SimulationEngine {
     for (ProcessThread thread : processThreads) {
       try {
         thread.join();
-        Logger.syncLog("  ✓ Thread finalizado: " + thread.getName());
+        Logger.syncLog("  Thread finalizado: " + thread.getName());
       } catch (InterruptedException e) {
         Logger.error("Error esperando thread: " + e.getMessage());
         Thread.currentThread().interrupt();

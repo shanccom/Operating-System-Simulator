@@ -24,7 +24,6 @@ public class SyncController {
   }
   
   public boolean prepareProcessForExecution(Process process) {
-      // ✅ NUEVO: Verificar si está esperando que termine el page fault
       if (process.isWaitingForPageFault()) {
           int currentTime = scheduler.getCurrentTime();
           int endTime = process.getPageFaultEndTime();
@@ -33,7 +32,7 @@ public class SyncController {
               return false;
           } else {
               // Ya terminó el page fault penalty
-              Logger.memLog(String.format("[T=%d] [PAGE FAULT] ✓ %s completó page fault handling", 
+              Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s completó page fault handling", 
                   currentTime, process.getPid()));
               process.clearPageFault();
               // Continuar con la verificación normal
@@ -46,7 +45,6 @@ public class SyncController {
           return true;
       }
       
-      // ✅ NUEVO: Necesita cargar páginas con overhead
       int currentTime = scheduler.getCurrentTime();
       
       Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s necesita cargar páginas", 
@@ -56,7 +54,6 @@ public class SyncController {
       boolean hadPageFaults = loadRequiredPages(process);
       
       if (hadPageFaults) {
-          // ✅ Páginas cargadas exitosamente, aplicar penalty
           int pageFaultPenalty = config.getPageFaultPenalty();
           int endTime = currentTime + pageFaultPenalty;
           

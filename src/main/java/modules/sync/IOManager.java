@@ -244,7 +244,7 @@ public class IOManager implements Runnable {
     // Obtener tiempo actual
     int completionTime = syncController.getScheduler().getCurrentTime();
     
-    Logger.procLog(String.format("[T=%d] [I/O] ✓ I/O completada para %s (duración: %d unidades)", 
+    Logger.procLog(String.format("[T=%d] [I/O] I/O completada para %s (duración: %d unidades)", 
       completionTime, process.getPid(), duration));
     
     syncController.notifyProcessReady(process, "completó I/O");
@@ -262,7 +262,7 @@ public class IOManager implements Runnable {
       
       // Verificar si ya completó el system call
       if (currentSimTime >= endTime) {
-        Logger.procLog(String.format("[T=%d] [SYSTEM CALL] ✓ %s completó system call", 
+        Logger.procLog(String.format("[T=%d] [SYSTEM CALL] %s completó system call", 
             currentSimTime, process.getPid()));
         process.clearSystemCall();
         break;
