@@ -124,7 +124,7 @@ public class DashboardPage extends VBox {
     }
 
 
-    // ✅ GETTERS PARA LOS PANELES
+    // GETTERS PARA LOS PANELES
     public ProPanel getProPanel() {
         return proPanel;
     }

@@ -86,19 +86,19 @@ public class ExePanel extends VBox {
     // metodos publico para actualizar gantt y metricas
     
     public void addExecution(String pid, int startTime, int endTime) {
-        System.out.println("[ExePanel] ✅ addExecution llamado: " + pid + " [" + startTime + "-" + endTime + "]");
+        //System.out.println("[ExePanel] addExecution llamado: " + pid + " [" + startTime + "-" + endTime + "]");
         ganttChart.addExecution(pid, startTime, endTime);
         totalCPUTime += (endTime - startTime);
         updateMetrics();
     }
 
     public void setCurrentTime(int time) {
-        System.out.println("[ExePanel] ✅ setCurrentTime llamado: " + time);
+        //System.out.println("[ExePanel] setCurrentTime llamado: " + time);
         ganttChart.setCurrentTime(time);
     }
 
     public void incrementContextSwitch() {
-        System.out.println("[ExePanel]✅  incrementContextSwitch llamado");
+        //System.out.println("[ExePanel] incrementContextSwitch llamado");
         contextSwitches++;
         updateMetrics();
     }

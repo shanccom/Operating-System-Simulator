@@ -40,15 +40,15 @@ public class GanttChart extends Pane {
     }
     
     public void addExecution(String pid, int startTime, int endTime) {
-         System.out.println("[GanttChart] addExecution: " + pid + " [" + startTime + "-" + endTime + "]");
+        //System.out.println("[GanttChart] addExecution: " + pid + " [" + startTime + "-" + endTime + "]");
         Platform.runLater(() -> {
             if (!processColors.containsKey(pid)) {
                 processColors.put(pid, COLORS[processColors.size() % COLORS.length]);
-                System.out.println("[GanttChart] Color asignado a " + pid + ": " + processColors.get(pid));
+                //System.out.println("[GanttChart] Color asignado a " + pid + ": " + processColors.get(pid));
             }
             
             entries.add(new GanttEntry(pid, startTime, endTime));
-            System.out.println("[GanttChart] Total entries: " + entries.size());
+            //System.out.println("[GanttChart] Total entries: " + entries.size());
             
             if (endTime > maxTime) {
                 maxTime = endTime + 10;
@@ -59,7 +59,7 @@ public class GanttChart extends Pane {
     }
     
     public void setCurrentTime(int time) {
-        System.out.println("[GanttChart] setCurrentTime: " + time);
+        //System.out.println("[GanttChart] setCurrentTime: " + time);
         Platform.runLater(() -> {
             this.currentTime = time;
             draw();
