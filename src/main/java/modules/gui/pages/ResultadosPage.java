@@ -2,6 +2,7 @@ package modules.gui.pages;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -13,20 +14,29 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import model.DatosResultados;
 import model.ResultadoProceso;
 
 public class ResultadosPage extends VBox {
-
-    private final Label valorEspera = crearValorPrincipal();
-    private final Label valorRetorno = crearValorPrincipal();
-    private final Label valorCpu = crearValorPrincipal();
-    private final Label valorFallos = crearValorPrincipal();
-    private final Label valorReemplazos = crearValorPrincipal();
+private final Label algPlanLabel = new Label();
+    private final Label algMemLabel = new Label();
+    private final Label totalProcesosLabel = new Label();
+    private final Label procesosCompletadosLabel = crearValorPrincipal();
+    private final Label tiempoRespuestaLabel = crearValorPrincipal();
+    private final Label cambiosContextoLabel = crearValorPrincipal();
+    private final Label tiempoCpuLabel = crearValorPrincipal();
+    private final Label tiempoOciosoLabel = crearValorPrincipal();
+    private final Label cargasTotalesLabel = crearValorPrincipal();
+    private final Label fallosPaginaLabel = crearValorPrincipal();
+    private final Label reemplazosLabel = crearValorPrincipal();
+    private final Label marcosLibresLabel = crearValorPrincipal();
     private final ProgressIndicator graficaCpu = new ProgressIndicator();
+    private final Label porcentajeCpuLabel = new Label();
     private final Label estadoCpu = new Label();
-    private final VBox contenedorBarras = new VBox(8);
+    private final VBox contenedorBarras = new VBox(10);
     private final TableView<ResultadoProceso> tablaProcesos = new TableView<>();
 
     public ResultadosPage() {
@@ -51,10 +61,6 @@ public class ResultadosPage extends VBox {
         VBox textos = new VBox(4);
         Label titulo = new Label("Resultados de Simulación");
         titulo.getStyleClass().add("page-title");
-        Label subtitulo = new Label("Métricas detalladas de la última ejecución.");
-        subtitulo.getStyleClass().add("page-subtitle");
-        textos.getChildren().addAll(titulo, subtitulo);
-
         barra.setLeft(textos);
         setMargin(barra, new Insets(0, 0, 8, 0));
         getChildren().add(barra);
