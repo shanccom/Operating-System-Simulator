@@ -32,9 +32,6 @@ public class DashboardPage extends VBox {
         Label title = new Label("Simulacion");
         title.getStyleClass().add("page-title");
 
-        Label subtitle = new Label("Dashboard");
-        subtitle.getStyleClass().add("page-subtitle");
-
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
@@ -47,7 +44,6 @@ public class DashboardPage extends VBox {
         runButton.setOnAction(e -> iniciarSimulacion());
         topBar.getChildren().addAll(
                 title,
-                subtitle,
                 spacer,
                 runButton
         );
