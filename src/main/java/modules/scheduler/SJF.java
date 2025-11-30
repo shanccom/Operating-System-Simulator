@@ -38,8 +38,8 @@ public class SJF extends Scheduler {
         }
 
         if(shortest != null){
-            readyQueue.remove(shortest);
-            contextSwitch(shortest);
+            //readyQueue.remove(shortest);
+            //contextSwitch(shortest);
             Logger.debug("SJF seleccionó: " + shortest.getPid() + " con ráfaga restante " + shortestBurstTime);
         }
         

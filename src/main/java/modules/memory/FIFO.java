@@ -22,57 +22,42 @@ public class FIFO extends MemoryManager {
         // FIFO: seleccionar el marco que fue cargado primero (mas antiguo)
 
         if (frameQueue.isEmpty()) {
-            Logger.warning("Cola FIFO vacía, seleccionando primer marco ocupado como fallback");
-            for (int i = 0; i < totalFrames; i++) {
-                if (frames[i].isOccupied()) {
-                    // GUI: aquí podrías resaltar el marco elegido como fallback
-                    return i;
-                }
-            }
-            return -1;
+          Logger.warning("Cola FIFO vacía, no hay víctimas disponibles");
+          return -1;
         }
 
-        // El primer elemento de la cola es el marco mas antiguo
-        int victimFrame = frameQueue.poll();
-
-        Logger.debug("FIFO seleccionó marco " + victimFrame + " como víctima");
-
-       
-        return victimFrame;
+        for (Integer frameIndex : frameQueue) {
+          Frame frame = frames[frameIndex];
+          // Puedes descomentar esto si NO quieres reemplazar páginas del mismo proceso:
+          // if (!frame.getProcessId().equals(requestingProcess.getPid())) {
+          //     return frameIndex;
+          // }
+          
+          // O simplemente retornar el más antiguo:
+          return frameIndex; // No hagas poll() aquí
+        }
+    
+      return -1;
     }
 
     @Override
     protected void loadPageToFrame(int frameIndex, String pid, int pageNumber) {
-        // Llamar al método padre para cargar la pagina
-        super.loadPageToFrame(frameIndex, pid, pageNumber);
-
-        // Evitar duplicados en la cola
-        frameQueue.remove(frameIndex);
-        frameQueue.offer(frameIndex);
-
-        Logger.debug("Marco " + frameIndex + " agregado a cola FIFO");
-
-        
+      super.loadPageToFrame(frameIndex, pid, pageNumber);
+      
+      if (!frameQueue.contains(frameIndex)) {
+          frameQueue.offer(frameIndex);
+          Logger.debug("Marco " + frameIndex + " agregado a cola FIFO (nuevo)");
+      }
     }
 
     @Override
     protected void replacePage(int frameIndex, String newPid, int newPage) {
-        // Antes de reemplazar, podemos loggear la víctima
-        String oldPid = frames[frameIndex].getProcessId();
-        int oldPage = frames[frameIndex].getPageNumber();
-        Logger.debug("FIFO reemplazara pagina " + oldPage + " del proceso " + oldPid);
-
-      
-
-        // Llamar al método padre para reemplazar
-        super.replacePage(frameIndex, newPid, newPage);
-
-        // Reinsertar el marco en la cola (ahora es el mas reciente)
-        frameQueue.remove(frameIndex);
-        frameQueue.offer(frameIndex);
-
-        Logger.debug("Marco " + frameIndex + " reinsertado en cola FIFO");
-
+      super.replacePage(frameIndex, newPid, newPage);
+  
+      if (!frameQueue.remove(frameIndex)) {
+          Logger.warning("Marco " + frameIndex + " no estaba en cola FIFO");
+      }
+      frameQueue.offer(frameIndex);
        
     }
 

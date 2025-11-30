@@ -21,21 +21,17 @@ public class Logger {
   private static final List<Consumer<LogEntry>> listeners = new ArrayList<>();
 
   public static class LogEntry {
-      private final LocalDateTime timestamp;
       private final String message;
       private final LogLevel level;
       
       public LogEntry(String message, LogLevel level) {
-          this.timestamp = LocalDateTime.now();
           this.message = message;
           this.level = level;
       }
       
       @Override
       public String toString() {
-          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
-          return String.format("[%s] %s", 
-              timestamp.format(formatter), message);
+          return String.format("%s", message);
       }
       
       public String getMessage() {
@@ -46,9 +42,7 @@ public class Logger {
           return level;
       }
       
-      public LocalDateTime getTimestamp() {
-          return timestamp;
-      }
+
   }
   // Comunicacion con la interfaz
   public static void addListener(Consumer<LogEntry> listener) {

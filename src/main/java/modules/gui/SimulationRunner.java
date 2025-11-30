@@ -11,6 +11,10 @@ import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
 import modules.sync.SimulationEngine;
 import modules.sync.SimulationStateListener;
+
+import modules.gui.dashboard.MemPanel;
+import modules.gui.dashboard.ProPanel;
+
 import utils.FileParser;
 import utils.Logger;
 import utils.SimulationFactory;
@@ -18,7 +22,9 @@ import utils.SimulationFactory;
 
 public class SimulationRunner {
 
-    public static void runSimulation(Config config, String processPath, DashboardPage dashboardPage) throws Exception {
+
+    public static void runSimulation(Config config, String processPath, DashboardPage dashboardPage, MemPanel memPanel) throws Exception {
+
         
         if (!config.validate()) {
             throw new IllegalArgumentException("Configuracion invalida");
@@ -30,6 +36,15 @@ public class SimulationRunner {
         }
         Scheduler scheduler = SimulationFactory.createScheduler(config);
         MemoryManager memoryManager = SimulationFactory.createMemoryManager(config);
+        // ---- registrar visualizador de memoria (si existe)
+        if (memPanel != null && memPanel.getVisualizer() != null) {
+            System.out.println("[SimulationRunner] Registrando MemoryVisualizer en MemoryManager...");
+            memoryManager.addListener(memPanel.getVisualizer());
+        } else {
+            System.out.println("[SimulationRunner] MemPanel o visualizer es NULL. No se registro listener de memoria.");
+        }
+
+
         printSystemConfiguration(config, processes, scheduler, memoryManager);
         System.out.println();
         SimulationEngine engine = new SimulationEngine(

@@ -57,9 +57,8 @@ public abstract class Scheduler {
     }
     
     public synchronized void confirmProcessSelection(Process process) {
-      // Solo sacar de la cola si el proceso se pudo preparar 
-      if (readyQueue.peek() == process) {
-        readyQueue.poll();
+      // Remover el proceso de la cola sin importar su posición
+      if (process != null && readyQueue.remove(process)) {
         contextSwitch(process);
       }
     }
@@ -181,6 +180,10 @@ public abstract class Scheduler {
     
     public synchronized boolean hasReadyProcesses() {
         return !readyQueue.isEmpty();
+    }
+
+    public void forceContextSwitch() {
+      currentProcess = null;
     }
     
     /**

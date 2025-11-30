@@ -1,13 +1,11 @@
 package modules.memory;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import model.Process;
 import utils.Logger;
+import modules.memory.MemoryEventListener;
 
 // NUEVO ADECUAMOS PARA USAR DISPARADORES de eventos-aun
 // NUEVO SI - Atributos necesarios para realizar NRU y optimal
@@ -76,7 +74,7 @@ public abstract class MemoryManager {
     }
     // FIN FRAME ________________________________________________________________________
 
-
+    private List<MemoryEventListener> listeners = new ArrayList<>();
     protected final int totalFrames;
     protected final Frame[] frames;
     protected final Map<String, Set<Integer>> processPageMap; // PID -> paginas cargadas
@@ -104,37 +102,81 @@ public abstract class MemoryManager {
         this.totalPageLoads = 0;
     }
 
+    //Listeners encapsulación
+    public void addListener(MemoryEventListener listener){
+        listeners.add(listener);
+    }
+    private void notifyPageFault(String pid, int page) {
+        for (MemoryEventListener listener : listeners) {
+            listener.onPageFault(pid, page);
+        }
+    }
+        
+    private void notifyPageAccess(int frameIndex, String pid, int page, boolean hit) {
+        for (MemoryEventListener l : listeners)
+            l.onPageAccess(frameIndex, pid, page, hit);
+    }
 
-    // *** CARGA DE PaGINA PRINCIPAL (EVENTO DE ACESO) ***
+
+    private void notifyFrameLoaded(int frameIndex, String pid, int page) {
+        for (MemoryEventListener l : listeners)
+            l.onFrameLoaded(frameIndex, pid, page);
+    }
+
+    private void notifyFrameEvicted(int frameIndex, String pid, int page) {
+        for (MemoryEventListener l : listeners)
+            l.onFrameEvicted(frameIndex, pid, page);
+    }
+
+    private void notifyVictimChosen(int frameIndex, String reason) {
+        for (MemoryEventListener l : listeners)
+            l.onVictimChosen(frameIndex, reason);
+    }
+
+    private void notifySnapshot(String snapshot) {
+        for (MemoryEventListener l : listeners)
+            l.onSnapshot(snapshot);
+    }
+
+    //load
     public synchronized boolean loadPage(Process process, int pageNumber) {
-
+        //Listener
         currentTime++;
         String pid = process.getPid();
 
         // Caso: la pagina YA esta en memoria (HIT)
+        
         if (isPageLoaded(pid, pageNumber)) {
-            Logger.memHit(pid, pageNumber, findFrame(pid, pageNumber));
+            int frameIndex = findFrame(pid, pageNumber);
+            Logger.memHit(pid, pageNumber, frameIndex);
+            notifyPageAccess(frameIndex, pid, pageNumber, true);
             accessPage(pid, pageNumber);
+            notifySnapshot(getMemorySnapshotCompact());
             Logger.memSnapshot(frames);
             return true;
         }
+
 
         // PAGE FAULT
         pageFaults++;
         process.incrementPageFaults();
         Logger.memFault(pid, pageNumber);
+        notifyPageFault(pid, pageNumber);
 
         // Intentar cargar en frame libre
         int freeFrame = findFreeFrame();
         if (freeFrame != -1) {
             loadPageToFrame(freeFrame, pid, pageNumber);
+            notifyFrameLoaded(freeFrame, pid, pageNumber);
             return true;
         }
 
         // Si no hay marcos libres → elegir víctima
         int victimFrame = selectVictimFrame(process, pageNumber);
+        notifyVictimChosen(victimFrame, "Aca incluir reason");
         if (victimFrame != -1) {
             replacePage(victimFrame, pid, pageNumber);
+            notifyFrameEvicted(victimFrame, pid, pageNumber);
             return true;
         }
 
@@ -158,7 +200,7 @@ public abstract class MemoryManager {
 
     protected abstract int selectVictimFrame(Process requestingProcess, int requestedPage);
 
-
+    //Metodo auxiliares para los de arriba
     protected void accessPage(String pid, int pageNumber) {
         for (int i = 0; i < totalFrames; i++) {
             Frame frame = frames[i];
@@ -172,7 +214,7 @@ public abstract class MemoryManager {
     }
 
 
-    protected int findFreeFrame() {
+    protected int findFreeFrame() { //Auxiliar
         for (int i = 0; i < totalFrames; i++) {
             if (!frames[i].isOccupied()) {
                 return i;
