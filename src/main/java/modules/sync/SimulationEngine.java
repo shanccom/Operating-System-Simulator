@@ -53,16 +53,12 @@ public class SimulationEngine {
       processThreads.add(thread);
     }
   }
-<<<<<<< HEAD
-  /* 
-=======
 
 
   public void setStateListener(SimulationStateListener listener) {
     this.stateListener = listener;
   }
 
->>>>>>> 410deea9e8d06a852e3ec72473d855e43c0db890
   public void run() {
     running = true;
 
@@ -78,7 +74,7 @@ public class SimulationEngine {
     ioManager.stop();
     syncController.stop();
     showResults();
-  }*/
+  }/* 
 
   public DatosResultados run() {
     
@@ -94,37 +90,8 @@ public class SimulationEngine {
     datosFinales = construirResultados();
     return datosFinales;
   }
-<<<<<<< HEAD
-  
-  private DatosResultados construirResultados() {
-    Map<String, Integer> reemplazos = memoryManager.getReemplazosPorProceso();
-    List<ResultadoProceso> resumen = new ArrayList<>();
+*/
 
-    for (Process p : allProcesses) {
-      resumen.add(new ResultadoProceso(p.getPid(),p.getWaitingTime(),p.getTurnaroundTime(),p.getResponseTime(),p.getPageFaults(),reemplazos.getOrDefault(p.getPid(), 0)));
-    }
-
-    return new DatosResultados(
-        scheduler.getAverageWaitingTime(),
-        scheduler.getAverageTurnaroundTime(),
-        scheduler.getAverageResponseTime(),
-        scheduler.getCPUUtilization(),
-        memoryManager.getPageFaults(),
-        memoryManager.getPageReplacements(),
-        scheduler.getTotalCPUTime(),
-        scheduler.getIdleTime(),
-        memoryManager.getTotalFrames(),
-        memoryManager.getFreeFrames(),
-        resumen,
-        scheduler.getAlgorithmName(),
-        memoryManager.getAlgorithmName(),
-        allProcesses.size()
-    );
-  }
-=======
-
-
->>>>>>> 410deea9e8d06a852e3ec72473d855e43c0db890
   private void startAllThreads() {
     for (ProcessThread thread : processThreads) {
       thread.start();

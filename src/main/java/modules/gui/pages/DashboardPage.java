@@ -6,18 +6,10 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
 import modules.gui.SimulationRunner;
-<<<<<<< HEAD
-import modules.gui.components.*;
-import modules.gui.dashboard.ExePanel;
-import modules.gui.dashboard.LogsPanel;
-import modules.gui.dashboard.MemPanel;
-import modules.gui.dashboard.ProPanel;
-=======
 import modules.gui.pages.ConfigPage;
 import modules.gui.dashboard.*;
 import model.Config;
 
->>>>>>> 410deea9e8d06a852e3ec72473d855e43c0db890
 public class DashboardPage extends VBox {
 
     private ExePanel exePanel;
@@ -43,15 +35,6 @@ public class DashboardPage extends VBox {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-<<<<<<< HEAD
-        Button runButton = new Button("Iniciar Simulación");
-        runButton.getStyleClass().add("primary-button");
-        ConfigPage cp = new ConfigPage(null);
-        runButton.setOnAction(e -> {
-            cp.runSimulation();
-        });
-
-=======
         statusLabel = new Label("Configure los parámetros antes de iniciar");
         statusLabel.setStyle("-fx-text-fill: #888; -fx-font-size: 12px;");
         
@@ -59,7 +42,6 @@ public class DashboardPage extends VBox {
         runButton = new Button("Iniciar Simulación");
         runButton.getStyleClass().add("primary-button");
         runButton.setOnAction(e -> iniciarSimulacion());
->>>>>>> 410deea9e8d06a852e3ec72473d855e43c0db890
         topBar.getChildren().addAll(
                 title,
                 spacer,
