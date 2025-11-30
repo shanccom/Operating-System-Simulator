@@ -182,6 +182,18 @@ public class SimulationEngine {
     if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
       if (!syncController.hasRequiredPages(currentRunning)) {
         Logger.log("[ENGINE] " + currentRunning.getPid() + " perdió páginas durante ejecución");
+        
+        // notificaciond que perdio pagina (perdió memoria)
+        //para gant
+        String pid = currentRunning.getPid();
+        Integer startTime = executionStartTimes.get(pid);
+        if (startTime != null && stateListener != null) {
+            System.out.println("[Engine] Proceso " + pid + " termina ejecución en t=" + currentTime + " (perdió memoria)");
+            stateListener.onProcessExecutionEnded(pid, currentTime);
+            executionStartTimes.remove(pid);
+        }
+        //fin
+        
         currentRunning.setState(ProcessState.READY);
         scheduler.addProcess(currentRunning);
         scheduler.setCurrentProcess(null);
@@ -190,16 +202,49 @@ public class SimulationEngine {
     }
 
     if (currentRunning != null && currentRunning.getState() == ProcessState.TERMINATED) {
+      // notificacion fin de ejecucion (proceso terminado)
+      //para gant
+      String pid = currentRunning.getPid();
+      Integer startTime = executionStartTimes.get(pid);
+      if (startTime != null && stateListener != null) {
+          System.out.println("[Engine]Proceso " + pid + " termina ejecución en t=" + currentTime + " (terminado)");
+          stateListener.onProcessExecutionEnded(pid, currentTime);
+          executionStartTimes.remove(pid);
+      }
+      //fin
+      
       scheduler.setCurrentProcess(null);
       currentRunning = null;
     }
 
     if (currentRunning != null && currentRunning.getState() == ProcessState.BLOCKED_IO) {
+      // notificar fin de ejecucion (bloqueado por I/O)
+      //para gant
+      String pid = currentRunning.getPid();
+      Integer startTime = executionStartTimes.get(pid);
+      if (startTime != null && stateListener != null) {
+          System.out.println("[Engine] Proceso " + pid + " termina ejecución en t=" + currentTime + " (bloqueado I/O)");
+          stateListener.onProcessExecutionEnded(pid, currentTime);
+          executionStartTimes.remove(pid);
+      }
+      //fin
+      
       scheduler.setCurrentProcess(null);
       currentRunning = null;
     }
 
     if (currentRunning != null && currentRunning.getState() == ProcessState.BLOCKED_MEMORY) {
+      // notificar fin de ejecucion (bloqueado por memoria)
+      //para gant
+      String pid = currentRunning.getPid();
+      Integer startTime = executionStartTimes.get(pid);
+      if (startTime != null && stateListener != null) {
+          System.out.println("[Engine] Proceso " + pid + " termina ejecución en t=" + currentTime + " (bloqueado memoria)");
+          stateListener.onProcessExecutionEnded(pid, currentTime);
+          executionStartTimes.remove(pid);
+      }
+      //fin
+      
       scheduler.setCurrentProcess(null);
       currentRunning = null;
     }
@@ -214,6 +259,19 @@ public class SimulationEngine {
             // Si el quantum se agotó, forzar expropiación
             if (rr.isQuantumAgotado()) {
                 Logger.debug("[ENGINE] Quantum agotado para " + currentRunning.getPid() + ", expropiando");
+                
+                // notificar fin de ejecucion  (quantum agotado)
+                //para gant
+                String pid = currentRunning.getPid();
+                Integer startTime = executionStartTimes.get(pid);
+                if (startTime != null && stateListener != null) {
+                    System.out.println("[Engine] Proceso " + pid + " termina ejecución en t=" + currentTime + " (quantum agotado)");
+                    stateListener.onProcessExecutionEnded(pid, currentTime);
+                    stateListener.onContextSwitch();
+                    executionStartTimes.remove(pid);
+                }
+                //fin
+                
                 synchronized(syncController.getCoordinationMonitor()) {
                     currentRunning.setState(ProcessState.READY);
                 }
@@ -227,6 +285,19 @@ public class SimulationEngine {
                 for (Process candidate : readyQueue) {
                     if (scheduler.shouldPreempt(currentRunning, candidate)) {
                         Logger.debug("[ENGINE] Expropiando " + currentRunning.getPid() + " por " + candidate.getPid());
+                        
+                        // notificar fin de ejecucion  (expropiado)
+                        //para gant
+                        String pid = currentRunning.getPid();
+                        Integer startTime = executionStartTimes.get(pid);
+                        if (startTime != null && stateListener != null) {
+                            System.out.println("[Engine] Proceso " + pid + " termina ejecución en t=" + currentTime + " (expropiado)");
+                            stateListener.onProcessExecutionEnded(pid, currentTime);
+                            stateListener.onContextSwitch();
+                            executionStartTimes.remove(pid);
+                        }
+                        //fin
+                        
                         synchronized(syncController.getCoordinationMonitor()) {
                             currentRunning.setState(ProcessState.READY);
                         }
@@ -249,6 +320,19 @@ public class SimulationEngine {
             for (Process candidate : readyQueue) {
                 if (scheduler.shouldPreempt(currentRunning, candidate)) {
                     Logger.debug("[ENGINE] Expropiando " + currentRunning.getPid() + " por " + candidate.getPid());
+                    
+                    // notificar fin de ejecucion  (expropiado)
+                    //para gant
+                    String pid = currentRunning.getPid();
+                    Integer startTime = executionStartTimes.get(pid);
+                    if (startTime != null && stateListener != null) {
+                        System.out.println("[Engine] Proceso " + pid + " termina ejecución en t=" + currentTime + " (expropiado)");
+                        stateListener.onProcessExecutionEnded(pid, currentTime);
+                        stateListener.onContextSwitch();
+                        executionStartTimes.remove(pid);
+                    }
+                    //fin
+                    
                     synchronized(syncController.getCoordinationMonitor()) {
                         currentRunning.setState(ProcessState.READY);
                     }
@@ -270,10 +354,23 @@ public class SimulationEngine {
     if (shouldContinueRunning && currentRunning != null) {
         boolean canExecute = syncController.canProcessExecute(currentRunning);
         if (canExecute) {
+            
             wakeUpThread(currentRunning);
             scheduler.recordCPUTime(1);
         } else {
             // Perdió memoria durante ejecución
+            
+            // notificar fin de ejecucion perdió memoria)
+            //para gant
+            String pid = currentRunning.getPid();
+            Integer startTime = executionStartTimes.get(pid);
+            if (startTime != null && stateListener != null) {
+                System.out.println("[Engine] Proceso " + pid + " termina ejecución en t=" + currentTime + " (perdió memoria)");
+                stateListener.onProcessExecutionEnded(pid, currentTime);
+                executionStartTimes.remove(pid);
+            }
+            //fin
+            
             scheduler.setCurrentProcess(null);
             scheduler.recordIdleTime(1);
             if (!scheduler.getReadyQueueSnapshot().contains(currentRunning)) {
@@ -293,6 +390,16 @@ public class SimulationEngine {
     
     // Cambiar al nuevo proceso (currentRunning ya fue manejado arriba, así que puede ser null)
     if (currentRunning != null && currentRunning.getState() == ProcessState.RUNNING) {
+        // notificar fin de ejecucion  (cambio de contexto)
+        String pid = currentRunning.getPid();
+        Integer startTime = executionStartTimes.get(pid);
+        if (startTime != null && stateListener != null) {
+            System.out.println("[Engine]Proceso " + pid + " termina ejecución en t=" + currentTime + " (context switch)");
+            stateListener.onProcessExecutionEnded(pid, currentTime);
+            stateListener.onContextSwitch();
+            executionStartTimes.remove(pid);
+        }
+        
         // Cambiar proceso actual de RUNNING a READY
         synchronized(syncController.getCoordinationMonitor()) {
             currentRunning.setState(ProcessState.READY);
@@ -308,6 +415,22 @@ public class SimulationEngine {
     boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
     
     if (canExecute) {
+        // notificar inicio de ejecucion
+        //para gant
+        String pid = nextProcess.getPid();
+        System.out.println("[Engine] ▶️ Proceso " + pid + " inicia ejecución en t=" + currentTime);
+        
+        if (stateListener != null) {
+            stateListener.onProcessExecutionStarted(pid, currentTime);
+            // Solo notificar context switch si hubo un proceso anterior
+            if (currentRunning != null) {
+                stateListener.onContextSwitch();
+            }
+        }
+        executionStartTimes.put(pid, currentTime);
+
+        //fin
+        
         // Confirmar selección y registrar cambio de contexto
         scheduler.confirmProcessSelection(nextProcess);  // Remueve de cola y registra context switch
         // Despertar thread del nuevo proceso
