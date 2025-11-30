@@ -1,5 +1,6 @@
 package modules.gui.pages;
 
+import modules.gui.MainFX;
 import modules.gui.SimulationRunner;
 import model.Config;
 import java.io.File;
@@ -21,6 +22,7 @@ public class ConfigPage extends VBox {
     private final ComboBox<String> replacementCombo = new ComboBox<>();
     private final CheckBox enableIOCheck = new CheckBox("Habilitar I/O");
     private final Spinner<Integer> timeUnitSpinner = new Spinner<>(10, 1000, 100, 10);
+    private final MainFX mainFx;
 
     private final Label labelProcess = new Label();
     private final Label labelStatus = new Label();
@@ -29,7 +31,8 @@ public class ConfigPage extends VBox {
 
     private DashboardPage dashboardPage;
 
-    public ConfigPage(Stage stage, DashboardPage dashboardPage) {
+    public ConfigPage(Stage stage, DashboardPage dashboardPage, MainFX mainFx) {
+        this.mainFx = mainFx;
         this.dashboardPage = dashboardPage;
         System.out.println("[ConfigPage] Constructor llamado");
         System.out.println("[ConfigPage] dashboardPage recibido: " + dashboardPage);
@@ -310,7 +313,8 @@ public class ConfigPage extends VBox {
                 currentConfig, 
                 processFile.getAbsolutePath(),
                 dashboardPage != null ? dashboardPage.getProPanel() : null,
-                dashboardPage.getMemPanel()
+                dashboardPage.getMemPanel(),
+                mainFx
             );
 
             labelStatus.setText("Simulación iniciada correctamente.");

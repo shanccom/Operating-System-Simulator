@@ -58,6 +58,7 @@ private final Label algPlanLabel = new Label();
         actualizarDatos(datos);
     }
 
+    
     private void construirEncabezado() {
         BorderPane barra = new BorderPane();
         barra.setPadding(new Insets(0, 0, 8, 0));

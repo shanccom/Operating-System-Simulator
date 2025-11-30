@@ -140,11 +140,11 @@ public class DatosResultados {
 
     public static DatosResultados prueba() {
         List<ResultadoProceso> procesos = List.of(
-                new ResultadoProceso("P1", 8, 18, 5, 150, 25),
-                new ResultadoProceso("P2", 15, 25, 8, 310, 60),
-                new ResultadoProceso("P3", 22, 40, 11, 220, 42),
-                new ResultadoProceso("P4", 10, 15, 6, 452, 98),
-                new ResultadoProceso("P5", 25, 45, 15, 320, 87)
+                new ResultadoProceso("P1", 8, 18, 5, 150),
+                new ResultadoProceso("P2", 15, 25, 8, 310),
+                new ResultadoProceso("P3", 22, 40, 11, 220),
+                new ResultadoProceso("P4", 10, 15, 6, 452),
+                new ResultadoProceso("P5", 25, 45, 15, 320)
         );
 
         return new DatosResultados(

@@ -3,6 +3,7 @@ package modules.gui;
 import java.util.List;
 
 import model.Config;
+import model.DatosResultados;
 import model.Process;
 import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
@@ -10,13 +11,14 @@ import modules.sync.SimulationEngine;
 import modules.sync.SimulationStateListener;
 import modules.gui.dashboard.MemPanel;
 import modules.gui.dashboard.ProPanel;
+import modules.gui.pages.ResultadosPage;
 import utils.FileParser;
 import utils.Logger;
 import utils.SimulationFactory;
 
 public class SimulationRunner {
 
-    public static void runSimulation(Config config, String processPath, ProPanel proPanel, MemPanel memPanel) throws Exception {
+    public static void runSimulation(Config config, String processPath, ProPanel proPanel, MemPanel memPanel, MainFX mainFx) throws Exception {
         
         if (!config.validate()) {
             throw new IllegalArgumentException("Configuracion invalida");
@@ -76,11 +78,17 @@ public class SimulationRunner {
         Thread simulationThread = new Thread(() -> {
             try {
                 engine.run();
+                DatosResultados resultados = engine.getDatosFinales();
+
+                javafx.application.Platform.runLater(() -> {
+                    ResultadosPage resultadosPage = new ResultadosPage(resultados);
+                    mainFx.showResultados(resultadosPage);  
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }, "SimulationThread");
-        
+
         simulationThread.setDaemon(false); // No es daemon para que complete antes de cerrar
         simulationThread.start();
         
