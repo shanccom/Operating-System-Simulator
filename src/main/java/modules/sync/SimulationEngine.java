@@ -74,23 +74,14 @@ public class SimulationEngine {
     ioManager.stop();
     syncController.stop();
     showResults();
-  }/* 
+    //datosFinales = construirResultados();
+  }
 
-  public DatosResultados run() {
-    
-    running = true;
-    syncController.start();
-    ioManager.start();
-    startAllThreads();
-    coordinationLoop();
-    waitForAllThreads();
-    ioManager.stop();
-    syncController.stop();
-    showResults();
-    datosFinales = construirResultados();
+  public DatosResultados getDatosFinales() {
     return datosFinales;
   }
-*/
+
+
 
   private void startAllThreads() {
     for (ProcessThread thread : processThreads) {

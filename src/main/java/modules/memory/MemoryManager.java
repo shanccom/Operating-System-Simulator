@@ -65,6 +65,7 @@ public abstract class MemoryManager {
         public boolean isReferenced() { return referenced; }
         public boolean isModified() { return modified; }
 
+
         @Override
         public String toString() {
             return isOccupied ?
@@ -343,4 +344,7 @@ public abstract class MemoryManager {
         totalPageLoads = 0;
         Logger.memLog("[MEM] Memoria reseteada");
     }
+    //Getters para resultados
+    public int getFramesLibres() {return getFreeFrames();}
+    public int getMarcosLibres() {return getFreeFrames();}
 }
