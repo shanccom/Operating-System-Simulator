@@ -77,8 +77,6 @@ public class ProcessThread extends Thread {
       process.setState(ProcessState.READY);
     }
     
-    // Notificar al controlador (usa su propio lock)
-    // IMPORTANTE: Esto se hace FUERA de threadMonitor para evitar deadlocks
     if (process.getState() == ProcessState.READY) {
       syncController.notifyProcessReady(process, "llegada al sistema");
     }
@@ -160,16 +158,19 @@ public class ProcessThread extends Thread {
     // Log de ráfaga completada
     if (burst.isCompleted()) {
       int currentTime = syncController.getScheduler().getCurrentTime();
-      Logger.exeLog(String.format("[T=%d] [%s] ✓ Ráfaga CPU completada (%d unidades)", 
+      Logger.exeLog(String.format("[T=%d] [%s] Rafaga CPU completada (%d unidades)", 
         currentTime, process.getPid(), burst.getDuration()));
     }
   }
 
   private void executeOneCPUUnit(Burst burst) {
     int currentTime = syncController.getScheduler().getCurrentTime();
-    
+
+    process.markFirstExecution(currentTime);
+
     // Ejecutar 1 unidad
     burst.execute(1);
+
     
     // Log del progreso
     int progress = burst.getDuration() - burst.getRemainingTime();

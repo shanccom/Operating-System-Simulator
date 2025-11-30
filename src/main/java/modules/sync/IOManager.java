@@ -4,6 +4,7 @@ import model.Burst;
 import model.Process;
 import model.ProcessState;
 import utils.Logger;
+import model.Config;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -16,6 +17,7 @@ public class IOManager implements Runnable {
     final Process process;
     final Burst ioBurst;
     final int requestTime;
+    
 
     IORequest(Process process, Burst ioBurst, int requestTime) {
       this.process = process;
@@ -37,13 +39,16 @@ public class IOManager implements Runnable {
   private final AtomicInteger completedIOOperations;
   private final AtomicInteger totalIOTime;
 
-  public IOManager(SyncController syncController) {
+  private final Config config;
+
+  public IOManager(SyncController syncController, Config config) {
     this.syncController = syncController;
     this.ioQueue = new LinkedBlockingQueue<>();
     this.running = new AtomicBoolean(false);
     this.totalIOOperations = new AtomicInteger(0);
     this.completedIOOperations = new AtomicInteger(0);
     this.totalIOTime = new AtomicInteger(0);
+    this.config = config;
   }
 
   public void start() {
@@ -144,6 +149,14 @@ public class IOManager implements Runnable {
 
     int currentTime = syncController.getScheduler().getCurrentTime();
     
+    int systemCallOverhead = config.getSystemCallOverhead();
+    int endTime = currentTime + systemCallOverhead;
+
+    process.setSystemCallEndTime(endTime);
+    
+    Logger.procLog(String.format("[T=%d] [SYSTEM CALL] Iniciando para %s (overhead: %d ciclos, termina en t=%d)", 
+        currentTime, process.getPid(), systemCallOverhead, endTime));
+
     // Crear solicitud
     IORequest request = new IORequest(process, ioBurst, currentTime);
     
@@ -173,6 +186,8 @@ public class IOManager implements Runnable {
       Logger.warning("[IOMANAGER] Proceso " + process.getPid() + " ya terminó, ignorando I/O");
       return;
     }
+
+    waitForSystemCallCompletion(process);
 
     // Calcular tiempos
     int startTime = syncController.getScheduler().getCurrentTime();
@@ -229,10 +244,40 @@ public class IOManager implements Runnable {
     // Obtener tiempo actual
     int completionTime = syncController.getScheduler().getCurrentTime();
     
-    Logger.procLog(String.format("[T=%d] [I/O] ✓ I/O completada para %s (duración: %d unidades)", 
+    Logger.procLog(String.format("[T=%d] [I/O] I/O completada para %s (duración: %d unidades)", 
       completionTime, process.getPid(), duration));
     
     syncController.notifyProcessReady(process, "completó I/O");
+  }
+
+  private void waitForSystemCallCompletion(Process process) throws InterruptedException {
+    if (!process.isInSystemCall()) {
+        return;  // No hay system call pendiente
+    }
+    
+    int endTime = process.getSystemCallEndTime();
+    
+    while(isRunning() && process.getState() != ProcessState.TERMINATED) {
+      int currentSimTime = syncController.getScheduler().getCurrentTime();
+      
+      // Verificar si ya completó el system call
+      if (currentSimTime >= endTime) {
+        Logger.procLog(String.format("[T=%d] [SYSTEM CALL] %s completó system call", 
+            currentSimTime, process.getPid()));
+        process.clearSystemCall();
+        break;
+      }
+      
+      synchronized(ioMonitor) {
+        if (isRunning() && 
+            process.getState() != ProcessState.TERMINATED && 
+            syncController.getScheduler().getCurrentTime() < endTime) {
+          ioMonitor.wait(50);
+        } else {
+          break;
+        }
+      }
+    }
   }
 
   public boolean isRunning() {

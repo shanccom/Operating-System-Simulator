@@ -88,7 +88,7 @@ public class ProPanel extends VBox {
         
         //System.out.println("[UI] ------------------------------------------------***************************READY recibido: " + processes.size());
         for (Process p : processes) {
-            System.out.println("   READY -> " + p.getPid() + " | state=" + p.getState());
+            //System.out.println("   READY -> " + p.getPid() + " | state=" + p.getState());
         }
 
         Platform.runLater(() -> {

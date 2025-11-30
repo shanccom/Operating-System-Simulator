@@ -39,8 +39,8 @@ public class SimulationEngine {
                           List<Process> processes, Config config) {
     this.scheduler = scheduler;
     this.memoryManager = memoryManager;
-    this.syncController = new SyncController(scheduler, memoryManager);
-    this.ioManager = new IOManager(syncController);
+    this.syncController = new SyncController(scheduler, memoryManager, config);
+    this.ioManager = new IOManager(syncController, config);
     this.allProcesses = processes;
     this.config = config;
     this.currentTime = 0;
@@ -189,7 +189,22 @@ public class SimulationEngine {
     for (ProcessThread thread : processThreads) {
       Process p = thread.getProcess();
       if (p.getState() == ProcessState.BLOCKED_MEMORY) {
-        thread.wakeUp(); // SyncController verificará si hay memoria disponible
+        // Verificar si ya completó el page fault
+        if (p.isWaitingForPageFault()) {
+          int currentTime = getCurrentTime();
+          int endTime = p.getPageFaultEndTime();
+          
+          if (currentTime >= endTime) {
+            // Ya terminó el page fault penalty
+            Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s completó penalty, intentando cargar", 
+                currentTime, p.getPid()));
+            p.clearPageFault();
+            thread.wakeUp();
+          }
+        } else {
+          // No está esperando page fault, intentar cargar páginas
+          thread.wakeUp();
+        }
       }
     }
   }
@@ -316,6 +331,7 @@ public class SimulationEngine {
       scheduler.recordIdleTime(1);
       return;
     }
+
     
     // Preparar proceso (verificar y cargar memoria)
     boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
@@ -323,7 +339,6 @@ public class SimulationEngine {
     if (canExecute) {
       // Confirmar selección (remueve de cola, registra context switch)
       scheduler.confirmProcessSelection(nextProcess);
-      wakeUpThread(nextProcess);
       scheduler.recordCPUTime(1);
     } else {
       // No puede ejecutar (falta memoria), queda en READY
@@ -369,7 +384,7 @@ public class SimulationEngine {
     for (ProcessThread thread : processThreads) {
       try {
         thread.join();
-        Logger.syncLog("  ✓ Thread finalizado: " + thread.getName());
+        Logger.syncLog("  Thread finalizado: " + thread.getName());
       } catch (InterruptedException e) {
         Logger.error("Error esperando thread: " + e.getMessage());
         Thread.currentThread().interrupt();
