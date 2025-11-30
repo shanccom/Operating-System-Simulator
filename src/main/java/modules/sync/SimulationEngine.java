@@ -100,6 +100,8 @@ public class SimulationEngine {
       
       sleep(config.getTimeUnit());
       
+      coordinateScheduler();
+
       advanceTime();
     }
     

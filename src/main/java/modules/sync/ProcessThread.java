@@ -152,8 +152,7 @@ public class ProcessThread extends Thread {
       // Ejecutar 1 unidad de CPU
       executeOneCPUUnit(burst);
       
-      // Esperar siguiente ciclo (si la ráfaga no terminó)
-      if (!burst.isCompleted() && process.getState() == ProcessState.RUNNING) {
+      if (process.getState() == ProcessState.RUNNING) {
         waitForNextCycle();
       }
     }
@@ -216,7 +215,10 @@ public class ProcessThread extends Thread {
     if (process.getState() == ProcessState.BLOCKED_IO) {
       syncController.getScheduler().setCurrentProcess(null);
       ioManager.requestIO(process, burst);
+
+      syncController.triggerReschedule();
     }
+
   }
 
   private void handleBurstCompletion(Burst currentBurst) {

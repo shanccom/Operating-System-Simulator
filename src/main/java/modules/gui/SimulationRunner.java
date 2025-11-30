@@ -30,10 +30,8 @@ public class SimulationRunner {
         MemoryManager memoryManager = SimulationFactory.createMemoryManager(config);
         // ---- registrar visualizador de memoria (si existe)
         if (memPanel != null && memPanel.getVisualizer() != null) {
-            System.out.println("[SimulationRunner] Registrando MemoryVisualizer en MemoryManager...");
             memoryManager.addListener(memPanel.getVisualizer());
         } else {
-            System.out.println("[SimulationRunner] MemPanel o visualizer es NULL. No se registro listener de memoria.");
         }
 
 
@@ -45,24 +43,20 @@ public class SimulationRunner {
         
         //REGISTRAR EL LISTENER ANTES DE INICIAR
         if (proPanel != null) {
-            System.out.println("[SimulationRunner] Registrando listener en el engine...");
             
             engine.setStateListener(new SimulationStateListener() {
                 @Override
                 public void onReadyQueueChanged(List<Process> readyQueue) {
-                    System.out.println("[SimulationRunner]  Ready queue actualizada: " + readyQueue.size());
                     proPanel.updateReadyQueue(readyQueue);
                 }
 
                 @Override
                 public void onBlockedIOChanged(List<Process> blockedIO) {
-                    System.out.println("[SimulationRunner]  Blocked I/O actualizada: " + blockedIO.size());
                     proPanel.updateBlockedIO(blockedIO);
                 }
 
                 @Override
                 public void onBlockedMemoryChanged(List<Process> blockedMemory) {
-                    System.out.println("[SimulationRunner]  Blocked Memory actualizada: " + blockedMemory.size());
                     proPanel.updateBlockedMemory(blockedMemory);
                 }
 
@@ -73,21 +67,16 @@ public class SimulationRunner {
 
                 @Override
                 public void onTimeChanged(int currentTime) {
-                    System.out.println("[SimulationRunner]  Tiempo: " + currentTime);
                 }
             });
         } else {
-            System.out.println("[SimulationRunner]  ProPanel es NULL, no se registro listener");
         }
         
         // EJECUTAR EN THREAD SEPARADO PARA NO BLOQUEAR LA UI
         Thread simulationThread = new Thread(() -> {
             try {
-                System.out.println("[SimulationRunner]  Iniciando simulacion en thread separado...");
                 engine.run();
-                System.out.println("[SimulationRunner]  Simulacion completada");
             } catch (Exception e) {
-                System.err.println("[SimulationRunner]  Error en simulacion: " + e.getMessage());
                 e.printStackTrace();
             }
         }, "SimulationThread");
@@ -95,7 +84,6 @@ public class SimulationRunner {
         simulationThread.setDaemon(false); // No es daemon para que complete antes de cerrar
         simulationThread.start();
         
-        System.out.println("[SimulationRunner] Thread de simulacion iniciado");
     }
     
     private static void printSystemConfiguration(Config config, List<Process> processes, Scheduler scheduler, MemoryManager memoryManager) {

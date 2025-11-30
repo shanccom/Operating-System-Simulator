@@ -209,6 +209,13 @@ public class SyncController {
     }
   }
   
+  public void triggerReschedule() {
+    // Despertar al motor de simulación para que seleccione el siguiente proceso
+    synchronized(getCoordinationMonitor()) {
+        getCoordinationMonitor().notifyAll();
+    }
+  }
+
   private boolean hasReadyProcesses() {
     return scheduler.hasReadyProcesses();
   }
@@ -216,6 +223,7 @@ public class SyncController {
   public synchronized boolean isRunning() {
     return running;
   }
+
 
   public Scheduler getScheduler() { return scheduler; }
   public MemoryManager getMemoryManager() { return memoryManager; }
