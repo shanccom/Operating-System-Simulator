@@ -34,8 +34,8 @@ public class SimulationEngine {
                           List<Process> processes, Config config) {
     this.scheduler = scheduler;
     this.memoryManager = memoryManager;
-    this.syncController = new SyncController(scheduler, memoryManager);
-    this.ioManager = new IOManager(syncController);
+    this.syncController = new SyncController(scheduler, memoryManager, config);
+    this.ioManager = new IOManager(syncController, config);
     this.allProcesses = processes;
     this.config = config;
     this.currentTime = 0;
@@ -199,6 +199,15 @@ public class SimulationEngine {
     if (current == null || current.getState() != ProcessState.RUNNING) {
       return false;
     }
+
+    if (current.isInContextSwitch()) {
+      if (!syncController.canProcessExecuteAfterContextSwitch(current)) {
+        // Aún en context switch, CPU idle
+        scheduler.recordIdleTime(1);
+        return true;  // Continuar con este proceso
+      }
+      // Context switch completado, ahora sí puede ejecutar
+    }
     
     // Verificar expropiación por quantum (Round Robin)
     if (scheduler instanceof RoundRobin) {
@@ -266,14 +275,15 @@ public class SimulationEngine {
       scheduler.recordIdleTime(1);
       return;
     }
+
     
     // Preparar proceso (verificar y cargar memoria)
     boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
     
     if (canExecute) {
       // Confirmar selección (remueve de cola, registra context switch)
+      syncController.startContextSwitch(nextProcess);
       scheduler.confirmProcessSelection(nextProcess);
-      wakeUpThread(nextProcess);
       scheduler.recordCPUTime(1);
     } else {
       // No puede ejecutar (falta memoria), queda en READY

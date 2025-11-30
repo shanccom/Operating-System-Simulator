@@ -6,6 +6,7 @@ import model.ProcessState;
 import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
 import utils.Logger;
+import model.Config;
 
 public class SyncController {
   
@@ -13,11 +14,13 @@ public class SyncController {
   private final MemoryManager memoryManager;
   private final Object coordinationMonitor = new Object();
   private volatile boolean running;
-  
-  public SyncController(Scheduler scheduler, MemoryManager memoryManager) {
+  private final Config config;
+
+  public SyncController(Scheduler scheduler, MemoryManager memoryManager, Config config) {
     this.scheduler = scheduler;
     this.memoryManager = memoryManager;
     this.running = false;
+    this.config = config;
   }
   
   public boolean prepareProcessForExecution(Process process) {
@@ -224,6 +227,39 @@ public class SyncController {
     return running;
   }
 
+  public boolean canProcessExecuteAfterContextSwitch(Process process) {
+    // Si no está en context switch, puede ejecutar
+    if (!process.isInContextSwitch()) {
+        return true;
+    }
+    
+    int currentTime = scheduler.getCurrentTime();
+    int endTime = process.getContextSwitchEndTime();
+    
+    // Si aún está en context switch, no puede ejecutar
+    if (currentTime < endTime) {
+        Logger.syncLog(String.format("[T=%d] [CONTEXT SWITCH] %s aún en context switch (termina en t=%d)", 
+            currentTime, process.getPid(), endTime));
+        return false;
+    }
+    
+    // Context switch completado
+    Logger.syncLog(String.format("[T=%d] [CONTEXT SWITCH] ✓ %s completó context switch", 
+        currentTime, process.getPid()));
+    process.setContextSwitchEndTime(-1);  // Reset
+    return true;
+  }
+
+  public void startContextSwitch(Process process) {
+    int currentTime = scheduler.getCurrentTime();
+    int overhead = config.getContextSwitchOverhead();
+    int endTime = currentTime + overhead;
+    
+    process.setContextSwitchEndTime(endTime);
+    
+    Logger.syncLog(String.format("[T=%d] [CONTEXT SWITCH] Iniciando para %s (overhead: %d ciclos, termina en t=%d)", 
+        currentTime, process.getPid(), overhead, endTime));
+  }
 
   public Scheduler getScheduler() { return scheduler; }
   public MemoryManager getMemoryManager() { return memoryManager; }

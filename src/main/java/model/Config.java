@@ -24,6 +24,9 @@ public class Config {
   private static final boolean ENABLE_IO = true;
   private int timeUnit;
   
+  private int contextSwitchOverhead = 1;
+  private int systemCallOverhead = 1;
+
   public Config() {
       this.totalFrames = 10;
       this.frameSize = 4096;
@@ -113,4 +116,21 @@ public class Config {
       if (schedulerType == SchedulerType.ROUND_ROBIN && quantum <= 0) return false;
       return true;
   }
+
+  public int getContextSwitchOverhead() { 
+    return contextSwitchOverhead; 
+  }
+  
+  public void setContextSwitchOverhead(int overhead) { 
+    this.contextSwitchOverhead = overhead; 
+  }
+
+  public int getSystemCallOverhead() { 
+    return systemCallOverhead; 
+  }
+  
+  public void setSystemCallOverhead(int overhead) { 
+    this.systemCallOverhead = overhead; 
+  }
+
 }
