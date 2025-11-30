@@ -46,7 +46,7 @@ public class ConfigPage extends VBox {
         labelProcess.setText("Archivo: " + processFile.getName());
         labelProcess.getStyleClass().add("text-clear");
 
-        labelStatus.setText("Listo para iniciar");
+        labelStatus.setText("Visualiza el comportamiento interno de un SO");
         labelStatus.getStyleClass().add("status-text");
 
         ScrollPane scrollPane = new ScrollPane();
@@ -217,7 +217,7 @@ public class ConfigPage extends VBox {
     }
 
     private Button buildStartButton() {
-        Button btn = new Button("Iniciar Simulación");
+        Button btn = new Button("Visualize");
         btn.getStyleClass().add("primary-button");
         btn.setOnAction(e -> runSimulation());
         btn.setMaxWidth(400);
