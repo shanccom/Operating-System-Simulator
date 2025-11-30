@@ -5,6 +5,7 @@ import javafx.geometry.Pos;
 import javafx.scene.layout.VBox;
 import modules.gui.components.MemoryVisualizer;
 import model.Config;
+import model.Config.ReplacementType;
 
 public class MemPanel extends VBox {
 
@@ -26,11 +27,12 @@ public class MemPanel extends VBox {
         this.config = config;
 
         int frames = config.getTotalFrames();
+        ReplacementType algor = config.getReplacementType();
 
         if (visualizer == null) {
-            visualizer = new MemoryVisualizer(frames);
+            visualizer = new MemoryVisualizer(frames, algor);
         } else {
-            visualizer.initialize(frames);
+            visualizer.initialize(frames, algor);
         }
 
         drawMemory();
