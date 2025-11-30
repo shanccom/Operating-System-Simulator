@@ -7,43 +7,54 @@
 
 .navbar {
   -fx-background-color: linear-gradient(to right, #2a103c, #31124c);
-  -fx-background-radius: 18;
-  -fx-padding: 16 18;
+  -fx-padding: 16;
   -fx-spacing: 14;
   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 20, 0.12, 0, 6);
   -fx-border-color: rgba(255,255,255,0.08);
-  -fx-border-radius: 18;
 }
 
 .brand {
   -fx-text-fill: #f5e9ff;
-  -fx-font-size: 18px;
+  -fx-font-size: 20px;
   -fx-font-weight: 800;
-  -fx-padding: 4 10;
-  -fx-background-color: rgba(255,255,255,0.05);
-  -fx-background-radius: 10;
+  -fx-padding: 6 14;
+  -fx-background-color: rgba(255,255,255,0.06);
+  -fx-background-radius: 12;
 }
 
 .nav-button {
   -fx-background-color: transparent;
   -fx-text-fill: #d5c3f5;
-  -fx-font-weight: 700;
-  -fx-padding: 10 16;
-  -fx-background-radius: 12;
+  -fx-font-weight: 600;
+  -fx-font-size: 14px;
+  -fx-padding: 10 18;
+  -fx-background-radius: 14;
   -fx-cursor: hand;
   -fx-border-color: transparent;
-  -fx-border-radius: 12;
+  -fx-border-radius: 14;
+  -fx-transition: all 0.3s ease;
 }
 
 .nav-button:hover {
-  -fx-background-color: rgba(255,255,255,0.08);
+  -fx-background-color: rgba(255,255,255,0.12);
+  -fx-text-fill: #ffffff;
 }
 
 .nav-button-active {
-  -fx-background-color: rgba(182,55,250,0.16);
-  -fx-text-fill: #fdfbff;
-  -fx-border-color: rgba(182,55,250,0.45);
+  -fx-background-color: linear-gradient(to right, #b637fa, #7a2bd6);
+  -fx-text-fill: #ffffff;
+  -fx-font-weight: 700;
+  -fx-border-color: rgba(255,255,255,0.25);
   -fx-border-width: 1;
+  -fx-effect: dropshadow(gaussian, rgba(182,55,250,0.45), 12, 0.2, 0, 4);
+}
+
+.status-text {
+  -fx-text-fill: #cfc6e9;
+  -fx-font-size: 13px;
+  -fx-padding: 6 12;
+  -fx-background-color: rgba(255,255,255,0.04);
+  -fx-background-radius: 8;
 }
 
 .page-container {
@@ -67,16 +78,78 @@
 .card {
   -fx-background-color: #171025;
   -fx-background-radius: 16;
-  -fx-border-radius: 16;
   -fx-border-color: rgba(255,255,255,0.08);
   -fx-padding: 18;
   -fx-spacing: 10;
   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 16, 0.16, 0, 8);
 }
 
+
+.card-mem {
+  -fx-background-color: rgba(180, 33, 141, 0.12); 
+  -fx-background-radius: 16;
+  -fx-background-insets: 2;
+  -fx-border-width: 4;
+  -fx-border-color: #ff5edfff;
+  -fx-border-radius: 16;
+  -fx-padding: 20;
+  -fx-spacing: 12;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 18, 0.18, 0, 8);
+  -fx-transition: all 0.3s ease;
+}
+
+.card-mem:hover {
+  -fx-background-color: rgba(180, 33, 141, 0.22);
+  -fx-effect: dropshadow(gaussian, rgba(255, 94, 223, 0.35), 22, 0.25, 0, 10);
+  -fx-border-width: 5;
+}
+.card-proc {
+  -fx-background-color: rgba(155, 253, 202, 0.05);
+  -fx-background-radius: 16;
+  -fx-background-insets: 2;
+  -fx-border-width: 3;
+  -fx-border-color: #9bfdcaff;
+  -fx-border-radius: 16;
+  -fx-padding: 20;
+  -fx-spacing: 12;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 18, 0.18, 0, 8);
+  -fx-transition: all 0.3s ease;
+}
+
+.card-proc:hover {
+  -fx-effect: dropshadow(gaussian, rgba(0, 255, 170, 0.35), 22, 0.25, 0, 10);
+  -fx-background-color: rgba(155, 253, 202, 0.12);
+}
+
+.card-exe {
+  -fx-background-color: rgba(157, 148, 253, 0.05);
+  -fx-background-radius: 16;
+  -fx-background-insets: 2;
+  -fx-border-width: 3;
+  -fx-border-color: #9d94fdff;
+  -fx-border-radius: 16;
+  -fx-padding: 20;
+  -fx-spacing: 12;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 18, 0.18, 0, 8);
+  -fx-transition: all 0.3s ease;
+}
+
+.card-exe:hover {
+  -fx-effect: dropshadow(gaussian, rgba(157, 148, 253, 0.35), 22, 0.25, 0, 10);
+  -fx-background-color: rgba(157, 148, 253, 0.12);
+}
+
+.card-title-mem {
+  -fx-text-fill: #ff41e6;
+  -fx-font-size: 18px;
+  -fx-font-weight: 800;
+  -fx-letter-spacing: 0.5px;
+  -fx-text-alignment: center;
+  -fx-effect: dropshadow(gaussian, rgba(255, 65, 230, 0.35), 4, 0.3, 0, 2);
+}
 .card-title {
   -fx-text-fill: #f5e9ff;
-  -fx-font-size: 16px;
+  -fx-font-size: 17px;
   -fx-font-weight: 800;
 }
 
@@ -295,6 +368,7 @@
   -fx-text-fill: #f5e9ff;
 }
 
+<<<<<<< HEAD
 .section-title {
   -fx-font-size: 18px;
   -fx-font-weight: 800;
@@ -374,3 +448,30 @@
   -fx-border-color: #b637fa;
   -fx-effect: dropshadow(gaussian, rgba(182,55,250,0.35), 12, 0.25, 0, 3);
 }
+=======
+
+.card {
+    -fx-background-color: #2a1b3d;
+    -fx-background-radius: 18;
+    -fx-padding: 12;
+    
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 10, 0.1, 0, 3);
+}
+
+.text-clear {
+    -fx-fill: #ffffff;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.page-title {
+    -fx-font-size: 26px;
+    -fx-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+.page-subtitle {
+    -fx-font-size: 16px;
+    -fx-fill: #d6d6d6;
+}
+>>>>>>> 410deea9e8d06a852e3ec72473d855e43c0db890

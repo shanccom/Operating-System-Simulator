@@ -36,30 +36,29 @@ public abstract class Scheduler {
         this.idleTime = 0;
     }
     
-
+    //Cambiado a sync panel de procesos
     public synchronized void addProcess(Process process) {
       if (process.getState() == ProcessState.TERMINATED || 
           process.getState() == ProcessState.RUNNING) {
-          Logger.debug("[SCHEDULER] No se puede agregar proceso " + process.getPid() + 
+          Logger.syncLog("[SCHEDULER] No se puede agregar proceso " + process.getPid() + 
                       " en estado: " + process.getState());
           return;
       }
       
       if (readyQueue.contains(process)) {
-          Logger.debug("[SCHEDULER] Proceso " + process.getPid() + " ya está en cola READY");
+          Logger.procLog("[SCHEDULER] Proceso " + process.getPid() + " ya está en cola READY");
           return;
       }
       
       readyQueue.offer(process);
-      Logger.debug("[SCHEDULER] " + process.getPid() + " agregado (cola: " + readyQueue.size() + ")");
+      Logger.procLog("[SCHEDULER] " + process.getPid() + " agregado (cola: " + readyQueue.size() + ")");
       
       notifyAll();
     }
     
     public synchronized void confirmProcessSelection(Process process) {
-      // Solo sacar de la cola si el proceso se pudo preparar 
-      if (readyQueue.peek() == process) {
-        readyQueue.poll();
+      // Remover el proceso de la cola sin importar su posición
+      if (process != null && readyQueue.remove(process)) {
         contextSwitch(process);
       }
     }
@@ -91,7 +90,7 @@ public abstract class Scheduler {
             currentProcess.getState() != ProcessState.TERMINATED) {
             
             contextSwitches++;
-            Logger.log("Context switch: " + currentProcess.getPid() + " -> " + newProcess.getPid());
+            Logger.exeLog("[SCHEDULER][CONTEXT-SWITCH] " + currentProcess.getPid() + " -> " + newProcess.getPid());
         }
         
         currentProcess = newProcess;
@@ -106,7 +105,7 @@ public abstract class Scheduler {
         totalTurnaroundTime += process.getTurnaroundTime();
         totalResponseTime += process.getResponseTime();
         
-        Logger.log("Proceso " + process.getPid() + " completado en t=" + currentTime);
+        Logger.procLog("Proceso " + process.getPid() + " completado en t=" + currentTime);
     }
     
     protected void updateCurrentProcess(Process process) {
@@ -193,21 +192,25 @@ public abstract class Scheduler {
     public synchronized boolean hasReadyProcesses() {
         return !readyQueue.isEmpty();
     }
+
+    public void forceContextSwitch() {
+      currentProcess = null;
+    }
     
     /**
      * Imprime el reporte de metricas
      */
     public void printMetrics() {
         System.out.println();
-        Logger.log("[SCHE] METRICAS DEL PLANIFICADOR - " + getAlgorithmName());
-        Logger.log("Procesos completados: " + completedProcesses);
-        Logger.log(String.format("Tiempo promedio de espera: %.2f", getAverageWaitingTime()));
-        Logger.log(String.format("Tiempo promedio de retorno: %.2f", getAverageTurnaroundTime()));
-        Logger.log(String.format("Tiempo promedio de respuesta: %.2f", getAverageResponseTime()));
-        Logger.log(String.format("Utilizacion de CPU: %.2f%%", getCPUUtilization()));
-        Logger.log("Cambios de contexto: " + contextSwitches);
-        Logger.log("Tiempo total de CPU: " + totalCPUTime);
-        Logger.log("Tiempo inactivo: " + idleTime);
+        Logger.exeLog("[SCHE] METRICAS DEL SCHEDULER - " + getAlgorithmName());
+        Logger.exeLog("Procesos completados: " + completedProcesses);
+        Logger.exeLog(String.format("Tiempo promedio de espera: %.2f", getAverageWaitingTime()));
+        Logger.exeLog(String.format("Tiempo promedio de retorno: %.2f", getAverageTurnaroundTime()));
+        Logger.exeLog(String.format("Tiempo promedio de respuesta: %.2f", getAverageResponseTime()));
+        Logger.exeLog(String.format("Utilizacion de CPU: %.2f%%", getCPUUtilization()));
+        Logger.exeLog("Cambios de contexto: " + contextSwitches);
+        Logger.exeLog("Tiempo total de CPU: " + totalCPUTime);
+        Logger.exeLog("Tiempo inactivo: " + idleTime);
         System.out.println();
     }
     
@@ -225,6 +228,6 @@ public abstract class Scheduler {
         completedProcesses = 0;
         totalCPUTime = 0;
         idleTime = 0;
-        Logger.log("Planificador reseteado");
+        Logger.exeLog("Planificador reseteado");
     }
 }

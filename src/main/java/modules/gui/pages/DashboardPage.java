@@ -5,14 +5,28 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
-import modules.gui.MainFX;
 import modules.gui.SimulationRunner;
+<<<<<<< HEAD
 import modules.gui.components.*;
 import modules.gui.dashboard.ExePanel;
 import modules.gui.dashboard.LogsPanel;
 import modules.gui.dashboard.MemPanel;
 import modules.gui.dashboard.ProPanel;
+=======
+import modules.gui.pages.ConfigPage;
+import modules.gui.dashboard.*;
+import model.Config;
+
+>>>>>>> 410deea9e8d06a852e3ec72473d855e43c0db890
 public class DashboardPage extends VBox {
+
+    private ExePanel exePanel;
+    private ProPanel proPanel;
+    private MemPanel memPanel;
+    private LogsPanel logsPanel;
+    private ConfigPage configPage;
+    private Button runButton;
+    private Label statusLabel;
 
     public DashboardPage() {
         setSpacing(20);
@@ -26,12 +40,10 @@ public class DashboardPage extends VBox {
         Label title = new Label("Simulacion");
         title.getStyleClass().add("page-title");
 
-        Label subtitle = new Label("Dashboard");
-        subtitle.getStyleClass().add("page-subtitle");
-
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+<<<<<<< HEAD
         Button runButton = new Button("Iniciar Simulación");
         runButton.getStyleClass().add("primary-button");
         ConfigPage cp = new ConfigPage(null);
@@ -39,9 +51,17 @@ public class DashboardPage extends VBox {
             cp.runSimulation();
         });
 
+=======
+        statusLabel = new Label("Configure los parámetros antes de iniciar");
+        statusLabel.setStyle("-fx-text-fill: #888; -fx-font-size: 12px;");
+        
+        // Botón de iniciar simulación
+        runButton = new Button("Iniciar Simulación");
+        runButton.getStyleClass().add("primary-button");
+        runButton.setOnAction(e -> iniciarSimulacion());
+>>>>>>> 410deea9e8d06a852e3ec72473d855e43c0db890
         topBar.getChildren().addAll(
                 title,
-                subtitle,
                 spacer,
                 runButton
         );
@@ -63,13 +83,75 @@ public class DashboardPage extends VBox {
         row2.setPercentHeight(50);
         grid.getRowConstraints().addAll(row1, row2);
 
-        //Paneles
-        grid.add(new ExePanel(), 0, 0);
-        grid.add(new ProPanel(), 1, 0);
-        grid.add(new MemPanel(), 0, 1);
-        grid.add(new LogsPanel(), 1, 1);
+        exePanel = new ExePanel();
+        proPanel = new ProPanel();
+        memPanel = new MemPanel(); // sin config
+
+
+        logsPanel = new LogsPanel();
+
+        grid.add(exePanel, 0, 0);
+        grid.add(proPanel, 1, 0);
+        grid.add(memPanel, 0, 1);
+        grid.add(logsPanel, 1, 1);
 
         getChildren().addAll(topBar, grid);
     }
 
+    // para conectar con ConfigPage (llamado desde MainFX)
+    public void setConfigPage(ConfigPage configPage) {
+        this.configPage = configPage;
+        memPanel.setConfig(configPage.getCurrentConfig());
+        //System.out.println("[DashboardPage] ConfigPage conectado: " + configPage);
+    }
+
+    //MÉTODO para iniciar la simulación
+    private void iniciarSimulacion() {
+        if (configPage == null) {
+            statusLabel.setText("Error: ConfigPage no conectado");
+            statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12px;");
+            System.out.println("[DashboardPage] ConfigPage es null");
+            return;
+        }
+        
+        System.out.println("[DashboardPage] Iniciando simulación...");
+        statusLabel.setText("Simulación en curso...");
+        statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 12px;");
+        
+        runButton.setDisable(true);
+        
+        // Llamar al método de ConfigPage para iniciar
+        configPage.runSimulation();
+        
+        // Opcional: Re-habilitar después de un tiempo
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+                javafx.application.Platform.runLater(() -> {
+                    runButton.setDisable(false);
+                    statusLabel.setText("Simulación iniciada correctamente");
+                });
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+
+    // ✅ GETTERS PARA LOS PANELES
+    public ProPanel getProPanel() {
+        return proPanel;
+    }
+
+    public ExePanel getExePanel() {
+        return exePanel;
+    }
+
+    public MemPanel getMemPanel() {
+        return memPanel;
+    }
+
+    public LogsPanel getLogsPanel() {
+        return logsPanel;
+    }
 }

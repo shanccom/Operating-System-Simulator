@@ -1,7 +1,6 @@
 package modules.scheduler;
 
 import model.Process;
-import utils.Logger;
 
 /**
  * First Come First Served (FCFS)
@@ -16,28 +15,20 @@ public class FCFS extends Scheduler {
     @Override
     public synchronized Process selectNextProcess() {
         if (currentProcess != null && 
-          currentProcess.getState() == model.ProcessState.RUNNING &&
-          currentProcess.getCurrentBurst() != null &&
-          !currentProcess.getCurrentBurst().isCompleted()) {
-          return currentProcess; 
+            currentProcess.getState() == model.ProcessState.RUNNING &&
+            currentProcess.getCurrentBurst() != null &&
+            !currentProcess.getCurrentBurst().isCompleted()) {
+            return currentProcess;
         }
-        
         
         if (currentProcess != null && 
-          (currentProcess.getState() == model.ProcessState.TERMINATED ||
-          (currentProcess.getCurrentBurst() != null && currentProcess.getCurrentBurst().isCompleted()))) {
-          currentProcess = null;
+            (currentProcess.getState() == model.ProcessState.TERMINATED ||
+            currentProcess.getCurrentBurst() == null ||
+            currentProcess.getCurrentBurst().isCompleted())) {
+            currentProcess = null;
         }
         
-      
-        Process next = readyQueue.peek();
-        if (next != null) {
-          if (next != currentProcess) {
-            Logger.log("FCFS seleccionó: " + next.getPid());
-          }
-        }
-        
-        return next;
+        return readyQueue.peek();
     }
     
     @Override

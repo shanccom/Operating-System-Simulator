@@ -21,19 +21,16 @@ public class RoundRobin extends Scheduler {
         this.quantum = quantum;
         this.currentQuantumRemaining = 0;
         
-        Logger.log("Planificador Round Robin inicializado (quantum=" + quantum + ")");
+        Logger.exeLog("Planificador Round Robin inicializado (quantum=" + quantum + ")");
     }
     
     @Override
     public synchronized Process selectNextProcess() {
-        Process next = readyQueue.poll();
+        Process next = readyQueue.peek();
         
         if (next != null) {
-            // Asignar quantum completo al nuevo proceso
-            currentQuantumRemaining = quantum;
-            contextSwitch(next);
-            
-            Logger.debug(String.format("RR seleccionó: %s (quantum=%d)", 
+            // Resetear quantum completo al nuevo proceso (se asignará en confirmProcessSelection)
+            Logger.procLog(String.format("RR selecciono: %s (quantum=%d)", 
                         next.getPid(), quantum));
         }
         
@@ -44,7 +41,7 @@ public class RoundRobin extends Scheduler {
     public boolean shouldPreempt(Process current, Process candidate) {
         // Round Robin debe interrumpir cuando el quantum se agota
         if (currentQuantumRemaining <= 0) {
-            Logger.debug("Quantum agotado para proceso " + current.getPid());
+            Logger.exeLog("Quantum agotado para proceso " + current.getPid());
             return true;
         }
         return false;
@@ -68,6 +65,16 @@ public class RoundRobin extends Scheduler {
     //Reinicia el quantum para un nuevo proceso
     public void resetQuantum() {
         this.currentQuantumRemaining = quantum;
+    }
+    
+    // Override para resetear el quantum cuando se confirma la selección
+    @Override
+    public synchronized void confirmProcessSelection(Process process) {
+        if (process != null && readyQueue.remove(process)) {
+            // Resetear quantum cuando se confirma la selección de un nuevo proceso
+            currentQuantumRemaining = quantum;
+            contextSwitch(process);
+        }
     }
     
     @Override

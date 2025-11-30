@@ -27,7 +27,15 @@ public class ConfigPage extends VBox {
 
     private Config currentConfig;
 
-    public ConfigPage(Stage stage) {
+    private DashboardPage dashboardPage;
+
+    public ConfigPage(Stage stage, DashboardPage dashboardPage) {
+        this.dashboardPage = dashboardPage;
+        System.out.println("[ConfigPage] Constructor llamado");
+        System.out.println("[ConfigPage] dashboardPage recibido: " + dashboardPage);
+        System.out.println("[ConfigPage] proPanel disponible: " + 
+                        (dashboardPage != null ? dashboardPage.getProPanel() : "NULL"));
+                        
         setSpacing(0);
         setPadding(new Insets(0));
         setAlignment(Pos.TOP_CENTER);
@@ -38,7 +46,7 @@ public class ConfigPage extends VBox {
         labelProcess.setText("Archivo: " + processFile.getName());
         labelProcess.getStyleClass().add("text-clear");
 
-        labelStatus.setText("Listo para iniciar");
+        labelStatus.setText("Visualiza el comportamiento interno de un SO");
         labelStatus.getStyleClass().add("status-text");
 
         ScrollPane scrollPane = new ScrollPane();
@@ -209,7 +217,7 @@ public class ConfigPage extends VBox {
     }
 
     private Button buildStartButton() {
-        Button btn = new Button("Iniciar Simulación");
+        Button btn = new Button("Visualize");
         btn.getStyleClass().add("primary-button");
         btn.setOnAction(e -> runSimulation());
         btn.setMaxWidth(400);
@@ -295,9 +303,17 @@ public class ConfigPage extends VBox {
 
             labelStatus.setText("Iniciando simulación...");
 
-            SimulationRunner.runSimulation(currentConfig, processFile.getAbsolutePath());
+            System.out.println("[ConfigPage] dashboardPage: " + dashboardPage);
+            System.out.println("[ConfigPage] proPanel: " + (dashboardPage != null ? dashboardPage.getProPanel() : "NULL"));
 
-            labelStatus.setText("Simulación completada exitosamente.");
+            SimulationRunner.runSimulation(
+                currentConfig, 
+                processFile.getAbsolutePath(),
+                dashboardPage != null ? dashboardPage.getProPanel() : null,
+                dashboardPage.getMemPanel()
+            );
+
+            labelStatus.setText("Simulación iniciada correctamente.");
 
         } catch (Exception ex) {
             labelStatus.setText("Error: " + ex.getMessage());

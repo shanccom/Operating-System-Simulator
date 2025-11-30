@@ -22,7 +22,7 @@ public class Priority extends Scheduler {
     public Priority(boolean preemptive) {
         super();
         this.isPreemptive = preemptive;
-        Logger.log("Planificador Priority inicializado " + 
+        Logger.exeLog("Planificador Priority inicializado " + 
                   (preemptive ? "(expropiativo)" : "(no expropiativo)"));
     }
     
@@ -50,9 +50,9 @@ public class Priority extends Scheduler {
         }
         
         if (highestPriority != null) {
-            readyQueue.remove(highestPriority);
-            contextSwitch(highestPriority);
-            Logger.debug("Priority seleccionó: " + highestPriority.getPid() + 
+            //readyQueue.remove(highestPriority);
+            //contextSwitch(highestPriority);
+            Logger.exeLog("Priority seleccionó: " + highestPriority.getPid() + 
                         " con prioridad " + bestPriority);
         }
         
@@ -69,7 +69,7 @@ public class Priority extends Scheduler {
         
         // Expropiar si el candidato tiene MAYOR prioridad (menor número)
         if (candidate.getPriority() < current.getPriority()) {
-            Logger.debug("Priority: Expropiando " + current.getPid() + 
+            Logger.exeLog("Priority: Expropiando " + current.getPid() + 
                         " (prioridad=" + current.getPriority() + ") por " + 
                         candidate.getPid() + " (prioridad=" + candidate.getPriority() + ")");
             return true;
