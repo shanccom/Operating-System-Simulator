@@ -24,35 +24,53 @@ public class SyncController {
   }
   
   public boolean prepareProcessForExecution(Process process) {
-    // Verificar estado inicial (fuera del lock para no bloquear)
-    if (process.getState() != ProcessState.READY) {
-      return false;
-    }
-    
-    // Cargar páginas necesarias en memoria
-    boolean hasMemory = ensureProcessMemory(process);
-    
-    if (!hasMemory) {
-      // No hay suficiente memoria, bloquear proceso
-      blockProcessForMemory(process);
-      return false;
-    }
-    
-    // Cambiar estado a RUNNING
-    synchronized (coordinationMonitor) {
-      if (process.getState() == ProcessState.READY) {
-        // Registrar primera ejecución (tiempo de respuesta)
-        if (process.getResponseTime() == -1) {
+      // ✅ NUEVO: Verificar si está esperando que termine el page fault
+      if (process.isWaitingForPageFault()) {
           int currentTime = scheduler.getCurrentTime();
-          process.markFirstExecution(currentTime);
-        }
-        
-        transitionState(process, ProcessState.RUNNING);
+          int endTime = process.getPageFaultEndTime();
+          
+          if (currentTime < endTime) {      
+              return false;
+          } else {
+              // Ya terminó el page fault penalty
+              Logger.memLog(String.format("[T=%d] [PAGE FAULT] ✓ %s completó page fault handling", 
+                  currentTime, process.getPid()));
+              process.clearPageFault();
+              // Continuar con la verificación normal
+          }
+      }
+      
+      // Verificar si tiene todas las páginas necesarias
+      if (hasAllRequiredPages(process)) {
+          process.setState(ProcessState.RUNNING);
+          return true;
+      }
+      
+      // ✅ NUEVO: Necesita cargar páginas con overhead
+      int currentTime = scheduler.getCurrentTime();
+      
+      Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s necesita cargar páginas", 
+          currentTime, process.getPid()));
+      
+      // Intentar cargar páginas
+      boolean hadPageFaults = loadRequiredPages(process);
+      
+      if (hadPageFaults) {
+          // ✅ Páginas cargadas exitosamente, aplicar penalty
+          int pageFaultPenalty = config.getPageFaultPenalty();
+          int endTime = currentTime + pageFaultPenalty;
+          
+          process.setState(ProcessState.BLOCKED_MEMORY);
+          process.setPageFaultEndTime(endTime);
+          
+          Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s bloqueado hasta t=%d (penalty: %d ciclos)", 
+              currentTime, process.getPid(), endTime, pageFaultPenalty));
+          
+          return false;  // No puede ejecutar aún
+      } else {
+        process.setState(ProcessState.RUNNING);
         return true;
       }
-    }
-    
-    return false;
   }
   
   public boolean canProcessExecute(Process process) {
@@ -67,49 +85,19 @@ public class SyncController {
     return hasAllRequiredPages(process);
   }
   
-  private boolean ensureProcessMemory(Process process) {
+  public boolean hasAllRequiredPages(Process process) {
     int requiredPages = process.getRequiredPages();
+    String pid = process.getPid();
     
-    // Verificar y cargar cada página necesaria
     for (int page = 0; page < requiredPages; page++) {
-      if (!memoryManager.isPageLoaded(process.getPid(), page)) {
-        // Intentar cargar la página
-        boolean loaded = memoryManager.loadPage(process, page);
-        
-        if (!loaded) {
-          // No hay memoria disponible
-          return false;
+        if (!memoryManager.isPageLoaded(pid, page)) {
+            return false;  // Falta al menos una página
         }
-      }
     }
     
     // Todas las páginas están cargadas
     return true;
-  }
-  
-  public boolean hasAllRequiredPages(Process process) {
-    int requiredPages = process.getRequiredPages();
-    boolean allLoaded = true;
-    
-    // Verificar cada página
-    for (int page = 0; page < requiredPages; page++) {
-      if (!memoryManager.isPageLoaded(process.getPid(), page)) {
-        // Intentar cargar la página faltante
-        boolean loaded = memoryManager.loadPage(process, page);
-        
-        if (!loaded) {
-          allLoaded = false;
-        }
-      }
-    }
-    
-    // Si estaba bloqueado por memoria y ahora tiene todas sus páginas, reactivarlo
-    if (allLoaded && process.getState() == ProcessState.BLOCKED_MEMORY) {
-      notifyProcessReady(process, "páginas cargadas en memoria");
-    }
-    
-    return allLoaded;
-  }
+}
   
   public void blockProcessForMemory(Process process) {
     synchronized (coordinationMonitor) {
@@ -227,39 +215,31 @@ public class SyncController {
     return running;
   }
 
-  public boolean canProcessExecuteAfterContextSwitch(Process process) {
-    // Si no está en context switch, puede ejecutar
-    if (!process.isInContextSwitch()) {
-        return true;
-    }
-    
-    int currentTime = scheduler.getCurrentTime();
-    int endTime = process.getContextSwitchEndTime();
-    
-    // Si aún está en context switch, no puede ejecutar
-    if (currentTime < endTime) {
-        Logger.syncLog(String.format("[T=%d] [CONTEXT SWITCH] %s aún en context switch (termina en t=%d)", 
-            currentTime, process.getPid(), endTime));
-        return false;
-    }
-    
-    // Context switch completado
-    Logger.syncLog(String.format("[T=%d] [CONTEXT SWITCH] ✓ %s completó context switch", 
-        currentTime, process.getPid()));
-    process.setContextSwitchEndTime(-1);  // Reset
-    return true;
-  }
+  private boolean loadRequiredPages(Process process) {
+    int numPages = process.getRequiredPages();
+    String pid = process.getPid();
+    boolean hadPageFault = false;
 
-  public void startContextSwitch(Process process) {
-    int currentTime = scheduler.getCurrentTime();
-    int overhead = config.getContextSwitchOverhead();
-    int endTime = currentTime + overhead;
+    // Intentar cargar cada página que no esté ya en memoria
+    for (int pageNum = 0; pageNum < numPages; pageNum++) {
+        // Verificar si la página ya está cargada
+        if (!memoryManager.isPageLoaded(pid, pageNum)) {
+            hadPageFault = true;
+            // Intentar cargar la página
+            boolean loaded = memoryManager.loadPage(process, pageNum);
+            
+            if (!loaded) {
+                // No se pudo cargar esta página
+                Logger.memLog(String.format("[PAGE FAULT] No se pudo cargar página %d de %s", 
+                    pageNum, pid));
+                return false;
+            }
+        }
+    }
     
-    process.setContextSwitchEndTime(endTime);
-    
-    Logger.syncLog(String.format("[T=%d] [CONTEXT SWITCH] Iniciando para %s (overhead: %d ciclos, termina en t=%d)", 
-        currentTime, process.getPid(), overhead, endTime));
-  }
+    // Todas las páginas fueron cargadas exitosamente
+    return hadPageFault;
+}
 
   public Scheduler getScheduler() { return scheduler; }
   public MemoryManager getMemoryManager() { return memoryManager; }

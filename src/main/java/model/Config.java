@@ -24,8 +24,8 @@ public class Config {
   private static final boolean ENABLE_IO = true;
   private int timeUnit;
   
-  private int contextSwitchOverhead = 1;
   private int systemCallOverhead = 1;
+  private int pageFaultPenalty = 3;
 
   public Config() {
       this.totalFrames = 10;
@@ -117,20 +117,20 @@ public class Config {
       return true;
   }
 
-  public int getContextSwitchOverhead() { 
-    return contextSwitchOverhead; 
-  }
-  
-  public void setContextSwitchOverhead(int overhead) { 
-    this.contextSwitchOverhead = overhead; 
-  }
-
   public int getSystemCallOverhead() { 
     return systemCallOverhead; 
   }
   
   public void setSystemCallOverhead(int overhead) { 
     this.systemCallOverhead = overhead; 
+  }
+
+  public int getPageFaultPenalty() { 
+    return pageFaultPenalty; 
+  }
+  
+  public void setPageFaultPenalty(int penalty) { 
+    this.pageFaultPenalty = penalty; 
   }
 
 }

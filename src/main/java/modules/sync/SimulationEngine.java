@@ -139,7 +139,22 @@ public class SimulationEngine {
     for (ProcessThread thread : processThreads) {
       Process p = thread.getProcess();
       if (p.getState() == ProcessState.BLOCKED_MEMORY) {
-        thread.wakeUp(); // SyncController verificará si hay memoria disponible
+        // Verificar si ya completó el page fault
+        if (p.isWaitingForPageFault()) {
+          int currentTime = getCurrentTime();
+          int endTime = p.getPageFaultEndTime();
+          
+          if (currentTime >= endTime) {
+            // Ya terminó el page fault penalty
+            Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s completó penalty, intentando cargar", 
+                currentTime, p.getPid()));
+            p.clearPageFault();
+            thread.wakeUp();
+          }
+        } else {
+          // No está esperando page fault, intentar cargar páginas
+          thread.wakeUp();
+        }
       }
     }
   }
@@ -198,15 +213,6 @@ public class SimulationEngine {
   private boolean handleCurrentProcessExecution(Process current) {
     if (current == null || current.getState() != ProcessState.RUNNING) {
       return false;
-    }
-
-    if (current.isInContextSwitch()) {
-      if (!syncController.canProcessExecuteAfterContextSwitch(current)) {
-        // Aún en context switch, CPU idle
-        scheduler.recordIdleTime(1);
-        return true;  // Continuar con este proceso
-      }
-      // Context switch completado, ahora sí puede ejecutar
     }
     
     // Verificar expropiación por quantum (Round Robin)
@@ -282,7 +288,6 @@ public class SimulationEngine {
     
     if (canExecute) {
       // Confirmar selección (remueve de cola, registra context switch)
-      syncController.startContextSwitch(nextProcess);
       scheduler.confirmProcessSelection(nextProcess);
       scheduler.recordCPUTime(1);
     } else {

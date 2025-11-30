@@ -23,8 +23,8 @@ public class Process {
   
   private int lastExecutionTime;   // Último momento en que se ejecuto 
   
-  private int contextSwitchEndTime = -1;
   private int systemCallEndTime = -1;
+  private int pageFaultEndTime = -1;
 
   public Process(String pid, int arrivalTime, List<Burst> bursts, int priority, int requiredPages) {
     this.pid = pid;
@@ -198,18 +198,6 @@ public class Process {
     return pid.hashCode();
   }
 
-  public int getContextSwitchEndTime() { 
-    return contextSwitchEndTime; 
-  }
-  
-  public void setContextSwitchEndTime(int time) { 
-    this.contextSwitchEndTime = time; 
-  }
-  
-  public boolean isInContextSwitch() { 
-    return contextSwitchEndTime > 0; 
-  }
-
   public int getSystemCallEndTime() { 
     return systemCallEndTime; 
   }
@@ -224,6 +212,22 @@ public class Process {
   
   public void clearSystemCall() {
     systemCallEndTime = -1;
+  }
+
+  public int getPageFaultEndTime() { 
+    return pageFaultEndTime; 
+  }
+
+  public void setPageFaultEndTime(int time) { 
+      this.pageFaultEndTime = time; 
+  }
+
+  public boolean isWaitingForPageFault() { 
+      return pageFaultEndTime > 0; 
+  }
+
+  public void clearPageFault() {
+      pageFaultEndTime = -1;
   }
 
 }

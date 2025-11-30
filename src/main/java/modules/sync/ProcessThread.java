@@ -167,9 +167,12 @@ public class ProcessThread extends Thread {
 
   private void executeOneCPUUnit(Burst burst) {
     int currentTime = syncController.getScheduler().getCurrentTime();
-    
+
+    process.markFirstExecution(currentTime);
+
     // Ejecutar 1 unidad
     burst.execute(1);
+
     
     // Log del progreso
     int progress = burst.getDuration() - burst.getRemainingTime();
