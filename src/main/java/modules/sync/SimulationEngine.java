@@ -81,6 +81,45 @@ public class SimulationEngine {
     return datosFinales;
   }
 
+  private DatosResultados construirResultados() {
+    double esperaProm = allProcesses.stream().mapToDouble(Process::getWaitingTime).average().orElse(0);
+    double retornoProm = allProcesses.stream().mapToDouble(Process::getTurnaroundTime).average().orElse(0);
+    double respuestaProm = allProcesses.stream().mapToDouble(Process::getResponseTime).average().orElse(0);
+
+    int completados = (int) allProcesses.stream().filter(p -> p.getState() == ProcessState.TERMINATED).count();
+    double usoCpu = scheduler.getCPUTimePercent(); 
+
+    List<ResultadoProceso> resumen = new ArrayList<>();
+    for (Process p : allProcesses) {
+        resumen.add(new ResultadoProceso(
+                p.getPid(),
+                p.getWaitingTime(),
+                p.getTurnaroundTime(),
+                p.getResponseTime(),
+                p.getPageFaults()
+        ));
+    }
+
+    return new DatosResultados(
+            esperaProm,
+            retornoProm,
+            respuestaProm,
+            usoCpu,
+            completados,
+            allProcesses.size(),
+            scheduler.getCambiosContexto(),
+            scheduler.getTiempoCpuTotal(),
+            scheduler.getTiempoOcioso(),
+            memoryManager.getTotalPageLoads(),
+            memoryManager.getPageFaults(),
+            memoryManager.getPageReplacements(),
+            memoryManager.getTotalFrames(),
+            memoryManager.getFreeFrames(),
+            resumen,
+            scheduler.getAlgorithmName(),
+            memoryManager.getAlgorithmName()
+    );
+  }
 
 
   private void startAllThreads() {

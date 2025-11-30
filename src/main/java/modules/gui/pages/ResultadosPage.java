@@ -181,14 +181,12 @@ private Node construirBloqueMetricasJuntas() {
         Label labelRetorno = new Label("Retorno (ms)");
         Label labelRespuesta = new Label("Respuesta (ms)");
         Label labelFallos = new Label("Fallos página");
-        Label labelReemplazos = new Label("Reemplazos");
 
         labelProceso.getStyleClass().add("text-clear");
         labelEspera.getStyleClass().add("text-clear");
         labelRetorno.getStyleClass().add("text-clear");
         labelRespuesta.getStyleClass().add("text-clear");
         labelFallos.getStyleClass().add("text-clear");
-        labelReemplazos.getStyleClass().add("text-clear");
 
         TableColumn<ResultadoProceso, String> pidCol = new TableColumn<>();
         pidCol.setGraphic(labelProceso);
@@ -210,11 +208,8 @@ private Node construirBloqueMetricasJuntas() {
         fallosCol.setGraphic(labelFallos);
         fallosCol.setCellValueFactory(new PropertyValueFactory<>("fallosPagina"));
 
-        TableColumn<ResultadoProceso, Integer> reemplazosCol = new TableColumn<>();
-        reemplazosCol.setGraphic(labelReemplazos);
-        reemplazosCol.setCellValueFactory(new PropertyValueFactory<>("reemplazos"));
 
-        tablaProcesos.getColumns().addAll(pidCol, esperaCol, retornoCol, respuestaCol, fallosCol, reemplazosCol);
+        tablaProcesos.getColumns().addAll(pidCol, esperaCol, retornoCol, respuestaCol, fallosCol);
         tablaProcesos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         tablaProcesos.setPrefHeight(260);
         tablaProcesos.getStyleClass().add("result-table");

@@ -6,15 +6,13 @@ public class ResultadoProceso {
     private final int tiempoRetorno;
     private final int tiempoRespuesta;
     private final int fallosPagina;
-    private final int reemplazos;
 
-    public ResultadoProceso(String pid, int tiempoEspera, int tiempoRetorno, int tiempoRespuesta, int fallosPagina, int reemplazos) {
+    public ResultadoProceso(String pid, int tiempoEspera, int tiempoRetorno, int tiempoRespuesta, int fallosPagina) {
         this.pid = pid;
         this.tiempoEspera = tiempoEspera;
         this.tiempoRetorno = tiempoRetorno;
         this.tiempoRespuesta = tiempoRespuesta;
         this.fallosPagina = fallosPagina;
-        this.reemplazos = reemplazos;
     }
 
     public String getPid() {
@@ -37,7 +35,4 @@ public class ResultadoProceso {
         return fallosPagina;
     }
 
-    public int getReemplazos() {
-        return reemplazos;
-    }
 }

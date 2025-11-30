@@ -316,6 +316,7 @@ public abstract class MemoryManager {
     public int getTotalPageLoads() { return totalPageLoads; }
     public int getTotalFrames() { return totalFrames; }
     public int getCurrentTime() { return currentTime; }
+    public int getMarcosLibres() {return getFreeFrames();}
 
     public void setCurrentTime(int time) {
         this.currentTime = time;
@@ -344,7 +345,4 @@ public abstract class MemoryManager {
         totalPageLoads = 0;
         Logger.memLog("[MEM] Memoria reseteada");
     }
-    //Getters para resultados
-    public int getFramesLibres() {return getFreeFrames();}
-    public int getMarcosLibres() {return getFreeFrames();}
 }
