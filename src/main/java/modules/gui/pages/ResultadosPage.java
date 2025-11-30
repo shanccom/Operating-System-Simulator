@@ -47,8 +47,13 @@ private final Label algPlanLabel = new Label();
         setSpacing(20);
         setPadding(new Insets(20));
         getStyleClass().add("page-container");
-        construirEncabezado();
-        construirTarjetas();
+        
+        getChildren().addAll(
+                construirDatosGenerales(),
+                construirMetricasScheduler(),
+                construirMetricasMemoria()
+        );
+        
         construirVisualizaciones();
         construirTabla();
         actualizarDatos(datos);
@@ -66,6 +71,39 @@ private final Label algPlanLabel = new Label();
         getChildren().add(barra);
     }
 
+    private Node construirDatosGenerales() {
+        VBox contenedor = new VBox(10);
+        Label titulo = new Label("Datos Generales");
+        titulo.getStyleClass().add("section-title");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(14);
+        grid.setVgap(10);
+
+        grid.add(crearDatoResumido("Algoritmo de Planificación", algPlanLabel), 0, 0);
+        grid.add(crearDatoResumido("Algoritmo de Memoria", algMemLabel), 1, 0);
+        grid.add(crearDatoResumido("Total de Procesos", totalProcesosLabel), 2, 0);
+
+        contenedor.getChildren().addAll(titulo, grid);
+        return contenedor;
+    }
+
+    private Node construirMetricasScheduler() {
+        VBox contenedor = new VBox(10);
+        Label titulo = new Label("Métricas del Scheduler");
+        titulo.getStyleClass().add("section-title");
+
+        GridPane grid = crearGridMetricas();
+        grid.add(crearTarjeta("Procesos Completados", procesosCompletadosLabel), 0, 0);
+        grid.add(crearTarjeta("Tiempo Promedio de Respuesta", tiempoRespuestaLabel), 1, 0);
+        grid.add(crearTarjeta("Cambios de Contexto", cambiosContextoLabel), 2, 0);
+        grid.add(crearTarjeta("Tiempo Total de CPU", tiempoCpuLabel), 3, 0);
+        grid.add(crearTarjeta("Tiempo Inactivo", tiempoOciosoLabel), 4, 0);
+
+        contenedor.getChildren().addAll(titulo, grid);
+        return contenedor;
+    }
+    /* 
     private void construirTarjetas() {
         GridPane grid = new GridPane();
         grid.setHgap(12);
@@ -78,6 +116,22 @@ private final Label algPlanLabel = new Label();
         grid.add(crearTarjeta("Reemplazos", valorReemplazos), 4, 0);
 
         getChildren().add(grid);
+    }
+*/
+
+    private Node construirMetricasMemoria() {
+        VBox contenedor = new VBox(10);
+        Label titulo = new Label("Métricas de Memoria");
+        titulo.getStyleClass().add("section-title");
+
+        GridPane grid = crearGridMetricas();
+        grid.add(crearTarjeta("Cargas Totales", cargasTotalesLabel), 0, 0);
+        grid.add(crearTarjeta("Fallos de Página", fallosPaginaLabel), 1, 0);
+        grid.add(crearTarjeta("Reemplazos Totales", reemplazosLabel), 2, 0);
+        grid.add(crearTarjeta("Marcos Libres", marcosLibresLabel), 3, 0);
+
+        contenedor.getChildren().addAll(titulo, grid);
+        return contenedor;
     }
 
     private void construirVisualizaciones() {
@@ -170,14 +224,24 @@ private final Label algPlanLabel = new Label();
     }
 
     public void actualizarDatos(DatosResultados datos) {
-        valorEspera.setText(String.format("%.1f ms", datos.getTiempoEsperaPromedio()));
-        valorRetorno.setText(String.format("%.1f ms", datos.getTiempoRetornoPromedio()));
-        valorCpu.setText(String.format("%.1f%%", datos.getUsoCpu()));
-        valorFallos.setText(String.valueOf(datos.getFallosPagina()));
-        valorReemplazos.setText(String.valueOf(datos.getReemplazosPagina()));
+        algPlanLabel.setText(datos.getAlgPlanificacion());
+        algMemLabel.setText(datos.getAlgMemoria());
+        totalProcesosLabel.setText(String.valueOf(datos.getTotalProcesos()));
+
+        procesosCompletadosLabel.setText(String.format("%d / %d", datos.getProcesosCompletados(), datos.getTotalProcesos()));
+        tiempoRespuestaLabel.setText(String.format("%.1f ms", datos.getTiempoRespuestaPromedio()));
+        cambiosContextoLabel.setText(String.valueOf(datos.getCambiosContexto()));
+        tiempoCpuLabel.setText(String.format("%d ms", datos.getTiempoCpu()));
+        tiempoOciosoLabel.setText(String.format("%d ms", datos.getTiempoOcioso()));
+
+        cargasTotalesLabel.setText(String.valueOf(datos.getCargasTotales()));
+        fallosPaginaLabel.setText(String.valueOf(datos.getFallosPagina()));
+        reemplazosLabel.setText(String.valueOf(datos.getReemplazosPagina()));
+        marcosLibresLabel.setText(String.format("%d / %d", datos.getMarcosLibres(), datos.getMarcosTotales()));
 
         double progresoCpu = Math.min(1.0, Math.max(0, datos.getUsoCpu() / 100));
         graficaCpu.setProgress(progresoCpu);
+        porcentajeCpuLabel.setText(String.format("%.0f%%", datos.getUsoCpu()));
         estadoCpu.setText(String.format("Trabajo: %.1f%%  |  Ocioso: %.1f%%", datos.getUsoCpu(), datos.getOcioCpu()));
 
         tablaProcesos.getItems().setAll(datos.getResumenProcesos());
@@ -219,6 +283,16 @@ private final Label algPlanLabel = new Label();
         return tarjeta;
     }
 
+    private VBox crearDatoResumido(String titulo, Label valor) {
+        Label etiqueta = new Label(titulo);
+        etiqueta.getStyleClass().add("metric-title");
+        valor.getStyleClass().add("metric-value");
+
+        VBox caja = new VBox(4, etiqueta, valor);
+        caja.getStyleClass().add("card");
+        return caja;
+    }
+
     private VBox crearContenedorGrafica(String titulo) {
         Label etiqueta = new Label(titulo);
         etiqueta.getStyleClass().add("card-subtitle");
@@ -233,5 +307,12 @@ private final Label algPlanLabel = new Label();
         Label label = new Label("—");
         label.getStyleClass().add("metric-value");
         return label;
+    }
+    
+    private GridPane crearGridMetricas() {
+        GridPane grid = new GridPane();
+        grid.setHgap(12);
+        grid.setVgap(12);
+        return grid;
     }
 }
