@@ -190,7 +190,6 @@ private Node construirBloqueMetricasJuntas() {
         labelFallos.getStyleClass().add("text-clear");
         labelReemplazos.getStyleClass().add("text-clear");
 
-        // Usar los Label como cabeceras de las columnas mediante setGraphic(...)
         TableColumn<ResultadoProceso, String> pidCol = new TableColumn<>();
         pidCol.setGraphic(labelProceso);
         pidCol.setCellValueFactory(new PropertyValueFactory<>("pid"));
