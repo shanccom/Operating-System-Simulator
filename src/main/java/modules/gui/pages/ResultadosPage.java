@@ -42,18 +42,17 @@ private final Label algPlanLabel = new Label();
     public ResultadosPage() {
         this(DatosResultados.prueba());
     }
-
     public ResultadosPage(DatosResultados datos) {
         setSpacing(20);
         setPadding(new Insets(20));
         getStyleClass().add("page-container");
-        
+
+        construirEncabezado();
+
         getChildren().addAll(
                 construirDatosGenerales(),
-                construirMetricasScheduler(),
-                construirMetricasMemoria()
+                construirBloqueMetricasJuntas() 
         );
-        
         construirVisualizaciones();
         construirTabla();
         actualizarDatos(datos);
@@ -66,6 +65,8 @@ private final Label algPlanLabel = new Label();
         VBox textos = new VBox(4);
         Label titulo = new Label("Resultados de Simulación");
         titulo.getStyleClass().add("page-title");
+        textos.getChildren().addAll(titulo);
+
         barra.setLeft(textos);
         setMargin(barra, new Insets(0, 0, 8, 0));
         getChildren().add(barra);
@@ -88,6 +89,21 @@ private final Label algPlanLabel = new Label();
         return contenedor;
     }
 
+private Node construirBloqueMetricasJuntas() {
+        HBox fila = new HBox(30);
+        fila.setAlignment(Pos.CENTER_LEFT);
+
+        VBox scheduler = (VBox) construirMetricasScheduler();
+        VBox memoria = (VBox) construirMetricasMemoria();
+
+        scheduler.setMinWidth(480);
+        memoria.setMinWidth(480);
+
+        fila.getChildren().addAll(scheduler, memoria);
+
+        return fila;
+    }
+
     private Node construirMetricasScheduler() {
         VBox contenedor = new VBox(10);
         Label titulo = new Label("Métricas del Scheduler");
@@ -103,21 +119,6 @@ private final Label algPlanLabel = new Label();
         contenedor.getChildren().addAll(titulo, grid);
         return contenedor;
     }
-    /* 
-    private void construirTarjetas() {
-        GridPane grid = new GridPane();
-        grid.setHgap(12);
-        grid.setVgap(12);
-
-        grid.add(crearTarjeta("Tiempo de espera promedio", valorEspera), 0, 0);
-        grid.add(crearTarjeta("Tiempo de retorno promedio", valorRetorno), 1, 0);
-        grid.add(crearTarjeta("Utilización de CPU", valorCpu), 2, 0);
-        grid.add(crearTarjeta("Fallos de página", valorFallos), 3, 0);
-        grid.add(crearTarjeta("Reemplazos", valorReemplazos), 4, 0);
-
-        getChildren().add(grid);
-    }
-*/
 
     private Node construirMetricasMemoria() {
         VBox contenedor = new VBox(10);
@@ -133,6 +134,7 @@ private final Label algPlanLabel = new Label();
         contenedor.getChildren().addAll(titulo, grid);
         return contenedor;
     }
+    
 
     private void construirVisualizaciones() {
         Label subtitulo = new Label("Visualizaciones");
