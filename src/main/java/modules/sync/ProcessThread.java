@@ -1,5 +1,7 @@
 package modules.sync;
 
+import java.util.Map;
+
 import model.Burst;
 import model.Process;
 import model.ProcessState;
@@ -16,6 +18,12 @@ public class ProcessThread extends Thread {
   // Monitor local para sincronización interna del thread
   private final Object threadMonitor = new Object();
   private volatile boolean running;
+  
+  //Listener y mapa de tiempos
+  private SimulationStateListener stateListener;
+  private Map<String, Integer> executionStartTimes;
+
+
 
   public ProcessThread(Process process, SyncController syncController, 
                        IOManager ioManager, Config config) {
@@ -25,6 +33,12 @@ public class ProcessThread extends Thread {
     this.ioManager = ioManager;
     this.config = config;
     this.running = true;
+  }
+
+  // metodo para establecer el listener
+  public void setStateListener(SimulationStateListener listener, Map<String, Integer> startTimes) {
+    this.stateListener = listener;
+    this.executionStartTimes = startTimes;
   }
 
   @Override 
@@ -133,6 +147,7 @@ public class ProcessThread extends Thread {
   }
 
   private void executeCPUBurst(Burst burst) throws InterruptedException {
+
     while (!burst.isCompleted() && running) {
       ProcessState state = process.getState();
       
@@ -152,6 +167,7 @@ public class ProcessThread extends Thread {
       
       if (process.getState() == ProcessState.RUNNING) {
         waitForNextCycle();
+
       }
     }
     
@@ -195,6 +211,10 @@ public class ProcessThread extends Thread {
     Logger.syncLog(String.format("[T=%d] [%s] Falta memoria → BLOCKED_MEMORY", 
       currentTime, process.getPid()));
     
+    //para gant
+    notifyExecutionEnd("bloqueado memoria");
+    //fin
+    
     // Bloquear proceso (SyncController usa su propio lock)
     syncController.blockProcessForMemory(process);
     
@@ -206,6 +226,10 @@ public class ProcessThread extends Thread {
     int currentTime = syncController.getScheduler().getCurrentTime();
     Logger.procLog(String.format("[T=%d] [%s] → Solicita I/O (duración: %d unidades)", 
       currentTime, process.getPid(), burst.getDuration()));
+
+    // para gant
+    notifyExecutionEnd("bloqueado I/O");
+    //fin
     
     // Cambiar estado a BLOCKED_IO (sin locks externos)
     if (process.getState() != ProcessState.TERMINATED) {
@@ -251,6 +275,12 @@ public class ProcessThread extends Thread {
     int currentTime = syncController.getScheduler().getCurrentTime();
     
     // Cambiar estado localmente
+    //para gant
+    notifyExecutionEnd("terminado");
+    //fin
+
+    // Cambiar estado a TERMINATED
+
     synchronized(threadMonitor) {
       process.setCompletionTime(currentTime);
       process.setState(ProcessState.TERMINATED);
@@ -274,6 +304,22 @@ public class ProcessThread extends Thread {
     Logger.syncLog("  Fallos de página:  " + process.getPageFaults());
     System.out.println();
   }
+
+  // metodo para notificar fin de ejecución
+  private void notifyExecutionEnd(String reason) {
+    if (stateListener != null && executionStartTimes != null) {
+      String pid = process.getPid();
+      Integer startTime = executionStartTimes.get(pid);
+      
+      if (startTime != null) {
+        int currentTime = syncController.getScheduler().getCurrentTime();
+        System.out.println("[ProcessThread-Gant]Proceso " + pid + " termina ejecución en t=" + currentTime + " (" + reason + ")");
+        stateListener.onProcessExecutionEnded(pid, currentTime);
+        executionStartTimes.remove(pid);
+      }
+    }
+  }
+
 
   public void wakeUp() {
     synchronized(threadMonitor) {

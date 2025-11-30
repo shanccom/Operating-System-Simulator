@@ -11,7 +11,9 @@ import utils.Logger;
 import model.ProcessState;
 import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SimulationEngine {
   
@@ -33,6 +35,8 @@ public class SimulationEngine {
   private volatile boolean running;
   
   private SimulationStateListener stateListener;
+  //para gant chart
+  private final Map<String, Integer> executionStartTimes = new HashMap<>();
 
 
   public SimulationEngine(Scheduler scheduler, MemoryManager memoryManager, 
@@ -55,9 +59,42 @@ public class SimulationEngine {
   }
 
 
+  // Metodo para pasar el listener a los threads
+
   public void setStateListener(SimulationStateListener listener) {
     this.stateListener = listener;
+    
+    // Pasar el listener y el mapa de tiempos a cada thread
+    for (ProcessThread thread : processThreads) {
+        thread.setStateListener(listener, executionStartTimes);
+    }
   }
+  
+  // Notificar cambios a la UI
+  private void notifyUIUpdate() {
+    if (stateListener != null) {
+      List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
+      
+      List<Process> blockedIO;
+      List<Process> blockedMemory;
+      
+      synchronized(engineMonitor) {
+        blockedIO = allProcesses.stream()
+          .filter(p -> p.getState() == ProcessState.BLOCKED_IO)
+          .toList();
+        
+        blockedMemory = allProcesses.stream()
+          .filter(p -> p.getState() == ProcessState.BLOCKED_MEMORY)
+          .toList();
+      }
+      
+      stateListener.onReadyQueueChanged(readyQueue);
+      stateListener.onBlockedIOChanged(blockedIO);
+      stateListener.onBlockedMemoryChanged(blockedMemory);
+      stateListener.onTimeChanged(currentTime);
+    }
+  }
+
 
   public void run() {
     running = true;
@@ -215,7 +252,7 @@ public class SimulationEngine {
       scheduler.setCurrentTime(currentTime);
     }
   }
-
+  
   private void coordinateScheduler() {
     Process currentRunning = scheduler.getCurrentProcess();
     
@@ -274,6 +311,7 @@ public class SimulationEngine {
         Logger.exeLog("[ENGINE] Quantum agotado para " + current.getPid());
         preemptProcess(current);
         return false;
+
       }
     }
     
@@ -282,6 +320,7 @@ public class SimulationEngine {
       return false;
     }
     
+
     // El proceso continúa ejecutando
     if (syncController.canProcessExecute(current)) {
       wakeUpThread(current);
@@ -321,6 +360,7 @@ public class SimulationEngine {
     // Si hay proceso previo en RUNNING, regresarlo a READY
     if (previousProcess != null && previousProcess.getState() == ProcessState.RUNNING) {
       preemptProcess(previousProcess);
+
     }
     
     // Seleccionar siguiente proceso
@@ -337,9 +377,25 @@ public class SimulationEngine {
     boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
     
     if (canExecute) {
+      //para gant
+      String pid = nextProcess.getPid();
+      System.out.println("[Engine-Gant] Proceso " + pid + " inicia ejecución en t=" + currentTime);
+      
+      if (stateListener != null) {
+          stateListener.onProcessExecutionStarted(pid, currentTime);
+          // Solo notificar context switch si hubo un proceso anterior
+          if (previousProcess != null) {
+              stateListener.onContextSwitch();
+          }
+      }
+      executionStartTimes.put(pid, currentTime);
+      //fin
+
+      
       // Confirmar selección (remueve de cola, registra context switch)
       scheduler.confirmProcessSelection(nextProcess);
       scheduler.recordCPUTime(1);
+
     } else {
       // No puede ejecutar (falta memoria), queda en READY
       scheduler.recordIdleTime(1);
@@ -357,30 +413,25 @@ public class SimulationEngine {
   }
 
 
-  private void notifyUIUpdate() {
-    if (stateListener == null) {
-      return;
-    }
-    
-    List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
-    
-    List<Process> blockedIO = allProcesses.stream()
-      .filter(p -> p.getState() == ProcessState.BLOCKED_IO)
-      .toList();
-    
-    List<Process> blockedMemory = allProcesses.stream()
-      .filter(p -> p.getState() == ProcessState.BLOCKED_MEMORY)
-      .toList();
-    
-    stateListener.onReadyQueueChanged(readyQueue);
-    stateListener.onBlockedIOChanged(blockedIO);
-    stateListener.onBlockedMemoryChanged(blockedMemory);
-    stateListener.onTimeChanged(currentTime);
-  }
-
-
   private void waitForAllThreads() {
+
     Logger.syncLog("ESPERANDO FINALIZACION DE THREADS");
+
+    //para gant
+    // notificar fin de ejecucio de procesos que terminaron 
+    synchronized(engineMonitor) {
+      for (String pid : new ArrayList<>(executionStartTimes.keySet())) {
+        Integer startTime = executionStartTimes.get(pid);
+        if (startTime != null && stateListener != null) {
+          System.out.println("[Engine-gant] 🏁 Proceso " + pid + " completado en t=" + currentTime);
+          stateListener.onProcessExecutionEnded(pid, currentTime);
+        }
+      }
+      executionStartTimes.clear();
+    }
+
+    //fin
+
     for (ProcessThread thread : processThreads) {
       try {
         thread.join();
