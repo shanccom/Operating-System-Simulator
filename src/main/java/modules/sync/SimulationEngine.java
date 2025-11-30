@@ -182,7 +182,7 @@ public class SimulationEngine {
     }
     
     // Verificar memoria durante ejecución
-    if (state == ProcessState.RUNNING && !syncController.hasRequiredPages(current)) {
+    if (state == ProcessState.RUNNING && !syncController.hasAllRequiredPages(current)) {
       Logger.syncLog("[ENGINE] " + current.getPid() + " perdió páginas durante ejecución");
       current.setState(ProcessState.READY);
       scheduler.addProcess(current);

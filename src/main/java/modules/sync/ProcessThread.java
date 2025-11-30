@@ -144,7 +144,7 @@ public class ProcessThread extends Thread {
       }
       
       // Verificar memoria ANTES de ejecutar
-      if (!syncController.hasRequiredPages(process)) {
+      if (!syncController.hasAllRequiredPages(process)) {
         handleMemoryLack();
         return; // Salir de la ejecución
       }
