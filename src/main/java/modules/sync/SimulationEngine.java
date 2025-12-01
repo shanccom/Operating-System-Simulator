@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class SimulationEngine {
   
@@ -59,7 +58,6 @@ public class SimulationEngine {
 
 
   // Metodo para pasar el listener a los threads
-
   public void setStateListener(SimulationStateListener listener) {
     this.stateListener = listener;
     
@@ -110,7 +108,6 @@ public class SimulationEngine {
     ioManager.stop();
     syncController.stop();
     showResults();
-    datosFinales = construirResultados();
   }
 
   public DatosResultados getDatosFinales() {
@@ -265,7 +262,6 @@ public class SimulationEngine {
 
 
   private void notifyBlockedProcesses() {
-    
     for (ProcessThread thread : processThreads) {
       Process p = thread.getProcess();
       ProcessState state = p.getState();
@@ -297,7 +293,7 @@ public class SimulationEngine {
     currentTime++;
     scheduler.setCurrentTime(currentTime);
   }
-  
+
   private void coordinateScheduler() {
     Process currentProcess = scheduler.getCurrentProcess();
     
@@ -433,9 +429,6 @@ public class SimulationEngine {
 
 
   private void waitForAllThreads() {
-
-    Logger.syncLog("ESPERANDO FINALIZACION DE THREADS");
-
     //para gant
     // notificar fin de ejecucio de procesos que terminaron 
     synchronized(engineMonitor) {
@@ -448,7 +441,6 @@ public class SimulationEngine {
       }
       executionStartTimes.clear();
     }
-
     //fin
 
     for (ProcessThread thread : processThreads) {
@@ -461,7 +453,6 @@ public class SimulationEngine {
       }
     }
   }
-
 
   private void showResults() {
     scheduler.printMetrics();

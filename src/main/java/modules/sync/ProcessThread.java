@@ -22,8 +22,6 @@ public class ProcessThread extends Thread {
   private SimulationStateListener stateListener;
   private Map<String, Integer> executionStartTimes;
 
-
-
   public ProcessThread(Process process, SyncController syncController, 
                        IOManager ioManager, Config config) {
     super("Thread-" + process.getPid());
@@ -146,7 +144,6 @@ public class ProcessThread extends Thread {
   }
 
   private void executeCPUBurst(Burst burst) throws InterruptedException {
-
     while (!burst.isCompleted() && running) {
       ProcessState state;
       synchronized(syncController.getCoordinationMonitor()) {
@@ -195,6 +192,7 @@ public class ProcessThread extends Thread {
       currentTime, process.getPid(), progress, burst.getDuration(), remaining));
   }
 
+
   private void handleMemoryLack() {
     synchronized(syncController.getCoordinationMonitor()) {
       int currentTime = syncController.getCurrentTime();
@@ -215,10 +213,6 @@ public class ProcessThread extends Thread {
       currentTime = syncController.getCurrentTime();
       Logger.procLog(String.format("[T=%d] [%s] Solicita I/O (duración: %d unidades)", 
         currentTime, process.getPid(), burst.getDuration()));
-      
-      // para gant
-      notifyExecutionEnd("bloqueado I/O");
-      //fin
       
       if (process.getState() != ProcessState.TERMINATED) {
         process.setState(ProcessState.BLOCKED_IO);
@@ -256,12 +250,6 @@ public class ProcessThread extends Thread {
   private void terminateProcess() {
     synchronized(syncController.getCoordinationMonitor()) {
       int currentTime = syncController.getCurrentTime();
-      
-      // Cambiar estado localmente
-      //para gant
-      notifyExecutionEnd("terminado");
-      //fin
-      
       process.setCompletionTime(currentTime);
       process.setState(ProcessState.TERMINATED);
       
