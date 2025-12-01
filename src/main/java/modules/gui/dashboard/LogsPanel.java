@@ -57,10 +57,18 @@ public class LogsPanel extends VBox {
                 case SYNC -> "#fff7beff";
                 case ERROR -> "#fd0000ff";
                 case WARNING -> "#fd7600ff";
-                default -> "#9fa5acff";
+                default -> "#ffffffff";
             };
 
             setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Consolas';" + "-fx-background-color: #0f0a1a; " + "-fx-font-size: 13.5px;");
+            setStyle("-fx-text-fill: " + color + ";" +
+            "-fx-font-family: 'Consolas';" +
+            "-fx-font-size: 14px;" +
+            "-fx-font-weight: 600;" +  // Grosor medio válido
+            "-fx-background-color: #0f0a1a;" +
+            "-fx-padding: 6px;" +
+            "-fx-border-color: #1a1a1a;" +
+            "-fx-border-width: 1px;");
         }
     }
 }

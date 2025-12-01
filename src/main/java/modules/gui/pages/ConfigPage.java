@@ -2,6 +2,7 @@ package modules.gui.pages;
 
 import modules.gui.MainFX;
 import modules.gui.SimulationRunner;
+import modules.gui.components.MemoryVisualizer;
 import model.Config;
 import java.io.File;
 import javafx.geometry.Insets;
@@ -28,17 +29,106 @@ public class ConfigPage extends VBox {
     private final Label labelStatus = new Label();
 
     private Config currentConfig;
-
     private DashboardPage dashboardPage;
+
+
+
+    private VBox buildConsiderationsCard() {
+        VBox mainBox = new VBox(15);
+        mainBox.getStyleClass().add("card");
+        mainBox.setMaxWidth(Double.MAX_VALUE);
+        mainBox.setPadding(new Insets(20));
+
+        // Título principal
+        Label mainTitle = new Label("Simulador de Sistema Operativo");
+        mainTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: rgba(240, 225, 255, 0.95);");
+        
+        Label subtitle = new Label("Administración de memoria y procesos en tiempo real");
+        subtitle.setStyle("-fx-font-size: 13px; -fx-text-fill: rgba(240, 225, 255, 0.7);");
+
+        // Contenedor de las tres columnas
+        HBox modulesContainer = new HBox(15);
+        modulesContainer.setAlignment(Pos.CENTER);
+        modulesContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
+
+
+        VBox memoryModule = createModuleCard(
+            "Memoria",
+            "module-memory",
+            "• Direccionamiento virtual (páginas)\n" +
+            "• Traducción a frames físicos\n" +
+            "• Page faults automáticos\n" +
+            "• Algoritmos: FIFO, LRU, OPTIMAL, NRU"
+        );
+
+
+        VBox processModule = createModuleCard(
+            "Procesos",
+            "module-process",
+            "• Estados: Listo, Ejecutando, Bloqueado\n" +
+            "• Planificadores: FCFS, SJF, RR, Prioridad\n" +
+            "• Soporte para I/O\n" +
+            "• Gestión de quantum (RR)"
+        );
+
+
+        VBox executionModule = createModuleCard(
+            "Ejecución",
+            "module-execution",
+            "• Diagrama de Gantt en tiempo real\n" +
+            "• Visualización del orden de ejecución\n" +
+            "• Interrupciones preemptivas\n" +
+            "• Métricas de rendimiento"
+        );
+
+        // Distribucion
+        HBox.setHgrow(executionModule, Priority.ALWAYS);
+        HBox.setHgrow(processModule, Priority.ALWAYS);
+        HBox.setHgrow(memoryModule, Priority.ALWAYS);
+        
+
+        modulesContainer.getChildren().addAll(executionModule, processModule, memoryModule);
+
+        mainBox.getChildren().addAll(mainTitle, subtitle, modulesContainer);
+        return mainBox;
+    }
+
+    private VBox createModuleCard(String title, String styleClass, String content) {
+        VBox card = new VBox(10);
+        card.getStyleClass().addAll("module-card", styleClass);
+        card.setMaxWidth(Double.MAX_VALUE);
+        card.setAlignment(Pos.TOP_LEFT);
+
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("module-title");
+
+        // Contenido
+        Label contentLabel = new Label(content);
+        contentLabel.getStyleClass().add("module-content");
+        contentLabel.setWrapText(true);
+        contentLabel.setMaxWidth(Double.MAX_VALUE);
+
+        card.getChildren().addAll(titleLabel, contentLabel);
+        return card;
+    }
+
+
+
+
+    private VBox wrapInConfigCard(GridPane configGrid) {
+        VBox box = new VBox(10);
+        box.getStyleClass().add("card");
+        box.setPadding(new Insets(15));
+        box.getChildren().add(configGrid);
+        return box;
+    }
+
+
 
     public ConfigPage(Stage stage, DashboardPage dashboardPage, MainFX mainFx) {
         this.mainFx = mainFx;
         this.dashboardPage = dashboardPage;
-        System.out.println("[ConfigPage] Constructor llamado");
-        System.out.println("[ConfigPage] dashboardPage recibido: " + dashboardPage);
-        System.out.println("[ConfigPage] proPanel disponible: " + 
-                        (dashboardPage != null ? dashboardPage.getProPanel() : "NULL"));
-                        
+
         setSpacing(0);
         setPadding(new Insets(0));
         setAlignment(Pos.TOP_CENTER);
@@ -62,16 +152,32 @@ public class ConfigPage extends VBox {
         content.setPadding(new Insets(20));
         content.setAlignment(Pos.TOP_CENTER);
 
+
+        // --- Construcción de secciones ---
+        VBox considerationsCard = buildConsiderationsCard();
         VBox sectionFile = buildFileSection(stage);
+
         GridPane configGrid = buildConfigGrid();
+        VBox configCard = wrapInConfigCard(configGrid);   // <-- Envolvemos
+
         Button startButton = buildStartButton();
 
-        content.getChildren().addAll(sectionFile, configGrid, startButton, labelStatus);
-        scrollPane.setContent(content);
 
+        // --- Orden final de los elementos ---
+        content.getChildren().addAll(
+            considerationsCard,
+            sectionFile,
+            configCard,
+            startButton,
+            labelStatus
+        );
+
+        scrollPane.setContent(content);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
         getChildren().add(scrollPane);
     }
+
+
 
     private VBox buildFileSection(Stage stage) {
         VBox box = new VBox(8);
@@ -97,8 +203,8 @@ public class ConfigPage extends VBox {
         });
 
         rowProcess.getChildren().addAll(labelProcess, btnProcess);
-
         box.getChildren().addAll(title, rowProcess);
+
         return box;
     }
 
@@ -106,13 +212,13 @@ public class ConfigPage extends VBox {
         GridPane grid = new GridPane();
         grid.setHgap(15);
         grid.setVgap(15);
-        grid.getStyleClass().add("card");
         grid.setPadding(new Insets(15));
 
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPercentWidth(50);
         ColumnConstraints col2 = new ColumnConstraints();
         col2.setPercentWidth(50);
+
         grid.getColumnConstraints().addAll(col1, col2);
 
         int row = 0;
@@ -125,86 +231,82 @@ public class ConfigPage extends VBox {
         leftSection.getStyleClass().add("config-section");
 
         Label memTitle = new Label("Memoria");
-        memTitle.getStyleClass().addAll("section-title", "text-clear");
+        memTitle.getStyleClass().add("section-title");
         memTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
 
         framesSpinner.setEditable(true);
         framesSpinner.setPrefWidth(80);
-        framesSpinner.getStyleClass().add("input-control");
-
-        HBox framesRow = createCompactRow("Frames:", framesSpinner);
 
         frameSizeSpinner.setEditable(true);
         frameSizeSpinner.setPrefWidth(80);
-        frameSizeSpinner.getStyleClass().add("input-control");
-
-        HBox frameSizeRow = createCompactRow("Tamaño (bytes):", frameSizeSpinner);
 
         replacementCombo.getItems().addAll("FIFO", "LRU", "OPTIMAL", "NRU");
         replacementCombo.getSelectionModel().select("LRU");
         replacementCombo.setPrefWidth(120);
-        replacementCombo.getStyleClass().add("input-control");
 
-        HBox replaceRow = createCompactRow("Reemplazo:", replacementCombo);
+        leftSection.getChildren().addAll(
+            memTitle,
+            createCompactRow("Frames:", framesSpinner),
+            createCompactRow("Tamaño (bytes):", frameSizeSpinner),
+            createCompactRow("Reemplazo:", replacementCombo)
+        );
 
-        leftSection.getChildren().addAll(memTitle, framesRow, frameSizeRow, replaceRow);
         grid.add(leftSection, 0, row, 1, 1);
+
 
         VBox rightSection = new VBox(10);
         rightSection.getStyleClass().add("config-section");
 
         Label cpuTitle = new Label("CPU");
-        cpuTitle.getStyleClass().addAll("section-title", "text-clear");
+        cpuTitle.getStyleClass().add("section-title");
         cpuTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
 
         schedulerCombo.getItems().addAll("FCFS", "SJF", "RR", "PRIORITY");
         schedulerCombo.getSelectionModel().select("FCFS");
         schedulerCombo.setPrefWidth(120);
-        schedulerCombo.getStyleClass().add("input-control");
-
-        HBox schedulerRow = createCompactRow("Scheduler:", schedulerCombo);
 
         quantumSpinner.setEditable(true);
         quantumSpinner.setPrefWidth(80);
         quantumSpinner.setDisable(true);
-        quantumSpinner.getStyleClass().add("input-control");
-
-        HBox quantumRow = createCompactRow("Quantum:", quantumSpinner);
 
         schedulerCombo.setOnAction(e -> {
-            String selected = schedulerCombo.getSelectionModel().getSelectedItem();
-            quantumSpinner.setDisable(!selected.equals("RR"));
+            quantumSpinner.setDisable(!schedulerCombo.getValue().equals("RR"));
         });
 
-        rightSection.getChildren().addAll(cpuTitle, schedulerRow, quantumRow);
+        rightSection.getChildren().addAll(
+            cpuTitle,
+            createCompactRow("Scheduler:", schedulerCombo),
+            createCompactRow("Quantum:", quantumSpinner)
+        );
+
         grid.add(rightSection, 1, row++, 1, 1);
 
+
+
         VBox advancedSection = new VBox(8);
-        advancedSection.getStyleClass().add("config-section");
 
         Label advTitle = new Label("Configuración Avanzada");
-        advTitle.getStyleClass().addAll("section-title", "text-clear");
+        advTitle.getStyleClass().add("section-title");
         advTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
 
-        HBox advancedRow = new HBox(20);
-        advancedRow.setAlignment(Pos.CENTER_LEFT);
-
-        enableIOCheck.getStyleClass().add("text-clear");
         enableIOCheck.setSelected(false);
 
         timeUnitSpinner.setEditable(true);
         timeUnitSpinner.setPrefWidth(80);
-        timeUnitSpinner.getStyleClass().add("input-control");
 
-        HBox timeRow = createCompactRow("Tiempo (ms):", timeUnitSpinner);
+        HBox advancedRow = new HBox(20);
+        advancedRow.setAlignment(Pos.CENTER_LEFT);
+        advancedRow.getChildren().addAll(
+            enableIOCheck,
+            createCompactRow("Tiempo (ms):", timeUnitSpinner)
+        );
 
-        advancedRow.getChildren().addAll(enableIOCheck, timeRow);
         advancedSection.getChildren().addAll(advTitle, advancedRow);
-
         grid.add(advancedSection, 0, row++, 2, 1);
 
         return grid;
     }
+
 
     private HBox createCompactRow(String labelText, Control control) {
         HBox row = new HBox(8);
@@ -219,6 +321,7 @@ public class ConfigPage extends VBox {
         return row;
     }
 
+
     private Button buildStartButton() {
         Button btn = new Button("Visualize");
         btn.getStyleClass().add("primary-button");
@@ -228,6 +331,7 @@ public class ConfigPage extends VBox {
         return btn;
     }
 
+
     private File openFile(Stage stage) {
         FileChooser fc = new FileChooser();
         fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("TXT files", "*.txt"));
@@ -236,8 +340,10 @@ public class ConfigPage extends VBox {
         if (initialDir.exists()) {
             fc.setInitialDirectory(initialDir);
         }
+
         return fc.showOpenDialog(stage);
     }
+
 
     private Config buildConfigFromForm() {
         Config config = new Config();
@@ -245,15 +351,8 @@ public class ConfigPage extends VBox {
         try {
             config.setTotalFrames(framesSpinner.getValue());
             config.setFrameSize(frameSizeSpinner.getValue());
-
-            config.setReplacementType(
-                    parseReplacementType(replacementCombo.getSelectionModel().getSelectedItem())
-            );
-
-            config.setSchedulerType(
-                    parseSchedulerType(schedulerCombo.getSelectionModel().getSelectedItem())
-            );
-
+            config.setReplacementType(parseReplacementType(replacementCombo.getValue()));
+            config.setSchedulerType(parseSchedulerType(schedulerCombo.getValue()));
             config.setQuantum(quantumSpinner.getValue());
             config.setTimeUnit(timeUnitSpinner.getValue());
 
@@ -265,6 +364,7 @@ public class ConfigPage extends VBox {
         return config;
     }
 
+
     private Config.SchedulerType parseSchedulerType(String value) {
         return switch (value.toUpperCase()) {
             case "FCFS" -> Config.SchedulerType.FCFS;
@@ -274,6 +374,7 @@ public class ConfigPage extends VBox {
             default -> Config.SchedulerType.FCFS;
         };
     }
+
 
     private Config.ReplacementType parseReplacementType(String value) {
         return switch (value.toUpperCase()) {
@@ -285,6 +386,7 @@ public class ConfigPage extends VBox {
         };
     }
 
+
     public void runSimulation() {
         try {
             if (processFile == null || !processFile.exists()) {
@@ -293,26 +395,29 @@ public class ConfigPage extends VBox {
             }
 
             currentConfig = buildConfigFromForm();
-
-            if (currentConfig == null) {
-                labelStatus.setText("Error: No se pudo construir la configuración.");
-                return;
-            }
+            if (currentConfig == null) return;
 
             if (!currentConfig.validate()) {
                 labelStatus.setText("Error: Configuración inválida.");
                 return;
             }
 
+            // Asegurar que el panel de memoria esté configurado ANTES de usar el visualizer
+            if (dashboardPage != null && dashboardPage.getMemPanel() != null) {
+                dashboardPage.getMemPanel().setConfig(currentConfig);
+            }
+
             labelStatus.setText("Iniciando simulación...");
 
-            System.out.println("[ConfigPage] dashboardPage: " + dashboardPage);
-            System.out.println("[ConfigPage] proPanel: " + (dashboardPage != null ? dashboardPage.getProPanel() : "NULL"));
+            // Solo llamar a buildPhysicalFrames si el visualizer ya existe
+            if (dashboardPage != null && dashboardPage.getMemPanel() != null &&
+                dashboardPage.getMemPanel().getVisualizer() != null) {
+                dashboardPage.getMemPanel().getVisualizer().buildPhysicalFrames();
+            }
 
             SimulationRunner.runSimulation(
-                currentConfig, 
+                currentConfig,
                 processFile.getAbsolutePath(),
-
                 dashboardPage != null ? dashboardPage : null,
                 dashboardPage.getMemPanel(),
                 mainFx
@@ -327,8 +432,8 @@ public class ConfigPage extends VBox {
         }
     }
 
+
     public Config getCurrentConfig() {
         return buildConfigFromForm();
     }
-
 }

@@ -162,7 +162,7 @@ Agregarlo al path
 
 ## Desplegar ...
 ```
-mvn clean install
+mvn clean compile
 mvn javafx:run
 ```
 

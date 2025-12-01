@@ -169,15 +169,25 @@ public abstract class MemoryManager {
         if (freeFrame != -1) {
             loadPageToFrame(freeFrame, pid, pageNumber);
             notifyFrameLoaded(freeFrame, pid, pageNumber);
+            notifySnapshot(getMemorySnapshotCompact());
             return true;
         }
 
         // Si no hay marcos libres → elegir víctima
         int victimFrame = selectVictimFrame(process, pageNumber);
-        notifyVictimChosen(victimFrame, "Aca incluir reason");
+        
         if (victimFrame != -1) {
+            // Guardar datos del frame que será reemplazado
+            String oldPid = frames[victimFrame].getProcessId();
+            int oldPage = frames[victimFrame].getPageNumber();
+            
+            notifyVictimChosen(victimFrame, "Aca incluir reason");
+            notifyFrameEvicted(victimFrame, oldPid, oldPage);
+            
             replacePage(victimFrame, pid, pageNumber);
-            notifyFrameEvicted(victimFrame, pid, pageNumber);
+            notifyFrameLoaded(victimFrame, pid, pageNumber);
+            notifySnapshot(getMemorySnapshotCompact());
+            
             return true;
         }
 

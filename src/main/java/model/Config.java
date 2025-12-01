@@ -28,7 +28,7 @@ public class Config {
   private int pageFaultPenalty = 3;
   private int contextSwitchOverhead = 1;
 
-  public Config() {
+  public Config() { //Por defecto
       this.totalFrames = 10;
       this.frameSize = 4096;
       this.schedulerType = SchedulerType.FCFS;
