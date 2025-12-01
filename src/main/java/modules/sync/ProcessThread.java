@@ -165,7 +165,7 @@ public class ProcessThread extends Thread {
       executeOneCPUUnit(burst);
       
       synchronized(threadMonitor) {
-        threadMonitor.wait
+        threadMonitor.wait();
       }
     }
     
