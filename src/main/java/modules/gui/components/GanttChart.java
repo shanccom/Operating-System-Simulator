@@ -146,8 +146,7 @@ public class GanttChart extends Pane {
     
     private void drawExecutionBlock(GraphicsContext gc, GanttEntry entry, double y) {
         double x = labelWidth + (entry.startTime * cellWidth);
-        //+1 , porque inicia en 0 y temrina en 3 y sura 4 unidades
-        double width = (entry.endTime - entry.startTime + 1) * cellWidth;
+        double width = (entry.endTime - entry.startTime) * cellWidth;
         
         Color color = processColors.get(entry.pid);
         
@@ -164,8 +163,8 @@ public class GanttChart extends Pane {
         if (width > 20) {
             gc.setFill(Color.WHITE);
             gc.setFont(Font.font("Monospace", FontWeight.BOLD, 11));
-            //+1 , porque inicia en 0 y temrina en 3 y sura 4 unidades
-            String text = (entry.endTime - entry.startTime+ 1) + "u";
+            
+            String text = (entry.endTime - entry.startTime) + "u";
             gc.fillText(text, x + width / 2 - 10, y + 25);
         }
         

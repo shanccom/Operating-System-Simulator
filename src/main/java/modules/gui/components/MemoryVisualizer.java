@@ -137,6 +137,8 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         this.totalFrames = frames;
         this.currentAlgorithm = algor.name();
         
+        System.out.println("[MemoryVisualizer] initialize: algoritmo=" + currentAlgorithm + ", totalFrames=" + totalFrames);
+        
         // Limpiar datos anteriores
         processPageTables.clear();
         physicalFrames.clear();
@@ -153,19 +155,25 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         
         // Construir los frames físicos
         buildPhysicalFrames();
+        System.out.println("[MemoryVisualizer] Frames creados: " + physicalFrames.size() + ", Keys: " + physicalFrames.keySet());
     }
 
     // Construye los frames físicos cuando ya hay configuración
     public void buildPhysicalFrames() {
-        if (physicalFramesContainer == null) return;
+        if (physicalFramesContainer == null) {
+            System.err.println("[MemoryVisualizer ERROR] physicalFramesContainer es null!");
+            return;
+        }
         
         physicalFramesContainer.getChildren().clear();
         physicalFrames.clear();
 
+        System.out.println("[MemoryVisualizer] buildPhysicalFrames: construyendo " + totalFrames + " frames...");
         for (int i = 0; i < totalFrames; i++) {
             PhysicalFrameCard frameCard = new PhysicalFrameCard(i);
             physicalFrames.put(i, frameCard);
             physicalFramesContainer.getChildren().add(frameCard);
+            System.out.println("  - Frame " + i + " creado");
         }
     }
 
@@ -178,29 +186,36 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         });
     }
     
+    // Método público que usa Platform.runLater
     public void registerProcess(String pid, int minPages) {
-        Platform.runLater(() -> {
-            if (!processPageTables.containsKey(pid)) {
-                Color processColor = processColors[colorIndex % processColors.length];
-                colorIndex++;
-                ProcessPageTable pageTable = new ProcessPageTable(pid, minPages, processColor);
-                processPageTables.put(pid, pageTable);
-                pageTablesContainer.getChildren().add(pageTable);
-            } else {
-                // Expandir si es necesario
-                processPageTables.get(pid).ensurePageCapacity(minPages);
-            }
-        });
+        Platform.runLater(() -> registerProcessSync(pid, minPages));
+    }
+    
+    // Método interno síncrono (debe llamarse desde el JavaFX thread)
+    private void registerProcessSync(String pid, int minPages) {
+        if (!processPageTables.containsKey(pid)) {
+            Color processColor = processColors[colorIndex % processColors.length];
+            colorIndex++;
+            ProcessPageTable pageTable = new ProcessPageTable(pid, minPages, processColor);
+            processPageTables.put(pid, pageTable);
+            pageTablesContainer.getChildren().add(pageTable);
+        } else {
+            // Expandir si es necesario
+            processPageTables.get(pid).ensurePageCapacity(minPages);
+        }
     }
     
     @Override
     public void onPageAccess(int frameIndex, String pid, int page, boolean hit) {
+        System.out.println("[MemoryVisualizer] onPageAccess: frame=" + frameIndex + ", pid=" + pid + ", page=" + page + ", hit=" + hit);
         Platform.runLater(() -> {
-            registerProcess(pid, page + 1);  // At least page+1 pages
+            registerProcessSync(pid, page + 1);  // Registro síncrono
             
             if (hit) {
                 if (physicalFrames.containsKey(frameIndex)) {
                     physicalFrames.get(frameIndex).highlightHit();
+                } else {
+                    System.err.println("[MemoryVisualizer ERROR] Frame " + frameIndex + " no existe en physicalFrames. Total frames: " + physicalFrames.size());
                 }
                 victimInfoLabel.setText("✓ HIT: Página P" + page + " de " + pid + " encontrada en Frame " + frameIndex);
                 victimInfoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #00ff88;");
@@ -210,8 +225,9 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
 
     @Override
     public void onPageFault(String pid, int page) {
+        System.out.println("[MemoryVisualizer] onPageFault: pid=" + pid + ", page=" + page);
         Platform.runLater(() -> {
-            registerProcess(pid, page + 1);  // At least page+1 pages
+            registerProcessSync(pid, page + 1);  // Registro síncrono
             
             if (processPageTables.containsKey(pid)) {
                 processPageTables.get(pid).markPageFault(page);
@@ -228,16 +244,21 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
 
     @Override
     public void onFrameLoaded(int frameIndex, String pid, int page) {
+        System.out.println("[MemoryVisualizer] onFrameLoaded: frame=" + frameIndex + ", pid=" + pid + ", page=" + page);
         Platform.runLater(() -> {
-            registerProcess(pid, page + 1);  // At least page+1 pages
+            registerProcessSync(pid, page + 1);  // Registro síncrono PRIMERO
             
             if (processPageTables.containsKey(pid)) {
                 processPageTables.get(pid).loadPage(page, frameIndex);
+            } else {
+                System.err.println("[MemoryVisualizer ERROR] Process " + pid + " no encontrado en processPageTables");
             }
             
             if (physicalFrames.containsKey(frameIndex)) {
                 Color processColor = processPageTables.get(pid).getColor();
                 physicalFrames.get(frameIndex).load(pid, page, processColor);
+            } else {
+                System.err.println("[MemoryVisualizer ERROR] Frame " + frameIndex + " no existe en physicalFrames. Total frames: " + physicalFrames.size());
             }
             
             victimInfoLabel.setText("↑ CARGADO: P" + page + " de " + pid + " → Frame " + frameIndex);
@@ -247,6 +268,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
 
     @Override
     public void onFrameEvicted(int frameIndex, String oldPid, int oldPage) {
+        System.out.println("[MemoryVisualizer] onFrameEvicted: frame=" + frameIndex + ", oldPid=" + oldPid + ", oldPage=" + oldPage);
         Platform.runLater(() -> {
             if (processPageTables.containsKey(oldPid)) {
                 processPageTables.get(oldPid).evictPage(oldPage);
@@ -254,6 +276,8 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             
             if (physicalFrames.containsKey(frameIndex)) {
                 physicalFrames.get(frameIndex).evict();
+            } else {
+                System.err.println("[MemoryVisualizer ERROR] Frame " + frameIndex + " no existe en physicalFrames al hacer evict");
             }
             
             victimInfoLabel.setText("↓ EVICTED: P" + oldPage + " de " + oldPid + " removido del Frame " + frameIndex);
@@ -263,9 +287,12 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
 
     @Override
     public void onVictimChosen(int frameIndex, String reason) {
+        System.out.println("[MemoryVisualizer] onVictimChosen: frame=" + frameIndex + ", reason=" + reason);
         Platform.runLater(() -> {
             if (physicalFrames.containsKey(frameIndex)) {
                 physicalFrames.get(frameIndex).highlightVictim();
+            } else {
+                System.err.println("[MemoryVisualizer ERROR] Frame " + frameIndex + " no existe en physicalFrames al elegir víctima");
             }
             
             String victimInfo = "Frame " + frameIndex + " candidato (" + currentAlgorithm + ")";
