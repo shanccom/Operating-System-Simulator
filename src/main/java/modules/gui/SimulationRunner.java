@@ -14,7 +14,6 @@ import modules.sync.SimulationEngine;
 import modules.sync.SimulationStateListener;
 
 import modules.gui.dashboard.MemPanel;
-import modules.gui.dashboard.ProPanel;
 
 import modules.gui.pages.ResultadosPage;
 
@@ -57,6 +56,12 @@ public class SimulationRunner {
         if (dashboardPage  != null) {
             //System.out.println("[SimulationRunner] Registrando listener en el engine...");
 
+            //limpiamos el diagrama
+            dashboardPage.getExePanel().clearGantt();
+            List<String> processIds = processes.stream()
+                .map(Process::getPid)
+                .toList();
+            dashboardPage.getExePanel().initializeProcesses(processIds);
             
             engine.setStateListener(new SimulationStateListener() {
 
@@ -66,6 +71,7 @@ public class SimulationRunner {
                 @Override
                 public void onProcessExecutionStarted(String pid, int startTime) {
                     //System.out.println("[SimulationRunner]INICIO de ejecución → PID=" + pid + ", t=" + startTime);
+                    dashboardPage.getExePanel().addExecutionStart(pid, startTime);
                     executionStarts.put(pid, startTime);
                     dashboardPage.getExePanel().setCurrentTime(startTime);
                 }
@@ -74,9 +80,8 @@ public class SimulationRunner {
                 public void onProcessExecutionEnded(String pid, int endTime) {
                     Integer start = executionStarts.get(pid);
                     //System.out.println("[SimulationRunner]FIN de ejecución → PID=" + pid +", inicio=" + start + ", fin=" + endTime);
-                    if (start != null) {
-                        dashboardPage.getExePanel().addExecution(pid, start, endTime);
-                    }
+                    dashboardPage.getExePanel().addExecutionEnd(pid, endTime);
+                    executionStarts.remove(pid);
                 }
 
                 @Override
@@ -118,6 +123,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onTimeChanged(int currentTime) {
+                    dashboardPage.getExePanel().setCurrentTime(currentTime);
                 }
             });
         } else {

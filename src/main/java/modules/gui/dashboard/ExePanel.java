@@ -1,5 +1,7 @@
 package modules.gui.dashboard;
 
+import java.util.List;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -91,6 +93,15 @@ public class ExePanel extends VBox {
         totalCPUTime += (endTime - startTime);
         updateMetrics();
     }
+    //desde que empieza la ejecucion de un proceso
+    public void addExecutionStart(String pid, int startTime) {
+        ganttChart.addExecutionStart(pid, startTime);
+    }
+    public void addExecutionEnd(String pid, int endTime) {
+        ganttChart.addExecutionEnd(pid, endTime);
+        totalCPUTime += 1; // Ajustar según la duración real
+        updateMetrics();
+    }
 
     public void setCurrentTime(int time) {
         //System.out.println("[ExePanel] setCurrentTime llamado: " + time);
@@ -121,6 +132,11 @@ public class ExePanel extends VBox {
         avgWaitTime = 0.0;
         updateMetrics();
     }
+
+    public void initializeProcesses(List<String> processIds) {
+        ganttChart.initializeProcesses(processIds);
+    }
+
 
     private void updateMetrics() {
         Platform.runLater(() -> {

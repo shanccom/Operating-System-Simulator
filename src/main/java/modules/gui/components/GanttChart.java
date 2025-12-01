@@ -1,5 +1,10 @@
 package modules.gui.components;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
@@ -8,9 +13,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import model.Process;
-
-import java.util.*;
 
 public class GanttChart extends Pane {
     
@@ -22,6 +24,10 @@ public class GanttChart extends Pane {
     
     private final List<GanttEntry> entries = new ArrayList<>();
     private final Map<String, Color> processColors = new HashMap<>();
+    private final List<String> processOrden = new ArrayList<>();//para dibujar antes los procesos
+    private final Map<String, GanttEntry> openEntries = new HashMap<>(); //para dibujar desde que empieza
+
+
     private int maxTime = 50;
     private int currentTime = 0;
     
@@ -41,8 +47,10 @@ public class GanttChart extends Pane {
     
     public void addExecution(String pid, int startTime, int endTime) {
         //System.out.println("[GanttChart] addExecution: " + pid + " [" + startTime + "-" + endTime + "]");
+        //para asegurar que se actualiza en el hilo JavaFX
         Platform.runLater(() -> {
             if (!processColors.containsKey(pid)) {
+                processOrden.add(pid);
                 processColors.put(pid, COLORS[processColors.size() % COLORS.length]);
                 //System.out.println("[GanttChart] Color asignado a " + pid + ": " + processColors.get(pid));
             }
@@ -57,11 +65,55 @@ public class GanttChart extends Pane {
             draw();
         });
     }
+    //cuando inicie
+    public void addExecutionStart(String pid, int startTime) {
+        Platform.runLater(() -> {
+            if (!processColors.containsKey(pid)) {
+                processOrden.add(pid);
+                processColors.put(pid, COLORS[processColors.size() % COLORS.length]);
+            }
+
+            // Crear entrada "abierta" (en progreso)
+            GanttEntry entry = new GanttEntry(pid, startTime, startTime); // se ira expandiendo
+            openEntries.put(pid, entry);
+            entries.add(entry);
+
+            //System.out.println("[GanttChart] Inicio de ejecución: " + pid + " en t=" + startTime);
+            draw();
+        });
+    }
+    
+    // cuando un proceso termina su ejecucion
+    public void addExecutionEnd(String pid, int endTime) {
+        Platform.runLater(()-> {
+
+            GanttEntry entry = openEntries.get(pid);
+            if (entry != null) {
+                entry.endTime = endTime;
+                openEntries.remove(pid);
+                //System.out.println("[GanttChart] Fin de ejecucion: " + pid + " en t=" + endTime + " (duración: " + (endTime - entry.startTime) + "u)");
+            } else {
+                //System.out.println("[GanttChart] No se encontro entrada abierta para " + pid);
+            }
+
+            if (endTime > maxTime) {
+                maxTime = endTime + 10;
+            }
+
+            draw();
+        });
+    }
     
     public void setCurrentTime(int time) {
         //System.out.println("[GanttChart] setCurrentTime: " + time);
-        Platform.runLater(() -> {
+         Platform.runLater(() -> {
             this.currentTime = time;
+            
+            // se actualiza el endTime de todos los bloques abiertos al tiempo actual
+            for (GanttEntry entry : openEntries.values()) {
+                entry.endTime = time;
+            }
+            
             draw();
         });
     }
@@ -76,6 +128,22 @@ public class GanttChart extends Pane {
         });
     }
     
+    public void initializeProcesses(List<String> processIds) {
+        Platform.runLater(() -> {
+            processOrden.clear();
+            processColors.clear();
+            
+            for (int i = 0; i < processIds.size(); i++) {
+                String pid = processIds.get(i);
+                processOrden.add(pid);
+                processColors.put(pid, COLORS[i % COLORS.length]);
+                System.out.println("[GanttChart] Proceso " + pid + " pre-creado con color: " + processColors.get(pid));
+            }
+            
+            draw();
+        });
+    }
+
     private void draw() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         
@@ -91,6 +159,13 @@ public class GanttChart extends Pane {
         
         // Dibujar header con línea de tiempo
         drawTimelineHeader(gc);
+
+        // Dibujar filas
+        for (int i = 0; i < processOrden.size(); i++) {
+            String pid = processOrden.get(i);
+            drawProcessRow(gc, pid, i);
+        }
+
         
         // Dibujar filas de procesos
         int row = 0;
@@ -109,7 +184,7 @@ public class GanttChart extends Pane {
         
         for (int t = 0; t <= maxTime; t += 5) {
             double x = labelWidth + (t * cellWidth);
-            gc.fillText(String.valueOf(t), x, 20);
+            gc.fillText(String.valueOf(t), x, 20);//numero del tiempo
             
             // Línea vertical de grid
             gc.setStroke(Color.web("#444"));
@@ -139,40 +214,54 @@ public class GanttChart extends Pane {
         // Dibujar bloques de ejecución
         for (GanttEntry entry : entries) {
             if (entry.pid.equals(pid)) {
-                drawExecutionBlock(gc, entry, y);
+                boolean isOpen = openEntries.containsKey(pid);
+                drawExecutionBlock(gc, entry, y,isOpen);
             }
         }
     }
     
-    private void drawExecutionBlock(GraphicsContext gc, GanttEntry entry, double y) {
+    private void drawExecutionBlock(GraphicsContext gc, GanttEntry entry, double y, boolean isOpen) {
         double x = labelWidth + (entry.startTime * cellWidth);
         double width = (entry.endTime - entry.startTime) * cellWidth;
         
+        //por si esta abierto pero no ha avanzado, no dibujar nada aún
+        if (width < 1) {
+            return;
+        }
+
         Color color = processColors.get(entry.pid);
         
         // Bloque principal
         gc.setFill(color);
         gc.fillRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
         
-        // Borde
-        gc.setStroke(Color.web("rgba(255,255,255,0.3)"));
-        gc.setLineWidth(2);
-        gc.strokeRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
-        
-        // Texto con duración
-        if (width > 20) {
-            gc.setFill(Color.WHITE);
-            gc.setFont(Font.font("Monospace", FontWeight.BOLD, 11));
+        if (isOpen) {
             
-            String text = (entry.endTime - entry.startTime) + "u";
-            gc.fillText(text, x + width / 2 - 10, y + 25);
-        }
-        
-        // Animación si está ejecutando ahora
-        if (entry.startTime <= currentTime && entry.endTime > currentTime) {
-            gc.setStroke(Color.web("#4CAF50"));
+            gc.setStroke(Color.YELLOW);
             gc.setLineWidth(3);
             gc.strokeRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
+            
+            // Mostrar "..." en lugar de duracion
+            if (width > 20) {
+                gc.setFill(Color.WHITE);
+                gc.setFont(Font.font("Monospace", FontWeight.BOLD, 11));
+                gc.fillText("...", x + width / 2 - 8, y + 25);
+            }
+
+        }else{
+            // Borde normal para bloques completados
+            gc.setStroke(Color.web("rgba(255,255,255,0.3)"));
+            gc.setLineWidth(2);
+            gc.strokeRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
+            // Texto con duración
+            if (width > 20) {
+                gc.setFill(Color.WHITE);
+                gc.setFont(Font.font("Monospace", FontWeight.BOLD, 11));
+                
+                String text = (entry.endTime - entry.startTime) + "u";
+                gc.fillText(text, x + width / 2 - 10, y + 25);
+            }
+
         }
     }
     
