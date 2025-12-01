@@ -120,8 +120,10 @@ public abstract class MemoryManager {
 
 
     private void notifyFrameLoaded(int frameIndex, String pid, int page) {
+        Frame frame = frames[frameIndex];
+        long lastAccessTime = frame.getLastAccessTime();
         for (MemoryEventListener l : listeners)
-            l.onFrameLoaded(frameIndex, pid, page);
+            l.onFrameLoaded(frameIndex, pid, page, lastAccessTime);
     }
 
     private void notifyFrameEvicted(int frameIndex, String pid, int page) {
@@ -130,8 +132,10 @@ public abstract class MemoryManager {
     }
 
     private void notifyVictimChosen(int frameIndex, String reason) {
+        Frame frame = frames[frameIndex];
+        long lastAccessTime = frame.getLastAccessTime();
         for (MemoryEventListener l : listeners)
-            l.onVictimChosen(frameIndex, reason);
+            l.onVictimChosen(frameIndex, reason, lastAccessTime);
     }
 
     private void notifySnapshot(String snapshot) {
@@ -288,6 +292,7 @@ public abstract class MemoryManager {
         Logger.memLog("[MEM] Paginas del proceso " + pid + " liberadas");
         Logger.memSnapshot(frames);
     }
+
 
 
     public synchronized String getMemorySnapshotCompact() {
