@@ -5,6 +5,7 @@ public class Config {
   public enum SchedulerType {
       FCFS,        // First Come First Served
       SJF,         // Shortest Job First
+      SRT,
       ROUND_ROBIN, // Round Robin
       PRIORITY     // Por Prioridades (opcional)
   }

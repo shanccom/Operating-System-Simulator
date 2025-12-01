@@ -261,7 +261,7 @@ public class ConfigPage extends VBox {
         cpuTitle.getStyleClass().add("section-title");
         cpuTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
 
-        schedulerCombo.getItems().addAll("FCFS", "SJF", "RR", "PRIORITY");
+        schedulerCombo.getItems().addAll("FCFS", "SJF", "SRT", "RR", "PRIORITY");
         schedulerCombo.getSelectionModel().select("FCFS");
         schedulerCombo.setPrefWidth(120);
 
@@ -369,6 +369,7 @@ public class ConfigPage extends VBox {
         return switch (value.toUpperCase()) {
             case "FCFS" -> Config.SchedulerType.FCFS;
             case "SJF" -> Config.SchedulerType.SJF;
+            case "SRT" -> Config.SchedulerType.SRT;
             case "RR" -> Config.SchedulerType.ROUND_ROBIN;
             case "PRIORITY" -> Config.SchedulerType.PRIORITY;
             default -> Config.SchedulerType.FCFS;

@@ -10,6 +10,7 @@ public class SimulationFactory {
     return switch (config.getSchedulerType()) {
       case FCFS -> new modules.scheduler.FCFS();
       case SJF -> new modules.scheduler.SJF();
+      case SRT -> new modules.scheduler.SRT();
       case ROUND_ROBIN -> new modules.scheduler.RoundRobin(config.getQuantum());
       case PRIORITY -> new modules.scheduler.Priority();
     };
