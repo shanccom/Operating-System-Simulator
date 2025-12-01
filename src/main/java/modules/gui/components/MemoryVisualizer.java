@@ -66,10 +66,15 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         // Contenedor principal horizontal
         HBox mainContent = new HBox(20);
         mainContent.setAlignment(Pos.TOP_CENTER);
+        HBox.setHgrow(mainContent, Priority.ALWAYS);
+        mainContent.setMaxWidth(Double.MAX_VALUE);
         
         // Panel izquierdo: Tablas de Páginas de procesos
         VBox leftPanel = new VBox(10);
         leftPanel.setAlignment(Pos.TOP_LEFT);
+        HBox.setHgrow(leftPanel, Priority.ALWAYS);
+        leftPanel.setMaxWidth(Double.MAX_VALUE);
+        
         Label pageTableTitle = new Label("Tabla de Páginas");
         pageTableTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #ffffffff;");
         
@@ -78,11 +83,11 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         pageTablesContainer.setPadding(new Insets(10));
         pageTableScroll.setContent(pageTablesContainer);
         pageTableScroll.setFitToWidth(true);
+        VBox.setVgrow(pageTableScroll, Priority.ALWAYS);
         HBox.setHgrow(pageTablesContainer, Priority.ALWAYS);
         pageTablesContainer.setMaxWidth(Double.MAX_VALUE);
         
         pageTableScroll.setMaxHeight(350);
-        pageTableScroll.setMaxWidth(1500);
         pageTableScroll.setStyle("-fx-background: #1a102b; -fx-background-color: transparent;");
         
         leftPanel.getChildren().addAll(pageTableTitle, pageTableScroll);
@@ -90,6 +95,9 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         // Panel derecho: Marcos Físicos
         VBox rightPanel = new VBox(10);
         rightPanel.setAlignment(Pos.TOP_LEFT);
+        HBox.setHgrow(rightPanel, Priority.ALWAYS);
+        rightPanel.setMaxWidth(Double.MAX_VALUE);
+        
         Label physicalTitle = new Label("Marcos Físicos");
         physicalTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #ffffffff;");
         
@@ -99,8 +107,8 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         physicalScroll.setContent(physicalFramesContainer);
         physicalScroll.setFitToWidth(true);
         physicalScroll.setMaxHeight(350);
-        physicalScroll.setMaxWidth(1500);
         physicalScroll.setStyle("-fx-background: #1a102b; -fx-background-color: transparent;");
+        VBox.setVgrow(physicalScroll, Priority.ALWAYS);
         HBox.setHgrow(physicalFramesContainer, Priority.ALWAYS);
         physicalFramesContainer.setMaxWidth(Double.MAX_VALUE);
 
@@ -283,6 +291,8 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             setSpacing(5);
             setPadding(new Insets(8));
             setStyle("-fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 6px; -fx-border-color: " + toRgbString(processColor) + "; -fx-border-radius: 6px; -fx-border-width: 2px;");
+            setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(this, Priority.ALWAYS);
             
             Label header = new Label(pid);
             header.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + toRgbString(processColor) + ";");
@@ -290,6 +300,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             pageGrid = new GridPane();
             pageGrid.setHgap(5);
             pageGrid.setVgap(5);
+            pageGrid.setMaxWidth(Double.MAX_VALUE);
             
             Label pageHeader = new Label("Página");
             pageHeader.setStyle("-fx-font-size: 10px; -fx-text-fill: #888;");
@@ -351,6 +362,8 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             setAlignment(Pos.CENTER_LEFT);
             setPadding(new Insets(3, 8, 3, 8));
             setStyle("-fx-background-color: rgba(0,0,0,0.3); -fx-background-radius: 4px;");
+            setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(this, Priority.ALWAYS);
             
             pageLabel = new Label("" + pageNumber);
             pageLabel.setMinWidth(40);
@@ -359,6 +372,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             frameLabel = new Label("---");
             frameLabel.setMinWidth(40);
             frameLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
+            HBox.setHgrow(frameLabel, Priority.ALWAYS);
             
             getChildren().addAll(pageLabel, frameLabel);
         }
@@ -402,6 +416,8 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             setAlignment(Pos.CENTER_LEFT);
             setPadding(new Insets(8));
             setStyle("-fx-background-color: rgba(26,16,43,0.6); -fx-background-radius: 6px; -fx-border-color: #333; -fx-border-radius: 6px;");
+            setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(this, Priority.ALWAYS);
             
             frameLabel = new Label("Frame " + frameIndex);
             frameLabel.setMinWidth(70);
@@ -414,6 +430,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             
             contentLabel = new Label("Vacío");
             contentLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #555; -fx-font-style: italic;");
+            HBox.setHgrow(contentLabel, Priority.ALWAYS);
             
             getChildren().addAll(frameLabel, colorIndicator, contentLabel);
         }
