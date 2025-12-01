@@ -25,6 +25,8 @@ public class GanttChart extends Pane {
     private final List<GanttEntry> entries = new ArrayList<>();
     private final Map<String, Color> processColors = new HashMap<>();
     private final List<String> processOrden = new ArrayList<>();//para dibujar antes los procesos
+    private final Map<String, GanttEntry> openEntries = new HashMap<>(); //para dibujar desde que empieza
+
 
     private int maxTime = 50;
     private int currentTime = 0;
@@ -63,11 +65,55 @@ public class GanttChart extends Pane {
             draw();
         });
     }
+    //cuando inicie
+    public void addExecutionStart(String pid, int startTime) {
+        Platform.runLater(() -> {
+            if (!processColors.containsKey(pid)) {
+                processOrden.add(pid);
+                processColors.put(pid, COLORS[processColors.size() % COLORS.length]);
+            }
+
+            // Crear entrada "abierta" (en progreso)
+            GanttEntry entry = new GanttEntry(pid, startTime, startTime); // se ira expandiendo
+            openEntries.put(pid, entry);
+            entries.add(entry);
+
+            //System.out.println("[GanttChart] Inicio de ejecución: " + pid + " en t=" + startTime);
+            draw();
+        });
+    }
+    
+    // cuando un proceso termina su ejecucion
+    public void addExecutionEnd(String pid, int endTime) {
+        Platform.runLater(()-> {
+
+            GanttEntry entry = openEntries.get(pid);
+            if (entry != null) {
+                entry.endTime = endTime;
+                openEntries.remove(pid);
+                //System.out.println("[GanttChart] Fin de ejecucion: " + pid + " en t=" + endTime + " (duración: " + (endTime - entry.startTime) + "u)");
+            } else {
+                //System.out.println("[GanttChart] No se encontro entrada abierta para " + pid);
+            }
+
+            if (endTime > maxTime) {
+                maxTime = endTime + 10;
+            }
+
+            draw();
+        });
+    }
     
     public void setCurrentTime(int time) {
         //System.out.println("[GanttChart] setCurrentTime: " + time);
-        Platform.runLater(() -> {
+         Platform.runLater(() -> {
             this.currentTime = time;
+            
+            // se actualiza el endTime de todos los bloques abiertos al tiempo actual
+            for (GanttEntry entry : openEntries.values()) {
+                entry.endTime = time;
+            }
+            
             draw();
         });
     }
@@ -168,40 +214,54 @@ public class GanttChart extends Pane {
         // Dibujar bloques de ejecución
         for (GanttEntry entry : entries) {
             if (entry.pid.equals(pid)) {
-                drawExecutionBlock(gc, entry, y);
+                boolean isOpen = openEntries.containsKey(pid);
+                drawExecutionBlock(gc, entry, y,isOpen);
             }
         }
     }
     
-    private void drawExecutionBlock(GraphicsContext gc, GanttEntry entry, double y) {
+    private void drawExecutionBlock(GraphicsContext gc, GanttEntry entry, double y, boolean isOpen) {
         double x = labelWidth + (entry.startTime * cellWidth);
         double width = (entry.endTime - entry.startTime) * cellWidth;
         
+        //por si esta abierto pero no ha avanzado, no dibujar nada aún
+        if (width < 1) {
+            return;
+        }
+
         Color color = processColors.get(entry.pid);
         
         // Bloque principal
         gc.setFill(color);
         gc.fillRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
         
-        // Borde
-        gc.setStroke(Color.web("rgba(255,255,255,0.3)"));
-        gc.setLineWidth(2);
-        gc.strokeRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
-        
-        // Texto con duración
-        if (width > 20) {
-            gc.setFill(Color.WHITE);
-            gc.setFont(Font.font("Monospace", FontWeight.BOLD, 11));
+        if (isOpen) {
             
-            String text = (entry.endTime - entry.startTime) + "u";
-            gc.fillText(text, x + width / 2 - 10, y + 25);
-        }
-        
-        // Animación si está ejecutando ahora
-        if (entry.startTime <= currentTime && entry.endTime > currentTime) {
-            gc.setStroke(Color.web("#4CAF50"));
+            gc.setStroke(Color.YELLOW);
             gc.setLineWidth(3);
             gc.strokeRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
+            
+            // Mostrar "..." en lugar de duracion
+            if (width > 20) {
+                gc.setFill(Color.WHITE);
+                gc.setFont(Font.font("Monospace", FontWeight.BOLD, 11));
+                gc.fillText("...", x + width / 2 - 8, y + 25);
+            }
+
+        }else{
+            // Borde normal para bloques completados
+            gc.setStroke(Color.web("rgba(255,255,255,0.3)"));
+            gc.setLineWidth(2);
+            gc.strokeRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
+            // Texto con duración
+            if (width > 20) {
+                gc.setFill(Color.WHITE);
+                gc.setFont(Font.font("Monospace", FontWeight.BOLD, 11));
+                
+                String text = (entry.endTime - entry.startTime) + "u";
+                gc.fillText(text, x + width / 2 - 10, y + 25);
+            }
+
         }
     }
     
