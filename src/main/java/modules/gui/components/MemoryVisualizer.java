@@ -59,7 +59,6 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         
         getStyleClass().add("card-mem");
         
-        // Título principal
         Label title = new Label("Memoria");
         title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #ffffffff;");
         
@@ -92,7 +91,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         
         leftPanel.getChildren().addAll(pageTableTitle, pageTableScroll);
         
-        // Panel derecho: Marcos Físicos
+        // Marcos Físicos
         VBox rightPanel = new VBox(10);
         rightPanel.setAlignment(Pos.TOP_LEFT);
         HBox.setHgrow(rightPanel, Priority.ALWAYS);
@@ -140,6 +139,10 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         System.out.println("[MemoryVisualizer] initialize: algoritmo=" + currentAlgorithm + ", totalFrames=" + totalFrames);
         
         // Limpiar datos anteriores
+        //pageTablesContainer.clear(); //problemas
+        if (pageTablesContainer != null) {
+            pageTablesContainer.getChildren().clear(); 
+        }
         processPageTables.clear();
         physicalFrames.clear();
         colorIndex = 0;
@@ -155,7 +158,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         
         // Construir los frames físicos
         buildPhysicalFrames();
-        System.out.println("[MemoryVisualizer] Frames creados: " + physicalFrames.size() + ", Keys: " + physicalFrames.keySet());
+        //System.out.println("[MemoryVisualizer] Frames creados: " + physicalFrames.size() + ", Keys: " + physicalFrames.keySet());
     }
 
     // Construye los frames físicos cuando ya hay configuración
@@ -168,7 +171,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         physicalFramesContainer.getChildren().clear();
         physicalFrames.clear();
 
-        System.out.println("[MemoryVisualizer] buildPhysicalFrames: construyendo " + totalFrames + " frames...");
+        //System.out.println("[MemoryVisualizer] buildPhysicalFrames: construyendo " + totalFrames + " frames...");
         for (int i = 0; i < totalFrames; i++) {
             PhysicalFrameCard frameCard = new PhysicalFrameCard(i);
             physicalFrames.put(i, frameCard);
@@ -243,7 +246,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     }
 
     @Override
-    public void onFrameLoaded(int frameIndex, String pid, int page) {
+    public void onFrameLoaded(int frameIndex, String pid, int page, long lastAccessTime) {
         System.out.println("[MemoryVisualizer] onFrameLoaded: frame=" + frameIndex + ", pid=" + pid + ", page=" + page);
         Platform.runLater(() -> {
             registerProcessSync(pid, page + 1);  // Registro síncrono PRIMERO
@@ -256,9 +259,9 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             
             if (physicalFrames.containsKey(frameIndex)) {
                 Color processColor = processPageTables.get(pid).getColor();
-                physicalFrames.get(frameIndex).load(pid, page, processColor);
+                physicalFrames.get(frameIndex).load(pid, page, processColor, lastAccessTime);
             } else {
-                System.err.println("[MemoryVisualizer ERROR] Frame " + frameIndex + " no existe en physicalFrames. Total frames: " + physicalFrames.size());
+                //System.err.println("[MemoryVisualizer ERROR] Frame " + frameIndex + " no existe en physicalFrames. Total frames: " + physicalFrames.size());
             }
             
             victimInfoLabel.setText("↑ CARGADO: P" + page + " de " + pid + " → Frame " + frameIndex);
@@ -286,11 +289,11 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     }
 
     @Override
-    public void onVictimChosen(int frameIndex, String reason) {
-        System.out.println("[MemoryVisualizer] onVictimChosen: frame=" + frameIndex + ", reason=" + reason);
+    public void onVictimChosen(int frameIndex, String reason, long lastAccessTime) {
+        //System.out.println("[MemoryVisualizer] onVictimChosen: frame=" + frameIndex + ", reason=" + reason);
         Platform.runLater(() -> {
             if (physicalFrames.containsKey(frameIndex)) {
-                physicalFrames.get(frameIndex).highlightVictim();
+                physicalFrames.get(frameIndex).highlightVictim(lastAccessTime);
             } else {
                 System.err.println("[MemoryVisualizer ERROR] Frame " + frameIndex + " no existe en physicalFrames al elegir víctima");
             }
@@ -299,6 +302,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             if (reason != null && !reason.isEmpty()) {
                 victimInfo += " - " + reason;
             }
+            victimInfo += " [LastAccess=" + lastAccessTime + "]";
             victimInfoLabel.setText("⚠ VICTIMA: " + victimInfo);
             victimInfoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffe066; -fx-font-weight: bold;");
         });
@@ -452,6 +456,8 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     private class PhysicalFrameCard extends HBox {
         private int frameIndex;
         private Label frameLabel;
+        private Label timeLabel;  // NUEVO
+        private long lastAccessTime = 0;  // NUEVO
         private Label contentLabel;
         private Rectangle colorIndicator;
         private boolean occupied = false;
@@ -474,16 +480,23 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             colorIndicator.setArcHeight(4);
             colorIndicator.setFill(Color.web("#333333"));
             
+            // Contenedor vertical para contenido y tiempo
+            VBox infoBox = new VBox(2);
+            HBox.setHgrow(infoBox, Priority.ALWAYS);
             contentLabel = new Label("Vacío");
             contentLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #555; -fx-font-style: italic;");
             HBox.setHgrow(contentLabel, Priority.ALWAYS);
-            
-            getChildren().addAll(frameLabel, colorIndicator, contentLabel);
+            timeLabel = new Label("");  
+            timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+            infoBox.getChildren().addAll(contentLabel, timeLabel);
+            getChildren().addAll(frameLabel, colorIndicator, contentLabel, infoBox);
         }
         
-        public void load(String pid, int page, Color processColor) {
+        public void load(String pid, int page, Color processColor, long lastAccessTime) {
             occupied = true;
-            contentLabel.setText(pid + " (P" + page + ")");
+            contentLabel.setText("Pid: " + pid + " (Page" + page + ")");
+            timeLabel.setText("⏱ Last Access : " + lastAccessTime);
+            timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #00ff88;");
             contentLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #ffffff; -fx-font-weight: bold;");
             colorIndicator.setFill(processColor);
             setStyle("-fx-background-color: rgba(0,255,136,0.1); -fx-background-radius: 6px; -fx-border-color: " + toRgbString(processColor) + "; -fx-border-radius: 6px; -fx-border-width: 2px;");
@@ -492,6 +505,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         public void evict() {
             occupied = false;
             contentLabel.setText("Vacío");
+            timeLabel.setText("");  // se vacia
             contentLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #555; -fx-font-style: italic;");
             colorIndicator.setFill(Color.web("#333333"));
             setStyle("-fx-background-color: rgba(26,16,43,0.6); -fx-background-radius: 6px; -fx-border-color: #333; -fx-border-radius: 6px;");
@@ -500,16 +514,34 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         public void highlightHit() {
             String currentStyle = getStyle();
             setStyle(currentStyle + "; -fx-background-color: rgba(0,255,136,0.3);");
+            
+            // Actualizar el label de tiempo con efecto
+            timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #00ff88; -fx-font-weight: bold;");
+            
             PauseTransition pause = new PauseTransition(Duration.millis(400));
-            pause.setOnFinished(e -> setStyle(currentStyle));
+            pause.setOnFinished(e -> {
+                setStyle(currentStyle);
+                timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #00ff88;");
+            });
             pause.play();
         }
         
-        public void highlightVictim() {
+        public void highlightVictim(long victimTime) {
+            String currentContent = contentLabel.getText();
             String currentStyle = getStyle();
+            // Mostrar que es víctima y el tiempo que tenía
+            contentLabel.setText("< VICTIM (T=" + victimTime + ")");
+            timeLabel.setText("⏱ Oldest: " + victimTime); 
+            timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #ff6666ff; -fx-font-weight: bold;");
+            contentLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #ffd427ff; -fx-font-weight: bold;");
             setStyle(currentStyle + "; -fx-border-color: #ffe066; -fx-border-width: 3px;");
             PauseTransition pause = new PauseTransition(Duration.millis(800));
-            pause.setOnFinished(e -> setStyle(currentStyle));
+            pause.setOnFinished(e -> {
+                contentLabel.setText(currentContent);
+                contentLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #ffffff; -fx-font-weight: bold;");
+                timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #00ff88;");
+                setStyle(currentStyle);
+            });
             pause.play();
         }
         
