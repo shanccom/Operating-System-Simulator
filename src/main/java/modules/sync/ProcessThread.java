@@ -159,20 +159,24 @@ public class ProcessThread extends Thread {
         }
       }
       
+      // Ejecutar una unidad de CPU
       executeOneCPUUnit(burst);
       
+      // CRÍTICO: Verificar si completó DENTRO del loop
+      if (burst.isCompleted()) {
+        int currentTime;
+        synchronized(syncController.getCoordinationMonitor()) {
+          currentTime = syncController.getCurrentTime();
+        }
+        Logger.exeLog(String.format("[T=%d] [%s] Rafaga CPU completada (%d unidades)", 
+          currentTime, process.getPid(), burst.getDuration()));
+        break; // Salir del loop inmediatamente sin wait
+      }
+      
+      // Solo esperar si la ráfaga NO se completó
       synchronized(threadMonitor) {
         threadMonitor.wait();
       }
-    }
-    
-    if (burst.isCompleted()) {
-      int currentTime;
-      synchronized(syncController.getCoordinationMonitor()) {
-        currentTime = syncController.getCurrentTime();
-      }
-      Logger.exeLog(String.format("[T=%d] [%s] Rafaga CPU completada (%d unidades)", 
-        currentTime, process.getPid(), burst.getDuration()));
     }
   }
 
