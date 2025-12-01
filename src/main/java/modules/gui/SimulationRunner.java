@@ -55,7 +55,7 @@ public class SimulationRunner {
         //REGISTRAR EL LISTENER ANTES DE INICIAR
 
         if (dashboardPage  != null) {
-            System.out.println("[SimulationRunner] Registrando listener en el engine...");
+            //System.out.println("[SimulationRunner] Registrando listener en el engine...");
 
             
             engine.setStateListener(new SimulationStateListener() {
@@ -65,7 +65,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onProcessExecutionStarted(String pid, int startTime) {
-                    System.out.println("[SimulationRunner]INICIO de ejecución → PID=" + pid + ", t=" + startTime);
+                    //System.out.println("[SimulationRunner]INICIO de ejecución → PID=" + pid + ", t=" + startTime);
                     executionStarts.put(pid, startTime);
                     dashboardPage.getExePanel().setCurrentTime(startTime);
                 }
@@ -73,7 +73,7 @@ public class SimulationRunner {
                 @Override
                 public void onProcessExecutionEnded(String pid, int endTime) {
                     Integer start = executionStarts.get(pid);
-                    System.out.println("[SimulationRunner]FIN de ejecución → PID=" + pid +", inicio=" + start + ", fin=" + endTime);
+                    //System.out.println("[SimulationRunner]FIN de ejecución → PID=" + pid +", inicio=" + start + ", fin=" + endTime);
                     if (start != null) {
                         dashboardPage.getExePanel().addExecution(pid, start, endTime);
                     }
@@ -81,7 +81,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onContextSwitch() {
-                    System.out.println("[SimulationRunner] Context Switch detectado");
+                    //System.out.println("[SimulationRunner] Context Switch detectado");
                     dashboardPage.getExePanel().incrementContextSwitch();
                 }
                 
@@ -90,7 +90,7 @@ public class SimulationRunner {
                 @Override
                 public void onReadyQueueChanged(List<Process> readyQueue) {
 
-                    System.out.println("[SimulationRunner]  Ready queue actualizada: " + readyQueue.size());
+                    //System.out.println("[SimulationRunner]  Ready queue actualizada: " + readyQueue.size());
                     dashboardPage.getProPanel().updateReadyQueue(readyQueue);
 
                 }
@@ -98,7 +98,7 @@ public class SimulationRunner {
                 @Override
                 public void onBlockedIOChanged(List<Process> blockedIO) {
 
-                    System.out.println("[SimulationRunner]  Blocked I/O actualizada: " + blockedIO.size());
+                    //System.out.println("[SimulationRunner]  Blocked I/O actualizada: " + blockedIO.size());
                     dashboardPage.getProPanel().updateBlockedIO(blockedIO);
 
                 }
@@ -106,7 +106,7 @@ public class SimulationRunner {
                 @Override
                 public void onBlockedMemoryChanged(List<Process> blockedMemory) {
 
-                    System.out.println("[SimulationRunner]  Blocked Memory actualizada: " + blockedMemory.size());
+                    //System.out.println("[SimulationRunner]  Blocked Memory actualizada: " + blockedMemory.size());
                     dashboardPage.getProPanel().updateBlockedMemory(blockedMemory);
 
                 }
