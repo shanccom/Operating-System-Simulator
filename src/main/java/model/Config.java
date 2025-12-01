@@ -26,6 +26,7 @@ public class Config {
   
   private int systemCallOverhead = 1;
   private int pageFaultPenalty = 3;
+  private int contextSwitchOverhead = 1;
 
   public Config() { //Por defecto
       this.totalFrames = 10;
@@ -131,6 +132,14 @@ public class Config {
   
   public void setPageFaultPenalty(int penalty) { 
     this.pageFaultPenalty = penalty; 
+  }
+
+  public int getContextSwitchOverhead() {
+    return contextSwitchOverhead;
+  }
+  
+  public void setContextSwitchOverhead(int overhead) {
+    this.contextSwitchOverhead = overhead;
   }
 
 }

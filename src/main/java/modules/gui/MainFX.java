@@ -14,6 +14,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import model.DatosResultados;
 import modules.gui.pages.ConfigPage;
 import modules.gui.pages.DashboardPage;
 import modules.gui.pages.ResultadosPage;
@@ -55,7 +56,7 @@ public class MainFX extends Application {
     private void crearPaginas(Stage stage) {
         dashboardPage = new DashboardPage();
         
-        configPage = new ConfigPage(stage, dashboardPage);
+        configPage = new ConfigPage(stage, dashboardPage, this);
         dashboardPage.setConfigPage(configPage);
         
         pages.put("config", configPage);
@@ -114,6 +115,11 @@ public class MainFX extends Application {
 
         root.setCenter(pages.get(key));
         activarBoton(key);
+    }
+
+    public void showResultados(ResultadosPage nResultados) {
+        pages.put("resultados", nResultados);
+        switchPage("resultados");
     }
 
     public static void main(String[] args) {

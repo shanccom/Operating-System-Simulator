@@ -23,6 +23,7 @@ public class Process {
   
   private int lastExecutionTime;   // Último momento en que se ejecuto 
   
+  private int contextSwitchEndTime = 0;
   private int systemCallEndTime = -1;
   private int pageFaultEndTime = -1;
 
@@ -228,6 +229,21 @@ public class Process {
 
   public void clearPageFault() {
       pageFaultEndTime = -1;
+  }
+  public int getContextSwitchEndTime() {
+    return contextSwitchEndTime;
+  }
+
+  public void setContextSwitchEndTime(int endTime) {
+    this.contextSwitchEndTime = endTime;
+  }
+
+  public void clearContextSwitch() {
+    this.contextSwitchEndTime = 0;
+  }
+
+  public boolean isInContextSwitch() {
+    return getState() == ProcessState.CONTEXT_SWITCHING;
   }
 
 }

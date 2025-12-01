@@ -2,13 +2,17 @@ package modules.sync;
 
 import model.Config;
 import model.Process;
+import model.ResultadoProceso;
+import model.DatosResultados;
 import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
-import modules.scheduler.RoundRobin;
 import utils.Logger;
 import model.ProcessState;
+import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SimulationEngine {
   
@@ -21,13 +25,17 @@ public class SimulationEngine {
   private final List<ProcessThread> processThreads;
   
   private final Config config;
-  
+  //Objeto que contendra los resultados finales
+  private DatosResultados datosFinales;
+
   private final Object engineMonitor = new Object();
   
   private int currentTime;
   private volatile boolean running;
   
   private SimulationStateListener stateListener;
+  //para gant chart
+  private final Map<String, Integer> executionStartTimes = new HashMap<>();
 
 
   public SimulationEngine(Scheduler scheduler, MemoryManager memoryManager, 
@@ -50,9 +58,42 @@ public class SimulationEngine {
   }
 
 
+  // Metodo para pasar el listener a los threads
+
   public void setStateListener(SimulationStateListener listener) {
     this.stateListener = listener;
+    
+    // Pasar el listener y el mapa de tiempos a cada thread
+    for (ProcessThread thread : processThreads) {
+        thread.setStateListener(listener, executionStartTimes);
+    }
   }
+  
+  // Notificar cambios a la UI
+  private void notifyUIUpdate() {
+    if (stateListener != null) {
+      List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
+      
+      List<Process> blockedIO;
+      List<Process> blockedMemory;
+      
+      synchronized(engineMonitor) {
+        blockedIO = allProcesses.stream()
+          .filter(p -> p.getState() == ProcessState.BLOCKED_IO)
+          .toList();
+        
+        blockedMemory = allProcesses.stream()
+          .filter(p -> p.getState() == ProcessState.BLOCKED_MEMORY)
+          .toList();
+      }
+      
+      stateListener.onReadyQueueChanged(readyQueue);
+      stateListener.onBlockedIOChanged(blockedIO);
+      stateListener.onBlockedMemoryChanged(blockedMemory);
+      stateListener.onTimeChanged(currentTime);
+    }
+  }
+
 
   public void run() {
     running = true;
@@ -69,48 +110,146 @@ public class SimulationEngine {
     ioManager.stop();
     syncController.stop();
     showResults();
+    datosFinales = construirResultados();
+  }
+
+  public DatosResultados getDatosFinales() {
+    return datosFinales;
+  }
+
+  private DatosResultados construirResultados() {
+    double esperaProm = allProcesses.stream().mapToDouble(Process::getWaitingTime).average().orElse(0);
+    double retornoProm = allProcesses.stream().mapToDouble(Process::getTurnaroundTime).average().orElse(0);
+    double respuestaProm = allProcesses.stream().mapToDouble(Process::getResponseTime).average().orElse(0);
+
+    int completados = (int) allProcesses.stream().filter(p -> p.getState() == ProcessState.TERMINATED).count();
+    double usoCpu = scheduler.getCPUTimePercent(); 
+
+    List<ResultadoProceso> resumen = new ArrayList<>();
+    for (Process p : allProcesses) {
+        resumen.add(new ResultadoProceso(
+                p.getPid(),
+                p.getWaitingTime(),
+                p.getTurnaroundTime(),
+                p.getResponseTime(),
+                p.getPageFaults()
+        ));
+    }
+
+    return new DatosResultados(
+            esperaProm,
+            retornoProm,
+            respuestaProm,
+            usoCpu,
+            completados,
+            allProcesses.size(),
+            scheduler.getCambiosContexto(),
+            scheduler.getTiempoCpuTotal(),
+            scheduler.getTiempoOcioso(),
+            memoryManager.getTotalPageLoads(),
+            memoryManager.getPageFaults(),
+            memoryManager.getPageReplacements(),
+            memoryManager.getTotalFrames(),
+            memoryManager.getFreeFrames(),
+            resumen,
+            scheduler.getAlgorithmName(),
+            memoryManager.getAlgorithmName()
+    );
   }
 
 
-  private void startAllThreads() {
+  private synchronized void startAllThreads() {
     for (ProcessThread thread : processThreads) {
       thread.start();
       Logger.syncLog("  Thread creado: " + thread.getName());
-      sleep(10); // Pequeña pausa para evitar condiciones de carrera al inicio
+      sleep(10);
     }
   }
 
   private void coordinationLoop() { 
-    
     while (isRunning() && !allProcessesCompleted()) {
-      int t = getCurrentTime();
-      
-      syncController.synchronizeTime(t);
-      
-      checkProcessArrivals(t);
-      
-      coordinateScheduler();
-      
-      updateWaitingTimes();
-      
-      notifyBlockedProcesses();
-      
-      
-      notifyUIUpdate();
+      synchronized(syncController.getCoordinationMonitor()) {
+        int t = getCurrentTime();
+        
+        // Actualizar tiempo en SyncController
+        syncController.synchronizeTime(t);
+        
+        // Notificar procesos en tiempo de llegada
+        notifyProcessArrivals(t);
+
+        handleContextSwitchCompletion(t);
+
+        countContextSwitchingCycles();
+        
+        // Coordinar ejecución
+        coordinateScheduler();
+        
+        // Actualizar tiempos de espera
+        updateWaitingTimes();
+        
+        // Revisar procesos bloqueados
+        notifyBlockedProcesses();
+        
+        // Notificar UI
+        notifyUIUpdate();
+      }
       
       sleep(config.getTimeUnit());
       
-      coordinateScheduler();
-
+      // Avanzar tiempo fuera del lock extendido
       advanceTime();
     }
-    
   }
 
-  private void checkProcessArrivals(int t) {
-    // Los threads manejan su propia llegada, solo los notificamos
+  private void handleContextSwitchCompletion(int currentTime) {
     for (ProcessThread thread : processThreads) {
-      thread.wakeUp(); // El thread verifica si su tiempo de llegada coincide
+      Process p = thread.getProcess();
+      
+      // Verificar si está en CONTEXT_SWITCHING
+      if (p.getState() == ProcessState.CONTEXT_SWITCHING) {
+        int endTime = p.getContextSwitchEndTime();
+        
+        // Si el tiempo de overhead ya pasó
+        if (currentTime >= endTime) {
+          Logger.exeLog(String.format("[T=%d] [ENGINE] %s CONTEXT_SWITCHING a READY", 
+            currentTime, p.getPid()));
+          
+          // Volver a READY
+          p.setState(ProcessState.READY);
+          scheduler.addProcess(p);
+          p.clearContextSwitch();
+        }
+      }
+    }
+  }
+
+  private void countContextSwitchingCycles() {
+    long contextswitchingCount = allProcesses.stream()
+      .filter(p -> p.getState() == ProcessState.CONTEXT_SWITCHING)
+      .count();
+    
+    if (contextswitchingCount > 0) {
+      scheduler.recordIdleTime((int) contextswitchingCount);
+      Logger.exeLog(String.format("[T=%d] [ENGINE] %d proceso(s) en CONTEXT_SWITCHING (CPU ociosa)", 
+        getCurrentTime(), contextswitchingCount));
+    }
+  }
+
+  private void notifyProcessArrivals(int t) {
+    // Ya estamos dentro de coordinationMonitor en coordinationLoop()
+    
+    // Despertar todos los threads para que verifiquen si llegaron
+    for (ProcessThread thread : processThreads) {
+      Process process = thread.getProcess();
+      int arrivalTime = process.getArrivalTime();
+      
+      // Si es el momento exacto de llegada o ya pasó
+      if (t == arrivalTime && process.getState() == ProcessState.NEW) {
+        Logger.syncLog(String.format("[T=%d] [ARRIVAL] %s llega al sistema", 
+          t, process.getPid()));
+        // El thread se encargará de cambiar a READY
+        thread.wakeUp();
+      }
     }
   }
 
@@ -126,178 +265,159 @@ public class SimulationEngine {
 
 
   private void notifyBlockedProcesses() {
-    // Despertar procesos bloqueados en I/O
-    for (ProcessThread thread : processThreads) {
-      Process p = thread.getProcess();
-      if (p.getState() == ProcessState.BLOCKED_IO) {
-        synchronized(p) {
-          p.notifyAll();
-        }
-      }
-    }
     
     for (ProcessThread thread : processThreads) {
       Process p = thread.getProcess();
-      if (p.getState() == ProcessState.BLOCKED_MEMORY) {
-        // Verificar si ya completó el page fault
+      ProcessState state = p.getState();
+      
+
+      if (state == ProcessState.CONTEXT_SWITCHING) {
+        continue;
+      }
+
+      if (state == ProcessState.BLOCKED_IO) {
+        // IOManager se encargará de desbloquear
+        // Solo nos aseguramos que siga bloqueado
+        
+      } else if (state == ProcessState.BLOCKED_MEMORY) {
         if (p.isWaitingForPageFault()) {
-          int currentTime = getCurrentTime();
           int endTime = p.getPageFaultEndTime();
-          
           if (currentTime >= endTime) {
-            // Ya terminó el page fault penalty
-            Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s completó penalty, intentando cargar", 
-                currentTime, p.getPid()));
+            Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s completó penalty", 
+              currentTime, p.getPid()));
             p.clearPageFault();
             thread.wakeUp();
           }
-        } else {
-          // No está esperando page fault, intentar cargar páginas
-          thread.wakeUp();
         }
       }
     }
   }
 
-  private void advanceTime() {
-    synchronized(engineMonitor) {
-      currentTime++;
-      scheduler.setCurrentTime(currentTime);
-    }
+  private synchronized void advanceTime() {
+    currentTime++;
+    scheduler.setCurrentTime(currentTime);
   }
-
+  
   private void coordinateScheduler() {
-    Process currentRunning = scheduler.getCurrentProcess();
+    Process currentProcess = scheduler.getCurrentProcess();
     
-    // Validar que el proceso actual sigue siendo válido
-    currentRunning = validateCurrentProcess(currentRunning);
-    
-    // Manejar quantum y expropiación del proceso actual
-    boolean shouldContinue = handleCurrentProcessExecution(currentRunning);
-    
-    // Si el proceso actual continúa, no seleccionar uno nuevo
-    if (shouldContinue) {
-      return;
+    if (currentProcess != null) {
+      validateAndContinueProcess(currentProcess);
+    } else {
+      selectNextProcess();
     }
-    
-    // Seleccionar y ejecutar siguiente proceso
-    selectAndExecuteNextProcess(currentRunning);
   }
 
-  private Process validateCurrentProcess(Process current) {
-    if (current == null) {
-      return null;
-    }
-    
-    // Verificar estados inválidos
+  private void validateAndContinueProcess(Process current) {
     ProcessState state = current.getState();
+    
+    // Verificar estado válido
     if (state == ProcessState.TERMINATED || 
         state == ProcessState.BLOCKED_IO || 
         state == ProcessState.BLOCKED_MEMORY) {
       scheduler.setCurrentProcess(null);
-      return null;
+      selectNextProcess();
+      return;
     }
     
     // Verificar memoria durante ejecución
-    if (state == ProcessState.RUNNING && !syncController.hasAllRequiredPages(current)) {
-      Logger.syncLog("[ENGINE] " + current.getPid() + " perdió páginas durante ejecución");
+    if (!syncController.hasAllRequiredPages(current)) {
+      Logger.syncLog("[ENGINE] " + current.getPid() + " perdió páginas");
       current.setState(ProcessState.READY);
       scheduler.addProcess(current);
       scheduler.setCurrentProcess(null);
-      return null;
+      selectNextProcess();
+      return;
     }
     
-    return current;
+    // Manejar expropiación por quantum (Round Robin)
+    handleQuantumExpropriation(current);
+    
+    // Si sigue siendo RUNNING, permite continuar
+    if (current.getState() == ProcessState.RUNNING) {
+      wakeUpProcessThread(current);
+      scheduler.recordCPUTime(1);
+    } else {
+      selectNextProcess();
+    }
   }
 
-  private boolean handleCurrentProcessExecution(Process current) {
-    if (current == null || current.getState() != ProcessState.RUNNING) {
-      return false;
-    }
-    
-    // Verificar expropiación por quantum (Round Robin)
-    if (scheduler instanceof RoundRobin) {
-      RoundRobin rr = (RoundRobin) scheduler;
+  private void handleQuantumExpropriation(Process current) {
+    if (scheduler instanceof modules.scheduler.RoundRobin) {
+      modules.scheduler.RoundRobin rr = (modules.scheduler.RoundRobin) scheduler;
       rr.decrementaQuantum();
       
       if (rr.isQuantumAgotado()) {
-        Logger.exeLog("[ENGINE] Quantum agotado para " + current.getPid());
-        preemptProcess(current);
-        return false;
+        int currentTime = getCurrentTime();
+        int overhead = config.getContextSwitchOverhead();
+        int endTime = currentTime + overhead;
+        
+        Logger.exeLog(String.format(
+          "[T=%d] [ENGINE] Quantum agotado: %s  CONTEXT_SWITCHING (hasta t=%d)", 
+          currentTime, current.getPid(), endTime));
+        
+        current.setState(ProcessState.CONTEXT_SWITCHING);
+        current.setContextSwitchEndTime(endTime);
+        scheduler.setCurrentProcess(null);
       }
     }
-    
-    // Verificar expropiación por prioridad
-    if (shouldPreemptForPriority(current)) {
-      return false;
-    }
-    
-    // El proceso continúa ejecutando
-    if (syncController.canProcessExecute(current)) {
-      wakeUpThread(current);
-      scheduler.recordCPUTime(1);
-      return true;
-    } else {
-      // Perdió memoria durante ejecución
-      scheduler.setCurrentProcess(null);
-      scheduler.recordIdleTime(1);
-      return false;
-    }
   }
 
-  private boolean shouldPreemptForPriority(Process current) {
-    List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
-    
-    for (Process candidate : readyQueue) {
-      if (scheduler.shouldPreempt(current, candidate)) {
-        Logger.exeLog("[ENGINE] Expropiando " + current.getPid() + " por " + candidate.getPid());
-        preemptProcess(current);
-        return true;
-      }
-    }
-    
-    return false;
-  }
-
-  private void preemptProcess(Process process) {
-    synchronized(syncController.getCoordinationMonitor()) {
-      process.setState(ProcessState.READY);
-    }
-    scheduler.addProcess(process);
-    scheduler.setCurrentProcess(null);
-  }
-
-  private void selectAndExecuteNextProcess(Process previousProcess) {
-    // Si hay proceso previo en RUNNING, regresarlo a READY
-    if (previousProcess != null && previousProcess.getState() == ProcessState.RUNNING) {
-      preemptProcess(previousProcess);
-    }
-    
-    // Seleccionar siguiente proceso
-    Process nextProcess = scheduler.selectNextProcess();
-    
-    if (nextProcess == null) {
-      // CPU idle
+  private void selectNextProcess() {
+    long inCS = allProcesses.stream().filter(p -> p.getState() == ProcessState.CONTEXT_SWITCHING).count();
+    if (inCS > 0) {
+      Logger.syncLog(String.format("[T=%d] [ENGINE] %d proceso(s) en CONTEXT_SWITCHING", 
+        getCurrentTime(), inCS));
       scheduler.recordIdleTime(1);
       return;
     }
-
     
-    // Preparar proceso (verificar y cargar memoria)
+    Process currentProcess = scheduler.getCurrentProcess();
+    Process nextProcess = scheduler.selectNextProcess();
+    
+    if (nextProcess == null) {
+      scheduler.recordIdleTime(1);
+      return;
+    }
+    
+    if (currentProcess != null && currentProcess != nextProcess) {
+      int overhead = config.getContextSwitchOverhead();
+      int currentTime = getCurrentTime();
+      
+      Logger.exeLog(String.format("[T=%d] [ENGINE] Context Switch: %s  %s (overhead: %d ciclos)", 
+        currentTime, currentProcess.getPid(), nextProcess.getPid(), overhead));
+      
+      scheduler.recordIdleTime(overhead);
+    }
+
     boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
     
     if (canExecute) {
-      // Confirmar selección (remueve de cola, registra context switch)
+      //para gant
+      String pid = nextProcess.getPid();
+      System.out.println("[Engine-Gant] Proceso " + pid + " inicia ejecución en t=" + currentTime);
+      
+      if (stateListener != null) {
+          stateListener.onProcessExecutionStarted(pid, currentTime);
+          // Solo notificar context switch si hubo un proceso anterior
+          if (currentProcess != null) {
+              stateListener.onContextSwitch();
+          }
+      }
+      executionStartTimes.put(pid, currentTime);
+      //fin
+      
       scheduler.confirmProcessSelection(nextProcess);
+      wakeUpProcessThread(nextProcess);
       scheduler.recordCPUTime(1);
+
     } else {
-      // No puede ejecutar (falta memoria), queda en READY
+      // Vuelve a la cola
       scheduler.recordIdleTime(1);
     }
   }
 
-
-  private void wakeUpThread(Process process) {
+  private void wakeUpProcessThread(Process process) {
     for (ProcessThread thread : processThreads) {
       if (thread.getProcess() == process) {
         thread.wakeUp();
@@ -306,31 +426,31 @@ public class SimulationEngine {
     }
   }
 
-
-  private void notifyUIUpdate() {
-    if (stateListener == null) {
-      return;
-    }
-    
-    List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
-    
-    List<Process> blockedIO = allProcesses.stream()
-      .filter(p -> p.getState() == ProcessState.BLOCKED_IO)
-      .toList();
-    
-    List<Process> blockedMemory = allProcesses.stream()
-      .filter(p -> p.getState() == ProcessState.BLOCKED_MEMORY)
-      .toList();
-    
-    stateListener.onReadyQueueChanged(readyQueue);
-    stateListener.onBlockedIOChanged(blockedIO);
-    stateListener.onBlockedMemoryChanged(blockedMemory);
-    stateListener.onTimeChanged(currentTime);
+  private synchronized boolean allProcessesCompleted() {
+    return allProcesses.stream()
+      .allMatch(p -> p.getState() == ProcessState.TERMINATED);
   }
 
 
   private void waitForAllThreads() {
+
     Logger.syncLog("ESPERANDO FINALIZACION DE THREADS");
+
+    //para gant
+    // notificar fin de ejecucio de procesos que terminaron 
+    synchronized(engineMonitor) {
+      for (String pid : new ArrayList<>(executionStartTimes.keySet())) {
+        Integer startTime = executionStartTimes.get(pid);
+        if (startTime != null && stateListener != null) {
+          System.out.println("[Engine-gant] 🏁 Proceso " + pid + " completado en t=" + currentTime);
+          stateListener.onProcessExecutionEnded(pid, currentTime);
+        }
+      }
+      executionStartTimes.clear();
+    }
+
+    //fin
+
     for (ProcessThread thread : processThreads) {
       try {
         thread.join();
@@ -339,14 +459,6 @@ public class SimulationEngine {
         Logger.error("Error esperando thread: " + e.getMessage());
         Thread.currentThread().interrupt();
       }
-    }
-  }
-
-
-  private boolean allProcessesCompleted() {
-    synchronized(engineMonitor) {
-      return allProcesses.stream()
-        .allMatch(p -> p.getState() == ProcessState.TERMINATED);
     }
   }
 

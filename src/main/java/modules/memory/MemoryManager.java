@@ -65,6 +65,7 @@ public abstract class MemoryManager {
         public boolean isReferenced() { return referenced; }
         public boolean isModified() { return modified; }
 
+
         @Override
         public String toString() {
             return isOccupied ?
@@ -315,6 +316,7 @@ public abstract class MemoryManager {
     public int getTotalPageLoads() { return totalPageLoads; }
     public int getTotalFrames() { return totalFrames; }
     public int getCurrentTime() { return currentTime; }
+    public int getMarcosLibres() {return getFreeFrames();}
 
     public void setCurrentTime(int time) {
         this.currentTime = time;

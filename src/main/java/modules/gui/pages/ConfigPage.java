@@ -1,5 +1,6 @@
 package modules.gui.pages;
 
+import modules.gui.MainFX;
 import modules.gui.SimulationRunner;
 import modules.gui.components.MemoryVisualizer;
 import model.Config;
@@ -22,12 +23,14 @@ public class ConfigPage extends VBox {
     private final ComboBox<String> replacementCombo = new ComboBox<>();
     private final CheckBox enableIOCheck = new CheckBox("Habilitar I/O");
     private final Spinner<Integer> timeUnitSpinner = new Spinner<>(10, 1000, 100, 10);
+    private final MainFX mainFx;
 
     private final Label labelProcess = new Label();
     private final Label labelStatus = new Label();
 
     private Config currentConfig;
     private DashboardPage dashboardPage;
+
 
 
     private VBox buildConsiderationsCard() {
@@ -122,7 +125,8 @@ public class ConfigPage extends VBox {
 
 
 
-    public ConfigPage(Stage stage, DashboardPage dashboardPage) {
+    public ConfigPage(Stage stage, DashboardPage dashboardPage, MainFX mainFx) {
+        this.mainFx = mainFx;
         this.dashboardPage = dashboardPage;
 
         setSpacing(0);
@@ -414,8 +418,10 @@ public class ConfigPage extends VBox {
             SimulationRunner.runSimulation(
                 currentConfig,
                 processFile.getAbsolutePath(),
-                dashboardPage != null ? dashboardPage.getProPanel() : null,
-                dashboardPage != null ? dashboardPage.getMemPanel() : null
+                dashboardPage != null ? dashboardPage : null,
+                dashboardPage.getMemPanel(),
+                mainFx
+
             );
 
             labelStatus.setText("Simulación iniciada correctamente.");
