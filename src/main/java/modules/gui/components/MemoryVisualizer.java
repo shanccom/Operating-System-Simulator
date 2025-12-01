@@ -178,14 +178,17 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         });
     }
     
-    public void registerProcess(String pid, int totalPages) {
+    public void registerProcess(String pid, int minPages) {
         Platform.runLater(() -> {
             if (!processPageTables.containsKey(pid)) {
                 Color processColor = processColors[colorIndex % processColors.length];
                 colorIndex++;
-                ProcessPageTable pageTable = new ProcessPageTable(pid, totalPages, processColor);
+                ProcessPageTable pageTable = new ProcessPageTable(pid, minPages, processColor);
                 processPageTables.put(pid, pageTable);
                 pageTablesContainer.getChildren().add(pageTable);
+            } else {
+                // Expandir si es necesario
+                processPageTables.get(pid).ensurePageCapacity(minPages);
             }
         });
     }
@@ -193,7 +196,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     @Override
     public void onPageAccess(int frameIndex, String pid, int page, boolean hit) {
         Platform.runLater(() -> {
-            registerProcess(pid, 10);
+            registerProcess(pid, page + 1);  // At least page+1 pages
             
             if (hit) {
                 if (physicalFrames.containsKey(frameIndex)) {
@@ -208,7 +211,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     @Override
     public void onPageFault(String pid, int page) {
         Platform.runLater(() -> {
-            registerProcess(pid, 10);
+            registerProcess(pid, page + 1);  // At least page+1 pages
             
             if (processPageTables.containsKey(pid)) {
                 processPageTables.get(pid).markPageFault(page);
@@ -226,7 +229,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     @Override
     public void onFrameLoaded(int frameIndex, String pid, int page) {
         Platform.runLater(() -> {
-            registerProcess(pid, 10);
+            registerProcess(pid, page + 1);  // At least page+1 pages
             
             if (processPageTables.containsKey(pid)) {
                 processPageTables.get(pid).loadPage(page, frameIndex);
@@ -325,20 +328,36 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         }
         
         public void loadPage(int page, int frame) {
+            ensurePageCapacity(page + 1);
             if (pages.containsKey(page)) {
                 pages.get(page).load(frame);
             }
         }
         
         public void evictPage(int page) {
+            ensurePageCapacity(page + 1);
             if (pages.containsKey(page)) {
                 pages.get(page).evict();
             }
         }
         
         public void markPageFault(int page) {
+            ensurePageCapacity(page + 1);
             if (pages.containsKey(page)) {
                 pages.get(page).fault();
+            }
+        }
+        
+        public void ensurePageCapacity(int minPages) {
+            int currentMax = pages.keySet().stream().max(Integer::compare).orElse(-1);
+            if (currentMax < minPages - 1) {
+                // Necesitamos agregar más páginas
+                for (int i = currentMax + 1; i < minPages; i++) {
+                    PageEntry entry = new PageEntry(i);
+                    pages.put(i, entry);
+                    pageGrid.add(entry, 0, i + 1);
+                    GridPane.setColumnSpan(entry, 2);
+                }
             }
         }
         
