@@ -27,6 +27,9 @@ public class GanttChart extends Pane {
     private final List<String> processOrden = new ArrayList<>();//para dibujar antes los procesos
     private final Map<String, GanttEntry> openEntries = new HashMap<>(); //para dibujar desde que empieza
 
+    //para I/O
+    private final List<GanttEntry> ioEntries = new ArrayList<>();
+    private final Map<String, GanttEntry> openIOEntries = new HashMap<>();
 
     private int maxTime = 50;
     private int currentTime = 0;
@@ -36,6 +39,8 @@ public class GanttChart extends Pane {
         Color.web("#9C27B0"), Color.web("#F44336"), Color.web("#00BCD4"),
         Color.web("#CDDC39"), Color.web("#FF5722"), Color.web("#3F51B5")
     };
+
+    private static final Color IO_COLOR = Color.web("#FF6B6B");
     
     public GanttChart() {
         canvas = new Canvas(800, 400);
@@ -44,7 +49,7 @@ public class GanttChart extends Pane {
         
         draw();
     }
-    
+    /* 
     public void addExecution(String pid, int startTime, int endTime) {
         //System.out.println("[GanttChart] addExecution: " + pid + " [" + startTime + "-" + endTime + "]");
         //para asegurar que se actualiza en el hilo JavaFX
@@ -65,6 +70,7 @@ public class GanttChart extends Pane {
             draw();
         });
     }
+    */
     //cuando inicie
     public void addExecutionStart(String pid, int startTime) {
         Platform.runLater(() -> {
@@ -104,6 +110,40 @@ public class GanttChart extends Pane {
         });
     }
     
+    public void addIOStart(String pid, int startTime) {
+        Platform.runLater(() -> {
+            // Asegurar que el proceso tenga color asignado
+            if (!processColors.containsKey(pid)) {
+                processOrden.add(pid);
+                processColors.put(pid, COLORS[processColors.size() % COLORS.length]);
+            }
+
+            GanttEntry entry = new GanttEntry(pid, startTime, startTime);
+            openIOEntries.put(pid, entry);
+            ioEntries.add(entry);
+
+            System.out.println("[GanttChart]Inicio I/O: " + pid + " en t=" + startTime);
+            draw();
+        });
+    }
+    
+    public void addIOEnd(String pid, int endTime) {
+        Platform.runLater(() -> {
+            GanttEntry entry = openIOEntries.get(pid);
+            if (entry != null) {
+                entry.endTime = endTime;
+                openIOEntries.remove(pid);
+                System.out.println("[GanttChart] Fin I/O: " + pid + " en t=" + endTime + " (duración: " + (endTime - entry.startTime) + "u)");
+            }
+
+            if (endTime > maxTime) {
+                maxTime = endTime + 10;
+            }
+
+            draw();
+        });
+    }
+
     public void setCurrentTime(int time) {
         //System.out.println("[GanttChart] setCurrentTime: " + time);
          Platform.runLater(() -> {
@@ -111,6 +151,11 @@ public class GanttChart extends Pane {
             
             // se actualiza el endTime de todos los bloques abiertos al tiempo actual
             for (GanttEntry entry : openEntries.values()) {
+                entry.endTime = time;
+            }
+
+            //Bloque I/O
+            for (GanttEntry entry : openIOEntries.values()) {
                 entry.endTime = time;
             }
             
@@ -122,6 +167,10 @@ public class GanttChart extends Pane {
         Platform.runLater(() -> {
             entries.clear();
             processColors.clear();
+
+            ioEntries.clear();
+            openIOEntries.clear();
+            
             currentTime = 0;
             maxTime = 50;
             draw();
