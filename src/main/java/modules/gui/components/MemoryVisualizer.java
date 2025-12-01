@@ -42,18 +42,18 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     };
     private int colorIndex = 0;
 
-    public MemoryVisualizer(int totalFrames,ReplacementType algor) {
-        this.totalFrames = totalFrames;
+    public MemoryVisualizer(ReplacementType algor, int frames) {
         currentAlgorithm = algor.name();
         setSpacing(15);
         setPadding(new Insets(15));
         setAlignment(Pos.TOP_CENTER);
-        initialize(totalFrames, algor);
+        totalFrames=frames;
+        initialize(algor,frames);
     }
 
     
-    public void initialize(int totalFrames, ReplacementType algor) {
-        this.totalFrames = totalFrames;
+    public void initialize(ReplacementType algor, int frames) {
+        this.totalFrames = totalFrames; 
         getChildren().clear();
         processPageTables.clear();
         physicalFrames.clear();
@@ -72,7 +72,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         // Panel izquierdo: Tablas de Páginas de procesos
         VBox leftPanel = new VBox(10);
         leftPanel.setAlignment(Pos.TOP_LEFT);
-        Label pageTableTitle = new Label("Tabla de Páginas (PT01)");
+        Label pageTableTitle = new Label("Tabla de Páginas");
         pageTableTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #ffffffff;");
         
         ScrollPane pageTableScroll = new ScrollPane();
@@ -80,7 +80,12 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         pageTablesContainer.setPadding(new Insets(10));
         pageTableScroll.setContent(pageTablesContainer);
         pageTableScroll.setFitToWidth(true);
+        HBox.setHgrow(pageTablesContainer, Priority.ALWAYS); // que el VBox se estire
+        pageTablesContainer.setMaxWidth(Double.MAX_VALUE); // permitir ancho máximo
+        
+
         pageTableScroll.setMaxHeight(350);
+        pageTableScroll.setMaxWidth(1500);
         pageTableScroll.setStyle("-fx-background: #1a102b; -fx-background-color: transparent;");
         
         leftPanel.getChildren().addAll(pageTableTitle, pageTableScroll);
@@ -97,15 +102,13 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         physicalScroll.setContent(physicalFramesContainer);
         physicalScroll.setFitToWidth(true);
         physicalScroll.setMaxHeight(350);
+        physicalScroll.setMaxWidth(1500); // para que no se corte
         physicalScroll.setStyle("-fx-background: #1a102b; -fx-background-color: transparent;");
-        
-        // Crear los marcos físicos
-        for (int i = 0; i < totalFrames; i++) {
-            PhysicalFrameCard frameCard = new PhysicalFrameCard(i);
-            physicalFrames.put(i, frameCard);
-            physicalFramesContainer.getChildren().add(frameCard);
-        }
-        
+        physicalScroll.setFitToWidth(true);
+        HBox.setHgrow(physicalFramesContainer, Priority.ALWAYS);
+        physicalFramesContainer.setMaxWidth(Double.MAX_VALUE);
+        // Crear los marcos físicos //BORRADO
+
         rightPanel.getChildren().addAll(physicalTitle, physicalScroll);
         
         mainContent.getChildren().addAll(leftPanel, rightPanel);
@@ -113,11 +116,11 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         // Panel inferior: Información del algoritmo y víctima
         VBox bottomPanel = new VBox(5);
         bottomPanel.setAlignment(Pos.CENTER_LEFT);
-        bottomPanel.setPadding(new Insets(10));
+        bottomPanel.setPadding(new Insets(5));
         bottomPanel.setStyle("-fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 8px;");
         
         algorithmLabel = new Label("Algoritmo: " + currentAlgorithm);
-        algorithmLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #00ff88; -fx-font-weight: bold;");
+        algorithmLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #ff00aaff; -fx-font-weight: bold;");
         
         victimInfoLabel = new Label("Esperando eventos...");
         victimInfoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #aaaaaa;");
@@ -125,6 +128,19 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         bottomPanel.getChildren().addAll(algorithmLabel, victimInfoLabel);
         
         getChildren().addAll(title, mainContent, bottomPanel);
+        buildPhysicalFrames();
+    }
+    //Nuevo para cargar frames cuando cargue 
+    public void buildPhysicalFrames() {
+        physicalFramesContainer.getChildren().clear();
+        physicalFrames.clear();
+
+        for (int i = 0; i < totalFrames; i++) {
+            PhysicalFrameCard frameCard = new PhysicalFrameCard(i);
+            physicalFrames.put(i, frameCard);
+            physicalFramesContainer.getChildren().add(frameCard);
+        }
+        
     }
 
     public void setAlgorithm(String algorithm) {
@@ -239,10 +255,10 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
 
     @Override
     public void onSnapshot(String snapshot) {
-        // Opcionalmente podrías logging o mostrar estado
+        
     }
     
-    // ============= CLASES INTERNAS =============
+
     
     private class ProcessPageTable extends VBox {
         private String pid;
@@ -331,11 +347,11 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             pageLabel = new Label("" + pageNumber);
             pageLabel.setMinWidth(40);
             pageLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #ffffff;");
-            
+            HBox.setHgrow(pageLabel, Priority.ALWAYS);
             frameLabel = new Label("---");
             frameLabel.setMinWidth(40);
             frameLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
-            
+            HBox.setHgrow(frameLabel, Priority.ALWAYS);
             getChildren().addAll(pageLabel, frameLabel);
         }
         
@@ -409,7 +425,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             colorIndicator.setFill(Color.web("#333333"));
             setStyle("-fx-background-color: rgba(26,16,43,0.6); -fx-background-radius: 6px; -fx-border-color: #333; -fx-border-radius: 6px;");
         }
-        
+
         public void highlightHit() {
             String currentStyle = getStyle();
             setStyle(currentStyle + "; -fx-background-color: rgba(0,255,136,0.3);");

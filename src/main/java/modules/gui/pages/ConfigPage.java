@@ -1,6 +1,7 @@
 package modules.gui.pages;
 
 import modules.gui.SimulationRunner;
+import modules.gui.components.MemoryVisualizer;
 import model.Config;
 import java.io.File;
 import javafx.geometry.Insets;
@@ -83,7 +84,7 @@ public class ConfigPage extends VBox {
         HBox.setHgrow(memoryModule, Priority.ALWAYS);
         
 
-        modulesContainer.getChildren().addAll(memoryModule, processModule, executionModule);
+        modulesContainer.getChildren().addAll(executionModule, processModule, memoryModule);
 
         mainBox.getChildren().addAll(mainTitle, subtitle, modulesContainer);
         return mainBox;
@@ -173,9 +174,7 @@ public class ConfigPage extends VBox {
     }
 
 
-    /* ------------------------------------------
-     *  CARD: Archivo de Procesos
-     * ------------------------------------------ */
+
     private VBox buildFileSection(Stage stage) {
         VBox box = new VBox(8);
         box.getStyleClass().add("card");
@@ -224,8 +223,6 @@ public class ConfigPage extends VBox {
         mainTitle.getStyleClass().add("card-title");
         grid.add(mainTitle, 0, row++, 2, 1);
 
-
-        // ------ Memoria ------
         VBox leftSection = new VBox(10);
         leftSection.getStyleClass().add("config-section");
 
@@ -253,7 +250,6 @@ public class ConfigPage extends VBox {
         grid.add(leftSection, 0, row, 1, 1);
 
 
-        // ------ CPU ------
         VBox rightSection = new VBox(10);
         rightSection.getStyleClass().add("config-section");
 
@@ -402,13 +398,24 @@ public class ConfigPage extends VBox {
                 return;
             }
 
+            // Asegurar que el panel de memoria esté configurado ANTES de usar el visualizer
+            if (dashboardPage != null && dashboardPage.getMemPanel() != null) {
+                dashboardPage.getMemPanel().setConfig(currentConfig);
+            }
+
             labelStatus.setText("Iniciando simulación...");
+
+            // Solo llamar a buildPhysicalFrames si el visualizer ya existe
+            if (dashboardPage != null && dashboardPage.getMemPanel() != null &&
+                dashboardPage.getMemPanel().getVisualizer() != null) {
+                dashboardPage.getMemPanel().getVisualizer().buildPhysicalFrames();
+            }
 
             SimulationRunner.runSimulation(
                 currentConfig,
                 processFile.getAbsolutePath(),
                 dashboardPage != null ? dashboardPage.getProPanel() : null,
-                dashboardPage.getMemPanel()
+                dashboardPage != null ? dashboardPage.getMemPanel() : null
             );
 
             labelStatus.setText("Simulación iniciada correctamente.");
