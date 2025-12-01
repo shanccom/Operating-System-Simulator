@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javafx.animation.FillTransition;
-
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -15,9 +13,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 import model.Config.ReplacementType;
 import modules.memory.MemoryEventListener;
@@ -42,18 +37,21 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     };
     private int colorIndex = 0;
 
-    public MemoryVisualizer(ReplacementType algor, int frames) {
-        currentAlgorithm = algor.name();
+    // Constructor sin parámetros para mostrar UI vacía
+    public MemoryVisualizer() {
         setSpacing(15);
         setPadding(new Insets(15));
         setAlignment(Pos.TOP_CENTER);
-        totalFrames=frames;
-        initialize(algor,frames);
+        buildEmptyUI();
     }
 
-    
-    public void initialize(ReplacementType algor, int frames) {
-        this.totalFrames = totalFrames; 
+    public MemoryVisualizer(ReplacementType algor, int frames) {
+        this();
+        initialize(algor, frames);
+    }
+
+    // Construye la UI sin frames físicos ni configuración
+    private void buildEmptyUI() {
         getChildren().clear();
         processPageTables.clear();
         physicalFrames.clear();
@@ -80,10 +78,9 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         pageTablesContainer.setPadding(new Insets(10));
         pageTableScroll.setContent(pageTablesContainer);
         pageTableScroll.setFitToWidth(true);
-        HBox.setHgrow(pageTablesContainer, Priority.ALWAYS); // que el VBox se estire
-        pageTablesContainer.setMaxWidth(Double.MAX_VALUE); // permitir ancho máximo
+        HBox.setHgrow(pageTablesContainer, Priority.ALWAYS);
+        pageTablesContainer.setMaxWidth(Double.MAX_VALUE);
         
-
         pageTableScroll.setMaxHeight(350);
         pageTableScroll.setMaxWidth(1500);
         pageTableScroll.setStyle("-fx-background: #1a102b; -fx-background-color: transparent;");
@@ -102,12 +99,10 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         physicalScroll.setContent(physicalFramesContainer);
         physicalScroll.setFitToWidth(true);
         physicalScroll.setMaxHeight(350);
-        physicalScroll.setMaxWidth(1500); // para que no se corte
+        physicalScroll.setMaxWidth(1500);
         physicalScroll.setStyle("-fx-background: #1a102b; -fx-background-color: transparent;");
-        physicalScroll.setFitToWidth(true);
         HBox.setHgrow(physicalFramesContainer, Priority.ALWAYS);
         physicalFramesContainer.setMaxWidth(Double.MAX_VALUE);
-        // Crear los marcos físicos //BORRADO
 
         rightPanel.getChildren().addAll(physicalTitle, physicalScroll);
         
@@ -119,19 +114,43 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         bottomPanel.setPadding(new Insets(5));
         bottomPanel.setStyle("-fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 8px;");
         
-        algorithmLabel = new Label("Algoritmo: " + currentAlgorithm);
+        algorithmLabel = new Label("Algoritmo: No configurado");
         algorithmLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #ff00aaff; -fx-font-weight: bold;");
         
-        victimInfoLabel = new Label("Esperando eventos...");
+        victimInfoLabel = new Label("Esperando configuración...");
         victimInfoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #aaaaaa;");
         
         bottomPanel.getChildren().addAll(algorithmLabel, victimInfoLabel);
         
         getChildren().addAll(title, mainContent, bottomPanel);
+    }
+    
+    public void initialize(ReplacementType algor, int frames) {
+        this.totalFrames = frames;
+        this.currentAlgorithm = algor.name();
+        
+        // Limpiar datos anteriores
+        processPageTables.clear();
+        physicalFrames.clear();
+        colorIndex = 0;
+        
+        // Actualizar UI existente
+        if (algorithmLabel != null) {
+            algorithmLabel.setText("Algoritmo: " + currentAlgorithm);
+        }
+        
+        if (victimInfoLabel != null) {
+            victimInfoLabel.setText("Esperando eventos...");
+        }
+        
+        // Construir los frames físicos
         buildPhysicalFrames();
     }
-    //Nuevo para cargar frames cuando cargue 
+
+    // Construye los frames físicos cuando ya hay configuración
     public void buildPhysicalFrames() {
+        if (physicalFramesContainer == null) return;
+        
         physicalFramesContainer.getChildren().clear();
         physicalFrames.clear();
 
@@ -140,13 +159,14 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             physicalFrames.put(i, frameCard);
             physicalFramesContainer.getChildren().add(frameCard);
         }
-        
     }
 
     public void setAlgorithm(String algorithm) {
         this.currentAlgorithm = algorithm;
         Platform.runLater(() -> {
-            algorithmLabel.setText("Algoritmo: " + algorithm);
+            if (algorithmLabel != null) {
+                algorithmLabel.setText("Algoritmo: " + algorithm);
+            }
         });
     }
     
@@ -165,10 +185,9 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     @Override
     public void onPageAccess(int frameIndex, String pid, int page, boolean hit) {
         Platform.runLater(() -> {
-            registerProcess(pid, 10); // Registrar proceso si no existe
+            registerProcess(pid, 10);
             
             if (hit) {
-                // HIT: resaltar en verde el marco físico
                 if (physicalFrames.containsKey(frameIndex)) {
                     physicalFrames.get(frameIndex).highlightHit();
                 }
@@ -183,7 +202,6 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         Platform.runLater(() -> {
             registerProcess(pid, 10);
             
-            // Actualizar tabla de páginas: marcar como FAULT
             if (processPageTables.containsKey(pid)) {
                 processPageTables.get(pid).markPageFault(page);
             }
@@ -191,7 +209,6 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             victimInfoLabel.setText("✗ PAGE FAULT: Página P" + page + " de " + pid + " no encontrada en memoria");
             victimInfoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ff4f6d; -fx-font-weight: bold;");
             
-            // Flash rojo en todos los frames
             for (PhysicalFrameCard frame : physicalFrames.values()) {
                 frame.flashFault();
             }
@@ -203,12 +220,10 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         Platform.runLater(() -> {
             registerProcess(pid, 10);
             
-            // Actualizar tabla de páginas del proceso
             if (processPageTables.containsKey(pid)) {
                 processPageTables.get(pid).loadPage(page, frameIndex);
             }
             
-            // Actualizar marco físico
             if (physicalFrames.containsKey(frameIndex)) {
                 Color processColor = processPageTables.get(pid).getColor();
                 physicalFrames.get(frameIndex).load(pid, page, processColor);
@@ -222,12 +237,10 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     @Override
     public void onFrameEvicted(int frameIndex, String oldPid, int oldPage) {
         Platform.runLater(() -> {
-            // Actualizar tabla de páginas del proceso evictado
             if (processPageTables.containsKey(oldPid)) {
                 processPageTables.get(oldPid).evictPage(oldPage);
             }
             
-            // Limpiar marco físico
             if (physicalFrames.containsKey(frameIndex)) {
                 physicalFrames.get(frameIndex).evict();
             }
@@ -258,8 +271,6 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         
     }
     
-
-    
     private class ProcessPageTable extends VBox {
         private String pid;
         private Color processColor;
@@ -276,12 +287,10 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             Label header = new Label(pid);
             header.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + toRgbString(processColor) + ";");
             
-            // Grid para páginas
             pageGrid = new GridPane();
             pageGrid.setHgap(5);
             pageGrid.setVgap(5);
             
-            // Header de la tabla
             Label pageHeader = new Label("Página");
             pageHeader.setStyle("-fx-font-size: 10px; -fx-text-fill: #888;");
             Label frameHeader = new Label("Frame");
@@ -290,7 +299,6 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             pageGrid.add(pageHeader, 0, 0);
             pageGrid.add(frameHeader, 1, 0);
             
-            // Inicializar páginas
             for (int i = 0; i < totalPages; i++) {
                 PageEntry entry = new PageEntry(i);
                 pages.put(i, entry);
@@ -347,11 +355,11 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             pageLabel = new Label("" + pageNumber);
             pageLabel.setMinWidth(40);
             pageLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #ffffff;");
-            HBox.setHgrow(pageLabel, Priority.ALWAYS);
+            
             frameLabel = new Label("---");
             frameLabel.setMinWidth(40);
             frameLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
-            HBox.setHgrow(frameLabel, Priority.ALWAYS);
+            
             getChildren().addAll(pageLabel, frameLabel);
         }
         

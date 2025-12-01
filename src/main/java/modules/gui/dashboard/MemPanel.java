@@ -17,10 +17,10 @@ public class MemPanel extends VBox {
         setSpacing(10);
         setPadding(new Insets(10));
         setAlignment(Pos.TOP_CENTER);
-        Label placeholder = new Label("Sin configuración cargada");
-        placeholder.setStyle("-fx-text-fill: #AAA; -fx-font-size: 14px;");
-
-        getChildren().add(placeholder);
+        
+        // Crear el visualizer vacío desde el inicio
+        visualizer = new MemoryVisualizer();
+        getChildren().add(visualizer);
     }
 
     public MemPanel(Config config) {
@@ -30,10 +30,14 @@ public class MemPanel extends VBox {
 
     public void setConfig(Config config) {
         this.config = config;
-        getChildren().clear();
 
         if (config == null) {
-            showPlaceholder("Sin configuración cargada");
+            // Reiniciar el visualizer a estado vacío
+            if (visualizer != null) {
+                getChildren().clear();
+                visualizer = new MemoryVisualizer();
+                getChildren().add(visualizer);
+            }
             return;
         }
 
@@ -41,38 +45,32 @@ public class MemPanel extends VBox {
         int frames = config.getTotalFrames();
 
         if (frames <= 0) {
+            // Mostrar error en el visualizer
             showPlaceholder("Config inválida (totalFrames = " + frames + ")");
             return;
         }
 
-        if (visualizer == null) {
-            visualizer = new MemoryVisualizer(algor, frames);
-        } else {
+        // Inicializar el visualizer con la configuración válida
+        if (visualizer != null) {
             visualizer.initialize(algor, frames);
         }
-
-        drawMemory();  // solo dibuja si hay frames válidos
     }
 
     private void showPlaceholder(String msg) {
+        getChildren().clear();
         Label placeholder = new Label(msg);
         placeholder.setStyle("-fx-text-fill: #AAA; -fx-font-size: 14px;");
         getChildren().add(placeholder);
     }
 
-    private void drawMemory() {
-        getChildren().clear();
-
-        if (visualizer != null) {
-            getChildren().add(visualizer);
-        }
-    }
-
     public MemoryVisualizer getVisualizer() {
         return visualizer;
     }
-    // Si quieres, un helper para bindear mm directamente:
+
+    // Helper para bindear el MemoryManager directamente
     public void bindMemoryManager(modules.memory.MemoryManager mm) {
-        if (mm != null && visualizer != null) mm.addListener(visualizer);
+        if (mm != null && visualizer != null) {
+            mm.addListener(visualizer);
+        }
     }
 }
