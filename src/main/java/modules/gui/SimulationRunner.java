@@ -123,6 +123,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onTimeChanged(int currentTime) {
+                    dashboardPage.getExePanel().setCurrentTime(currentTime);
                 }
             });
         } else {
