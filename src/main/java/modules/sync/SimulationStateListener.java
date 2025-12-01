@@ -9,4 +9,10 @@ public interface SimulationStateListener {
     void onBlockedMemoryChanged(List<Process> blockedMemory);
     void onProcessStateChanged(Process process);
     void onTimeChanged(int currentTime);
+
+     
+    void onProcessExecutionStarted(String pid, int startTime);
+    void onProcessExecutionEnded(String pid, int endTime);
+    void onContextSwitch();
+    
 }

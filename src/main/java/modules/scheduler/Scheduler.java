@@ -150,6 +150,36 @@ public abstract class Scheduler {
     public int getCurrentTime() {
         return currentTime;
     }
+    public int getTotalCPUTime() {
+        return totalCPUTime;
+    }
+
+    public int getIdleTime() {
+        return idleTime;
+    }
+
+    public int getCompletedProcesses() {
+        return completedProcesses;
+    }
+
+    public int getTiempoCpuTotal() {
+        return getTotalCPUTime();
+    }
+
+    public int getTiempoOcioso() {
+        return getIdleTime();
+    }
+
+    public int getCambiosContexto() {
+        return getContextSwitches();
+    }
+
+    public double getCPUTimePercent() {
+        int total = totalCPUTime + idleTime;
+        if (total == 0) return 0;
+        return (totalCPUTime * 100.0) / total;
+    }
+
     
     public void setCurrentTime(int time) {
         this.currentTime = time;

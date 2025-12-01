@@ -1,22 +1,33 @@
 package modules.gui;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import model.Config;
+import model.DatosResultados;
 import model.Process;
+import modules.gui.pages.DashboardPage; 
 import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
 import modules.sync.SimulationEngine;
 import modules.sync.SimulationStateListener;
+
 import modules.gui.dashboard.MemPanel;
 import modules.gui.dashboard.ProPanel;
+
+import modules.gui.pages.ResultadosPage;
+
 import utils.FileParser;
 import utils.Logger;
 import utils.SimulationFactory;
 
+
 public class SimulationRunner {
 
-    public static void runSimulation(Config config, String processPath, ProPanel proPanel, MemPanel memPanel) throws Exception {
+
+    public static void runSimulation(Config config, String processPath, DashboardPage dashboardPage, MemPanel memPanel, MainFX mainFx) throws Exception {
+
         
         if (!config.validate()) {
             throw new IllegalArgumentException("Configuracion invalida");
@@ -42,22 +53,62 @@ public class SimulationRunner {
         );
         
         //REGISTRAR EL LISTENER ANTES DE INICIAR
-        if (proPanel != null) {
+
+        if (dashboardPage  != null) {
+            System.out.println("[SimulationRunner] Registrando listener en el engine...");
+
             
             engine.setStateListener(new SimulationStateListener() {
+
+                //para el diagrama de Gantt
+                private Map<String, Integer> executionStarts = new HashMap<>();
+
+                @Override
+                public void onProcessExecutionStarted(String pid, int startTime) {
+                    System.out.println("[SimulationRunner]INICIO de ejecución → PID=" + pid + ", t=" + startTime);
+                    executionStarts.put(pid, startTime);
+                    dashboardPage.getExePanel().setCurrentTime(startTime);
+                }
+
+                @Override
+                public void onProcessExecutionEnded(String pid, int endTime) {
+                    Integer start = executionStarts.get(pid);
+                    System.out.println("[SimulationRunner]FIN de ejecución → PID=" + pid +", inicio=" + start + ", fin=" + endTime);
+                    if (start != null) {
+                        dashboardPage.getExePanel().addExecution(pid, start, endTime);
+                    }
+                }
+
+                @Override
+                public void onContextSwitch() {
+                    System.out.println("[SimulationRunner] Context Switch detectado");
+                    dashboardPage.getExePanel().incrementContextSwitch();
+                }
+                
+
+                //para las colas de procesos
                 @Override
                 public void onReadyQueueChanged(List<Process> readyQueue) {
-                    proPanel.updateReadyQueue(readyQueue);
+
+                    System.out.println("[SimulationRunner]  Ready queue actualizada: " + readyQueue.size());
+                    dashboardPage.getProPanel().updateReadyQueue(readyQueue);
+
                 }
 
                 @Override
                 public void onBlockedIOChanged(List<Process> blockedIO) {
-                    proPanel.updateBlockedIO(blockedIO);
+
+                    System.out.println("[SimulationRunner]  Blocked I/O actualizada: " + blockedIO.size());
+                    dashboardPage.getProPanel().updateBlockedIO(blockedIO);
+
                 }
 
                 @Override
                 public void onBlockedMemoryChanged(List<Process> blockedMemory) {
-                    proPanel.updateBlockedMemory(blockedMemory);
+
+                    System.out.println("[SimulationRunner]  Blocked Memory actualizada: " + blockedMemory.size());
+                    dashboardPage.getProPanel().updateBlockedMemory(blockedMemory);
+
                 }
 
                 @Override
@@ -76,11 +127,17 @@ public class SimulationRunner {
         Thread simulationThread = new Thread(() -> {
             try {
                 engine.run();
+                DatosResultados resultados = engine.getDatosFinales();
+
+                javafx.application.Platform.runLater(() -> {
+                    ResultadosPage resultadosPage = new ResultadosPage(resultados);
+                    mainFx.showResultados(resultadosPage);  
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }, "SimulationThread");
-        
+
         simulationThread.setDaemon(false); // No es daemon para que complete antes de cerrar
         simulationThread.start();
         
