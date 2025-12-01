@@ -1,5 +1,7 @@
 package modules.gui.dashboard;
 
+import java.util.List;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -121,6 +123,11 @@ public class ExePanel extends VBox {
         avgWaitTime = 0.0;
         updateMetrics();
     }
+    
+    public void initializeProcesses(List<String> processIds) {
+        ganttChart.initializeProcesses(processIds);
+    }
+
 
     private void updateMetrics() {
         Platform.runLater(() -> {

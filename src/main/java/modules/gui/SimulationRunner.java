@@ -14,7 +14,6 @@ import modules.sync.SimulationEngine;
 import modules.sync.SimulationStateListener;
 
 import modules.gui.dashboard.MemPanel;
-import modules.gui.dashboard.ProPanel;
 
 import modules.gui.pages.ResultadosPage;
 
@@ -57,6 +56,12 @@ public class SimulationRunner {
         if (dashboardPage  != null) {
             System.out.println("[SimulationRunner] Registrando listener en el engine...");
 
+            //limpiamos el diagrama
+            dashboardPage.getExePanel().clearGantt();
+            List<String> processIds = processes.stream()
+                .map(Process::getPid)
+                .toList();
+            dashboardPage.getExePanel().initializeProcesses(processIds);
             
             engine.setStateListener(new SimulationStateListener() {
 

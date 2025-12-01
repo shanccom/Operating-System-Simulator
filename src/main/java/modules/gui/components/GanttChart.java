@@ -1,5 +1,10 @@
 package modules.gui.components;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
@@ -8,9 +13,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import model.Process;
-
-import java.util.*;
 
 public class GanttChart extends Pane {
     
@@ -22,6 +24,8 @@ public class GanttChart extends Pane {
     
     private final List<GanttEntry> entries = new ArrayList<>();
     private final Map<String, Color> processColors = new HashMap<>();
+    private final List<String> processOrden = new ArrayList<>();//para dibujar antes los procesos
+
     private int maxTime = 50;
     private int currentTime = 0;
     
@@ -41,8 +45,10 @@ public class GanttChart extends Pane {
     
     public void addExecution(String pid, int startTime, int endTime) {
         //System.out.println("[GanttChart] addExecution: " + pid + " [" + startTime + "-" + endTime + "]");
+        //para asegurar que se actualiza en el hilo JavaFX
         Platform.runLater(() -> {
             if (!processColors.containsKey(pid)) {
+                processOrden.add(pid);
                 processColors.put(pid, COLORS[processColors.size() % COLORS.length]);
                 //System.out.println("[GanttChart] Color asignado a " + pid + ": " + processColors.get(pid));
             }
@@ -76,6 +82,22 @@ public class GanttChart extends Pane {
         });
     }
     
+    public void initializeProcesses(List<String> processIds) {
+        Platform.runLater(() -> {
+            processOrden.clear();
+            processColors.clear();
+            
+            for (int i = 0; i < processIds.size(); i++) {
+                String pid = processIds.get(i);
+                processOrden.add(pid);
+                processColors.put(pid, COLORS[i % COLORS.length]);
+                System.out.println("[GanttChart] Proceso " + pid + " pre-creado con color: " + processColors.get(pid));
+            }
+            
+            draw();
+        });
+    }
+
     private void draw() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         
@@ -91,6 +113,13 @@ public class GanttChart extends Pane {
         
         // Dibujar header con línea de tiempo
         drawTimelineHeader(gc);
+
+        // Dibujar filas
+        for (int i = 0; i < processOrden.size(); i++) {
+            String pid = processOrden.get(i);
+            drawProcessRow(gc, pid, i);
+        }
+
         
         // Dibujar filas de procesos
         int row = 0;
@@ -109,7 +138,7 @@ public class GanttChart extends Pane {
         
         for (int t = 0; t <= maxTime; t += 5) {
             double x = labelWidth + (t * cellWidth);
-            gc.fillText(String.valueOf(t), x, 20);
+            gc.fillText(String.valueOf(t), x, 20);//numero del tiempo
             
             // Línea vertical de grid
             gc.setStroke(Color.web("#444"));
