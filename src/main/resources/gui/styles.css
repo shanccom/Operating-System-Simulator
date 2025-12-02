@@ -207,7 +207,24 @@
   -fx-background-color: rgba(157, 148, 253, 0.12);
 }
 
+/* Estados activos para iluminación de paneles */
+.card-mem-active {
+  -fx-background-color: rgba(180, 33, 141, 0.22);
+  -fx-effect: dropshadow(gaussian, rgba(255, 94, 223, 0.35), 22, 0.25, 0, 10);
+  -fx-border-width: 5;
+}
 
+.card-proc-active {
+  -fx-effect: dropshadow(gaussian, rgba(0, 255, 170, 0.35), 22, 0.25, 0, 10);
+  -fx-background-color: rgba(155, 253, 202, 0.12);
+  -fx-border-width: 5;
+}
+
+.card-exe-active {
+  -fx-effect: dropshadow(gaussian, rgba(157, 148, 253, 0.35), 22, 0.25, 0, 10);
+  -fx-background-color: rgba(157, 148, 253, 0.12);
+  -fx-border-width: 5;
+}
 
 .card-title-mem {
   -fx-text-fill: #ff41e6;
