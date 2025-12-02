@@ -108,6 +108,9 @@ public class SimulationEngine {
     ioManager.stop();
     syncController.stop();
     showResults();
+
+    datosFinales = construirResultados();
+
   }
 
   public DatosResultados getDatosFinales() {
