@@ -36,6 +36,8 @@ public class SimulationEngine {
   //para gant chart
   private final Map<String, Integer> executionStartTimes = new HashMap<>();
 
+  //paso a paso
+  private SimulationController simulationController;
 
   public SimulationEngine(Scheduler scheduler, MemoryManager memoryManager, 
                           List<Process> processes, Config config) {
@@ -47,6 +49,8 @@ public class SimulationEngine {
     this.config = config;
     this.currentTime = 0;
     this.running = false;
+
+    this.simulationController = new SimulationController();
     
     // Crear un thread independiente por cada proceso
     this.processThreads = new ArrayList<>();
@@ -165,6 +169,14 @@ public class SimulationEngine {
 
   private void coordinationLoop() { 
     while (isRunning() && !allProcessesCompleted()) {
+      
+      try {
+        simulationController.waitForNextStep();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        break;
+      }
+      
       synchronized(syncController.getCoordinationMonitor()) {
         int t = getCurrentTime();
         
@@ -491,6 +503,11 @@ public class SimulationEngine {
       }
     }
   }
+
+  public SimulationController getSimulationController() {
+    return simulationController;
+  }
+
 
   public synchronized int getCurrentTime() { return currentTime; }
   public synchronized boolean isRunning() { return running; }
