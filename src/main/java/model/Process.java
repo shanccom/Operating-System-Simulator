@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 public class Process {
-  
+
   private final String pid;
   private final int arrivalTime;
   private int priority;
@@ -20,9 +20,9 @@ public class Process {
   private int waitingTime;         // Tiempo total en estado READY
   private int responseTime;        // Tiempo desde llegada hasta primera ejecucion
   private boolean hasStarted;      // Para calcular response time
-  
+
   private int lastExecutionTime;   // Último momento en que se ejecuto 
-  
+
   private int contextSwitchEndTime = 0;
   private int systemCallEndTime = -1;
   private int pageFaultEndTime = -1;
@@ -44,36 +44,36 @@ public class Process {
     this.completionTime = -1;
     this.responseTime = -1;
   }
-  
+
   public Burst getCurrentBurst() {
     if (currentBurstIndex < bursts.size()) {
       return bursts.get(currentBurstIndex);
     }
     return null;
   }
-  
+
   public void advanceBurst() {
     currentBurstIndex++;
   }
-  
+
   public boolean isCompleted() {
     return currentBurstIndex >= bursts.size();
   }
-  
+
   public int getTotalCPUTime() {
       return bursts.stream().filter(Burst::isCPU).mapToInt(Burst::getDuration).sum();
   }
-  
+
   public int getTotalBurstTime() {
       return bursts.stream().mapToInt(Burst::getDuration).sum();
   }
-  
+
   public int getTurnaroundTime() {
     if (completionTime < 0) 
       return -1;
     return completionTime - arrivalTime;
   }
-  
+
   public void markFirstExecution(int currentTime) {
     if (!hasStarted) {
       this.hasStarted = true;
@@ -81,97 +81,97 @@ public class Process {
       this.responseTime = currentTime - arrivalTime;
     }
   }
-  
+
   public void incrementWaitingTime() {
     if (state == ProcessState.READY) {
       waitingTime++;
     }
   }
-  
+
   public void loadPage(int pageNumber) {
     loadedPages.add(pageNumber);
   }
-  
+
   public void unloadPage(int pageNumber) {
     loadedPages.remove(pageNumber);
   }
-  
+
   public boolean isPageLoaded(int pageNumber) {
     return loadedPages.contains(pageNumber);
   }
-  
+
   public void incrementPageFaults() {
     pageFaults++;
   }
-  
+
   public void clearLoadedPages() {
     loadedPages.clear();
   }
-  
+
   public String getPid() {
     return pid;
   }
-  
+
   public int getArrivalTime() {
       return arrivalTime;
   }
-  
+
   public int getPriority() {
       return priority;
   }
-  
+
   public void setPriority(int priority) {
       this.priority = priority;
   }
-  
+
   public ProcessState getState() {
       return state;
   }
-  
+
   public void setState(ProcessState state) {
       this.state = state;
   }
-  
+
   public int getRequiredPages() {
       return requiredPages;
   }
-  
+
   public Set<Integer> getLoadedPages() {
       return new HashSet<>(loadedPages);
   }
-  
+
   public int getPageFaults() {
       return pageFaults;
   }
-  
+
   public int getCompletionTime() {
       return completionTime;
   }
-  
+
   public void setCompletionTime(int completionTime) {
       this.completionTime = completionTime;
   }
-  
+
   public int getWaitingTime() {
       return waitingTime;
   }
-  
+
   public int getResponseTime() {
       return responseTime;
   }
-  
+
   public int getStartTime() {
       return startTime;
   }
-  
+
   public List<Burst> getBursts() {
       return new ArrayList<>(bursts);
   }
-  
+
   public int getCurrentBurstIndex() {
       return currentBurstIndex;
   }
-  
+
   public int getRemainingTime() {
     int remaining = 0;
     for (int i = currentBurstIndex; i < bursts.size(); i++) {
@@ -179,13 +179,13 @@ public class Process {
     }
     return remaining;
   }
-  
+
   @Override
   public String toString() {
     return String.format("Process[%s, Arrival=%d, Priority=%d, State=%s, Pages=%d]",
       pid, arrivalTime, priority, state, requiredPages);
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -193,7 +193,7 @@ public class Process {
     Process process = (Process) o;
     return pid.equals(process.pid);
   }
-  
+
   @Override
   public int hashCode() {
     return pid.hashCode();
@@ -202,15 +202,15 @@ public class Process {
   public int getSystemCallEndTime() { 
     return systemCallEndTime; 
   }
-  
+
   public void setSystemCallEndTime(int time) { 
     this.systemCallEndTime = time; 
   }
-  
+
   public boolean isInSystemCall() { 
     return systemCallEndTime > 0; 
   }
-  
+
   public void clearSystemCall() {
     systemCallEndTime = -1;
   }

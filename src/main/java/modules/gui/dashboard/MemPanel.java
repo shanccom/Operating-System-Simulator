@@ -22,12 +22,12 @@ public class MemPanel extends VBox implements Logger.PanelHighlightListener {
         setPadding(new Insets(10));
         setAlignment(Pos.TOP_CENTER);
 
-        // Crear el visualizer vacío desde el inicio
-        visualizer = new MemoryVisualizer();
+       
+        visualizer = new MemoryVisualizer();  // Crear el visualizer vacío desde el inicio
         getChildren().add(visualizer);
 
-        // Registrar como listener para iluminarse en logs MEM
-        Logger.addPanelListener(this);
+        
+        Logger.addPanelListener(this);// Registrar como listener para iluminarse en logs MEM
     }
 
     public MemPanel(Config config) {
@@ -74,16 +74,16 @@ public class MemPanel extends VBox implements Logger.PanelHighlightListener {
         return visualizer;
     }
 
-    // Helper para bindear el MemoryManager directamente
-    public void bindMemoryManager(modules.memory.MemoryManager mm) {
+    
+    public void bindMemoryManager(modules.memory.MemoryManager mm) { // Helper para bindear el MemoryManager directamente
         if (mm != null && visualizer != null) {
             mm.addListener(visualizer);
         }
     }
 
-    // Implementación de PanelHighlightListener
+    
     @Override
-    public void onLogEmitted(Logger.LogLevel level) {
+    public void onLogEmitted(Logger.LogLevel level) { // Implementación de PanelHighlightListener
         if (level == Logger.LogLevel.MEM) {
             highlight();
         }
