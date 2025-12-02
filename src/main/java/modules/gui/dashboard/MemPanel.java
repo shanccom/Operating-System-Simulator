@@ -1,14 +1,18 @@
 package modules.gui.dashboard;
 
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import modules.gui.components.MemoryVisualizer;
 import model.Config;
 import model.Config.ReplacementType;
+import utils.Logger;
 
-public class MemPanel extends VBox {
+public class MemPanel extends VBox implements Logger.PanelHighlightListener {
 
     private Config config;
     private MemoryVisualizer visualizer;
@@ -17,10 +21,14 @@ public class MemPanel extends VBox {
         setSpacing(10);
         setPadding(new Insets(10));
         setAlignment(Pos.TOP_CENTER);
-        
+        getStyleClass().add("card-mem");
+
         // Crear el visualizer vacío desde el inicio
         visualizer = new MemoryVisualizer();
         getChildren().add(visualizer);
+
+        // Registrar como listener para iluminarse en logs MEM
+        Logger.addPanelListener(this);
     }
 
     public MemPanel(Config config) {
@@ -72,5 +80,23 @@ public class MemPanel extends VBox {
         if (mm != null && visualizer != null) {
             mm.addListener(visualizer);
         }
+    }
+
+    // Implementación de PanelHighlightListener
+    @Override
+    public void onLogEmitted(Logger.LogLevel level) {
+        if (level == Logger.LogLevel.MEM) {
+            highlight();
+        }
+    }
+
+    private void highlight() {
+        Platform.runLater(() -> {
+            getStyleClass().add("card-mem-active");
+
+            PauseTransition pause = new PauseTransition(Duration.millis(800));
+            pause.setOnFinished(e -> getStyleClass().remove("card-mem-active"));
+            pause.play();
+        });
     }
 }
