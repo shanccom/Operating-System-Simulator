@@ -6,6 +6,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.layout.StackPane;
 
 import modules.gui.dashboard.*;
 
@@ -26,6 +27,8 @@ public class DashboardPage extends VBox {
     private Button continueButton;
     private ToggleButton stepModeToggle;
     private boolean isStepMode = false;
+
+    
 
     private SimulationEngine currentEngine;
 
@@ -52,14 +55,28 @@ public class DashboardPage extends VBox {
         runButton.getStyleClass().add("primary-button");
         runButton.setOnAction(e -> iniciarSimulacion());
         
-        stepModeToggle = new ToggleButton("Modo Paso a Paso");
+        HBox toggleContainer = new HBox(8);
+        toggleContainer.setAlignment(Pos.CENTER_LEFT);
+
+        Label toggleLabel = new Label("Modo Paso a Paso:");
+        toggleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12px;");
+
+        stepModeToggle = new ToggleButton();
         stepModeToggle.getStyleClass().add("toggle-button");
+        StackPane thumb = new StackPane();
+        thumb.getStyleClass().add("thumb");
+        stepModeToggle.setGraphic(thumb);
+
+        // Cambiar el listener para usar el toggle sin texto
         stepModeToggle.setOnAction(e -> {
             isStepMode = stepModeToggle.isSelected();
             statusLabel.setText(isStepMode ? 
                 "Modo paso a paso activado" : 
                 "Modo continuo activado");
         });
+
+        toggleContainer.getChildren().addAll(toggleLabel, stepModeToggle);
+
 
         stepButton = new Button("Siguiente Paso →");
         stepButton.getStyleClass().add("secondary-button");
@@ -70,13 +87,13 @@ public class DashboardPage extends VBox {
         continueButton.getStyleClass().add("primary-button");
         continueButton.setDisable(true);
         continueButton.setOnAction(e -> continuarSimulacion());
-        
-        
+
+
         topBar.getChildren().addAll(
                 title,
                 spacer,
                 runButton,
-                stepModeToggle,
+                toggleContainer,
                 stepButton,
                 continueButton
         );
