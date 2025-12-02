@@ -218,9 +218,10 @@ public class ProcessThread extends Thread {
       Logger.procLog(String.format("[T=%d] [%s] Solicita I/O (duración: %d unidades)", 
         currentTime, process.getPid(), burst.getDuration()));
       
-      // para gant
+    
+      // INICIO para gant
       notifyExecutionEnd("bloqueado I/O");
-      //fin
+      //FIN
 
       if (process.getState() != ProcessState.TERMINATED) {
         process.setState(ProcessState.BLOCKED_IO);

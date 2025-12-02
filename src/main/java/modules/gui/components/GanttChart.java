@@ -122,7 +122,7 @@ public class GanttChart extends Pane {
             openIOEntries.put(pid, entry);
             ioEntries.add(entry);
 
-            System.out.println("[GanttChart]Inicio I/O: " + pid + " en t=" + startTime);
+            //System.out.println("[GanttChart]Inicio I/O: " + pid + " en t=" + startTime);
             draw();
         });
     }
@@ -133,7 +133,8 @@ public class GanttChart extends Pane {
             if (entry != null) {
                 entry.endTime = endTime;
                 openIOEntries.remove(pid);
-                System.out.println("[GanttChart] Fin I/O: " + pid + " en t=" + endTime + " (duración: " + (endTime - entry.startTime) + "u)");
+                
+                //System.out.println("[GanttChart] Fin I/O: " + pid + " en t=" + endTime + " (duración: " + (endTime - entry.startTime) + "u)");
             }
 
             if (endTime > maxTime) {
@@ -186,7 +187,7 @@ public class GanttChart extends Pane {
                 String pid = processIds.get(i);
                 processOrden.add(pid);
                 processColors.put(pid, COLORS[i % COLORS.length]);
-                System.out.println("[GanttChart] Proceso " + pid + " pre-creado con color: " + processColors.get(pid));
+                //System.out.println("[GanttChart] Proceso " + pid + " pre-creado con color: " + processColors.get(pid));
             }
             
             draw();
@@ -303,7 +304,8 @@ public class GanttChart extends Pane {
     
     private void drawExecutionBlock(GraphicsContext gc, GanttEntry entry, double y, boolean isOpen) {
         double x = labelWidth + (entry.startTime * cellWidth);
-        double width = (entry.endTime - entry.startTime) * cellWidth;
+        //+1 para dibujarlo bien
+        double width = (entry.endTime - entry.startTime+1) * cellWidth;
         
         //por si esta abierto pero no ha avanzado, no dibujar nada aún
         if (width < 1) {
@@ -339,7 +341,8 @@ public class GanttChart extends Pane {
                 gc.setFill(Color.WHITE);
                 gc.setFont(Font.font("Monospace", FontWeight.BOLD, 11));
                 
-                String text = (entry.endTime - entry.startTime) + "u";
+                //+1 para dibujarlo bien
+                String text = (entry.endTime - entry.startTime +1) + "u";
                 gc.fillText(text, x + width / 2 - 10, y + 25);
             }
 
@@ -349,7 +352,8 @@ public class GanttChart extends Pane {
     //Dibujar bloque de E/S con nombre del proceso
     private void drawIOBlock(GraphicsContext gc, GanttEntry entry, double y, boolean isOpen, Color color) {
         double x = labelWidth + (entry.startTime * cellWidth);
-        double width = (entry.endTime - entry.startTime) * cellWidth;
+        //falat verificar si se suma +1
+        double width = (entry.endTime - entry.startTime +1) * cellWidth;
         
         if (width < 1) {
             return;
@@ -381,7 +385,8 @@ public class GanttChart extends Pane {
             if (width > 30) {
                 gc.setFill(Color.WHITE);
                 gc.setFont(Font.font("Monospace", FontWeight.BOLD, 10));
-                String text = entry.pid + " " + (entry.endTime - entry.startTime) + "u";
+                //falat verificar si se suma +1
+                String text = entry.pid + " " + (entry.endTime - entry.startTime+1) + "u";
                 gc.fillText(text, x + 5, y + 22);
             } else if (width > 15) {
                 gc.setFill(Color.WHITE);
