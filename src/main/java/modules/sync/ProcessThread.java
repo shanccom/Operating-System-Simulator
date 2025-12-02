@@ -218,6 +218,10 @@ public class ProcessThread extends Thread {
       Logger.procLog(String.format("[T=%d] [%s] Solicita I/O (duración: %d unidades)", 
         currentTime, process.getPid(), burst.getDuration()));
       
+      // para gant
+      notifyExecutionEnd("bloqueado I/O");
+      //fin
+
       if (process.getState() != ProcessState.TERMINATED) {
         process.setState(ProcessState.BLOCKED_IO);
       }
@@ -254,6 +258,12 @@ public class ProcessThread extends Thread {
   private void terminateProcess() {
     synchronized(syncController.getCoordinationMonitor()) {
       int currentTime = syncController.getCurrentTime();
+
+      // Cambiar estado localmente
+      //para gant
+      notifyExecutionEnd("terminado");
+      //fin
+      
       process.setCompletionTime(currentTime);
       process.setState(ProcessState.TERMINATED);
       

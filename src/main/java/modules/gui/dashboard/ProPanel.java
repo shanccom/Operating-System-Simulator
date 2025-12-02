@@ -1,16 +1,19 @@
 package modules.gui.dashboard;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import model.Process;
+import utils.Logger;
 
 import java.util.List;
 
-public class ProPanel extends VBox {
+public class ProPanel extends VBox implements Logger.PanelHighlightListener {
 
     private VBox readyContainer;
     private VBox blockedIOContainer;
@@ -81,14 +84,19 @@ public class ProPanel extends VBox {
         updateReadyQueue(List.of());
         updateBlockedIO(List.of());
         updateBlockedMemory(List.of());
+
+        // Registrar como listener para iluminarse en logs PROC
+        Logger.addPanelListener(this);
     }
 
     // MÉTODOS PARA ACTUALIZAR COLAS
     public void updateReadyQueue(List<Process> processes) {
-        
-        //System.out.println("[UI] ------------------------------------------------***************************READY recibido: " + processes.size());
+
+        // System.out.println("[UI]
+        // ------------------------------------------------***************************READY
+        // recibido: " + processes.size());
         for (Process p : processes) {
-            //System.out.println("   READY -> " + p.getPid() + " | state=" + p.getState());
+            // System.out.println(" READY -> " + p.getPid() + " | state=" + p.getState());
         }
 
         Platform.runLater(() -> {
@@ -102,7 +110,6 @@ public class ProPanel extends VBox {
             }
         });
     }
-
 
     public void updateBlockedIO(List<Process> processes) {
         Platform.runLater(() -> {
@@ -143,9 +150,8 @@ public class ProPanel extends VBox {
         badge.setPadding(new Insets(6, 10, 6, 10));
         badge.setStyle(String.format(
                 "-fx-background-color: %s; " +
-                "-fx-background-radius: 6px; -fx-border-radius: 6px;",
-                color
-        ));
+                        "-fx-background-radius: 6px; -fx-border-radius: 6px;",
+                color));
 
         // Icono
         Region icon = new Region();
@@ -160,13 +166,30 @@ public class ProPanel extends VBox {
 
         Label detailLabel = new Label(
                 "Prioridad: " + process.getPriority() +
-                " | Espera: " + process.getWaitingTime()
-        );
+                        " | Espera: " + process.getWaitingTime());
         detailLabel.setStyle("-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 10px;");
 
         info.getChildren().addAll(pidLabel, detailLabel);
 
         badge.getChildren().addAll(icon, info);
         return badge;
+    }
+
+    // Implementación de PanelHighlightListener
+    @Override
+    public void onLogEmitted(Logger.LogLevel level) {
+        if (level == Logger.LogLevel.PROC) {
+            highlight();
+        }
+    }
+
+    private void highlight() {
+        Platform.runLater(() -> {
+            getStyleClass().add("card-proc-active");
+
+            PauseTransition pause = new PauseTransition(Duration.millis(800));
+            pause.setOnFinished(e -> getStyleClass().remove("card-proc-active"));
+            pause.play();
+        });
     }
 }

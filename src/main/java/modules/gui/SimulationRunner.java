@@ -97,6 +97,16 @@ public class SimulationRunner {
                     dashboardPage.getExePanel().addExecutionEnd(pid, endTime);
                     executionStarts.remove(pid);
                 }
+                @Override
+                public void onIOStarted(String pid, int startTime){
+                    System.out.println("[SimulationRunner] I/O iniciado → PID=" + pid + ", t=" + startTime);
+                    dashboardPage.getExePanel().addIOStart(pid, startTime);
+                }
+                @Override
+                public void onIOEnded(String pid, int endTime){
+                    System.out.println("[SimulationRunner] I/O terminado → PID=" + pid + ", t=" + endTime);
+                    dashboardPage.getExePanel().addIOEnd(pid, endTime);
+                }
 
                 @Override
                 public void onContextSwitch() {
@@ -132,7 +142,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onProcessStateChanged(Process process) {
-                    // Implementar si es necesario
+                    // aun nada
                 }
 
                 @Override

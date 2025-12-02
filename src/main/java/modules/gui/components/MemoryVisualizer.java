@@ -32,8 +32,8 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     private String currentAlgorithm;
     private Color[] processColors = {
         Color.web("#FF6B6B"), Color.web("#4ECDC4"), Color.web("#45B7D1"),
-        Color.web("#FFA07A"), Color.web("#98D8C8"), Color.web("#F7DC6F"),
-        Color.web("#BB8FCE"), Color.web("#85C1E2")
+        Color.web("#FFA07A"), Color.web("#5086f2ff"), Color.web("#F7DC6F"),
+        Color.web("#BB8FCE"), Color.web("#a669ecff")
     };
     private int colorIndex = 0;
 
@@ -504,7 +504,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         
         public void evict() {
             occupied = false;
-            contentLabel.setText("Vacío");
+            contentLabel.setText("FREE");
             timeLabel.setText("");  // se vacia
             contentLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #555; -fx-font-style: italic;");
             colorIndicator.setFill(Color.web("#333333"));

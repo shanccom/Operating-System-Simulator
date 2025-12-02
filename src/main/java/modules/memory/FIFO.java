@@ -28,12 +28,6 @@ public class FIFO extends MemoryManager {
 
         for (Integer frameIndex : frameQueue) {
           Frame frame = frames[frameIndex];
-          // Puedes descomentar esto si NO quieres reemplazar páginas del mismo proceso:
-          // if (!frame.getProcessId().equals(requestingProcess.getPid())) {
-          //     return frameIndex;
-          // }
-          
-          // O simplemente retornar el más antiguo:
           return frameIndex; // No hagas poll() aquí
         }
     
@@ -56,6 +50,7 @@ public class FIFO extends MemoryManager {
   
       if (!frameQueue.remove(frameIndex)) {
           Logger.memLog("Marco " + frameIndex + " no estaba en cola FIFO");
+          
       }
       frameQueue.offer(frameIndex);
        
