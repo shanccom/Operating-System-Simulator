@@ -101,12 +101,12 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         updateMetrics();
     }
     public void addIOStart(String pid, int startTime) {
-        System.out.println("[ExePanel] addIOStart: " + pid + " en t=" + startTime);
+        //System.out.println("[ExePanel] addIOStart: " + pid + " en t=" + startTime);
         ganttChart.addIOStart(pid, startTime);
     }
 
     public void addIOEnd(String pid, int endTime) {
-        System.out.println("[ExePanel] addIOEnd: " + pid + " en t=" + endTime);
+        //System.out.println("[ExePanel] addIOEnd: " + pid + " en t=" + endTime);
         ganttChart.addIOEnd(pid, endTime);
     }
 

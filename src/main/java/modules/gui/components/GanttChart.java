@@ -122,7 +122,7 @@ public class GanttChart extends Pane {
             openIOEntries.put(pid, entry);
             ioEntries.add(entry);
 
-            System.out.println("[GanttChart]Inicio I/O: " + pid + " en t=" + startTime);
+            //System.out.println("[GanttChart]Inicio I/O: " + pid + " en t=" + startTime);
             draw();
         });
     }
@@ -133,7 +133,8 @@ public class GanttChart extends Pane {
             if (entry != null) {
                 entry.endTime = endTime;
                 openIOEntries.remove(pid);
-                System.out.println("[GanttChart] Fin I/O: " + pid + " en t=" + endTime + " (duración: " + (endTime - entry.startTime) + "u)");
+                
+                //System.out.println("[GanttChart] Fin I/O: " + pid + " en t=" + endTime + " (duración: " + (endTime - entry.startTime) + "u)");
             }
 
             if (endTime > maxTime) {
@@ -186,7 +187,7 @@ public class GanttChart extends Pane {
                 String pid = processIds.get(i);
                 processOrden.add(pid);
                 processColors.put(pid, COLORS[i % COLORS.length]);
-                System.out.println("[GanttChart] Proceso " + pid + " pre-creado con color: " + processColors.get(pid));
+                //System.out.println("[GanttChart] Proceso " + pid + " pre-creado con color: " + processColors.get(pid));
             }
             
             draw();
