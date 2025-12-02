@@ -118,7 +118,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onProcessStateChanged(Process process) {
-                    // Implementar si es necesario
+                    // aun nada
                 }
 
                 @Override
