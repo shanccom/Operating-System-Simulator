@@ -5,10 +5,11 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
-import modules.gui.SimulationRunner;
-import modules.gui.pages.ConfigPage;
+import javafx.scene.control.ToggleButton;
+
 import modules.gui.dashboard.*;
-import model.Config;
+
+import modules.sync.SimulationEngine;
 
 public class DashboardPage extends VBox {
 
@@ -19,6 +20,14 @@ public class DashboardPage extends VBox {
     private ConfigPage configPage;
     private Button runButton;
     private Label statusLabel;
+
+    //paso a paso
+    private Button stepButton;
+    private Button continueButton;
+    private ToggleButton stepModeToggle;
+    private boolean isStepMode = false;
+
+    private SimulationEngine currentEngine;
 
     public DashboardPage() {
         setSpacing(20);
@@ -42,10 +51,34 @@ public class DashboardPage extends VBox {
         runButton = new Button("Iniciar Simulación");
         runButton.getStyleClass().add("primary-button");
         runButton.setOnAction(e -> iniciarSimulacion());
+        
+        stepModeToggle = new ToggleButton("Modo Paso a Paso");
+        stepModeToggle.getStyleClass().add("toggle-button");
+        stepModeToggle.setOnAction(e -> {
+            isStepMode = stepModeToggle.isSelected();
+            statusLabel.setText(isStepMode ? 
+                "Modo paso a paso activado" : 
+                "Modo continuo activado");
+        });
+
+        stepButton = new Button("Siguiente Paso →");
+        stepButton.getStyleClass().add("secondary-button");
+        stepButton.setDisable(true);
+        stepButton.setOnAction(e -> avanzarPaso());
+
+        continueButton = new Button("Continuar");
+        continueButton.getStyleClass().add("primary-button");
+        continueButton.setDisable(true);
+        continueButton.setOnAction(e -> continuarSimulacion());
+        
+        
         topBar.getChildren().addAll(
                 title,
                 spacer,
-                runButton
+                runButton,
+                stepModeToggle,
+                stepButton,
+                continueButton
         );
 
         GridPane grid = new GridPane();
@@ -78,6 +111,9 @@ public class DashboardPage extends VBox {
         grid.add(logsPanel, 1, 1);
 
         getChildren().addAll(topBar, grid);
+      
+        
+    
     }
 
     // para conectar con ConfigPage (llamado desde MainFX)
@@ -86,39 +122,80 @@ public class DashboardPage extends VBox {
         //System.out.println("[DashboardPage] ConfigPage conectado: " + configPage);
     }
 
-    //MÉTODO para iniciar la simulación
     private void iniciarSimulacion() {
-        if (configPage == null) {
-            statusLabel.setText("Error: ConfigPage no conectado");
-            statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12px;");
-            System.out.println("[DashboardPage] ConfigPage es null");
-            return;
-        }
-        
-        System.out.println("[DashboardPage] Iniciando simulación...");
-        
-        statusLabel.setText("Simulación en curso...");
-        statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 12px;");
-        memPanel.setConfig(configPage.getCurrentConfig());
-        runButton.setDisable(true);
-        memPanel.setConfig(configPage.getCurrentConfig());
-        // Llamar al método de ConfigPage para iniciar
-        configPage.runSimulation();
-        
-        // Opcional: Re-habilitar después de un tiempo
-        new Thread(() -> {
+      if (configPage == null) {
+          statusLabel.setText("Error: ConfigPage no conectado");
+          statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12px;");
+          return;
+      }
+      
+      System.out.println("[DashboardPage] Iniciando simulación...");
+      
+      statusLabel.setText("Simulación en curso...");
+      statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 12px;");
+      memPanel.setConfig(configPage.getCurrentConfig());
+      runButton.setDisable(true);
+      
+      configPage.setStepModeEnabled(isStepMode);
+
+      // Llamar al método de ConfigPage para iniciar
+      configPage.runSimulation();
+      
+      // DESPUÉS de iniciar, obtener el engine y configurar modo paso a paso
+      new Thread(() -> {
+        int attempts = 0;
+        while (attempts < 10) { // Intentar hasta 10 veces (5 segundos)
             try {
-                Thread.sleep(2000);
+                Thread.sleep(500);
+                attempts++;
+                
                 javafx.application.Platform.runLater(() -> {
-                    runButton.setDisable(false);
-                    statusLabel.setText("Simulación iniciada correctamente");
+                    currentEngine = configPage.getCurrentEngine();
+                    
+                    if (currentEngine != null) {
+                        if (isStepMode) {
+                            stepButton.setDisable(false);
+                            continueButton.setDisable(false);
+                            statusLabel.setText("");
+                        } else {
+                            statusLabel.setText("");
+                        }
+                        runButton.setDisable(false);
+                    }
                 });
+                
+                if (currentEngine != null) {
+                    break; // Salir del loop si ya tenemos el engine
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                break;
             }
-        }).start();
-    }
+        }
+        
+        if (currentEngine == null) {
+            javafx.application.Platform.runLater(() -> {
+                statusLabel.setText("Error: No se pudo obtener el engine");
+            });
+        }
+    }).start();
+  }
 
+  private void avanzarPaso() {
+    if (currentEngine != null && currentEngine.getSimulationController() != null) {
+      currentEngine.getSimulationController().advanceOneStep();
+    }
+  }
+
+  private void continuarSimulacion() {
+    if (currentEngine != null && currentEngine.getSimulationController() != null) {
+        currentEngine.getSimulationController().continueExecution();
+        isStepMode = false;
+        stepModeToggle.setSelected(false);
+        stepButton.setDisable(true);
+        continueButton.setDisable(true);
+    }
+  }
 
     // GETTERS PARA LOS PANELES
     public ProPanel getProPanel() {

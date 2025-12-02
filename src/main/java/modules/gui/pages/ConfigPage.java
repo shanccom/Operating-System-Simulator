@@ -2,7 +2,6 @@ package modules.gui.pages;
 
 import modules.gui.MainFX;
 import modules.gui.SimulationRunner;
-import modules.gui.components.MemoryVisualizer;
 import model.Config;
 import java.io.File;
 import javafx.geometry.Insets;
@@ -11,6 +10,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import modules.sync.SimulationEngine;
 
 public class ConfigPage extends VBox {
 
@@ -31,7 +32,8 @@ public class ConfigPage extends VBox {
     private Config currentConfig;
     private DashboardPage dashboardPage;
 
-
+    private SimulationEngine currentEngine;
+    private boolean stepModeEnabled = false;
 
     private VBox buildConsiderationsCard() {
         VBox mainBox = new VBox(15);
@@ -433,8 +435,26 @@ public class ConfigPage extends VBox {
         }
     }
 
+    public void setStepModeEnabled(boolean enabled) {
+      this.stepModeEnabled = enabled;
+      System.out.println("[ConfigPage] Modo paso a paso: " + enabled);
+    }
+
 
     public Config getCurrentConfig() {
-        return buildConfigFromForm();
+      return buildConfigFromForm();
+    }
+
+    public SimulationEngine getCurrentEngine() {
+      return currentEngine;
+    }
+    public void setCurrentEngine(SimulationEngine engine) {
+        this.currentEngine = engine;
+        
+        // Si el modo paso a paso estaba activado, configurarlo ahora
+        if (stepModeEnabled && engine != null) {
+            System.out.println("[ConfigPage] Activando modo paso a paso en el engine");
+            engine.getSimulationController().setStepMode(true);
+        }
     }
 }

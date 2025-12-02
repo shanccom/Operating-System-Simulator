@@ -121,6 +121,10 @@ public class MainFX extends Application {
         pages.put("resultados", nResultados);
         switchPage("resultados");
     }
+    
+    public ConfigPage getConfigPage() {
+      return configPage;
+    }
 
     public static void main(String[] args) {
         launch(args);

@@ -46,11 +46,25 @@ public class SimulationRunner {
 
 
         printSystemConfiguration(config, processes, scheduler, memoryManager);
+        
         System.out.println();
         SimulationEngine engine = new SimulationEngine(
             scheduler, memoryManager, processes, config
         );
         
+        if (mainFx != null && mainFx.getConfigPage() != null) {
+          javafx.application.Platform.runLater(() -> {
+              mainFx.getConfigPage().setCurrentEngine(engine);
+              System.out.println("[SimulationRunner] Engine guardado en ConfigPage");
+          });
+          
+          try {
+              Thread.sleep(300);
+          } catch (InterruptedException e) {
+              e.printStackTrace();
+          }
+        }
+
         //REGISTRAR EL LISTENER ANTES DE INICIAR
 
         if (dashboardPage  != null) {
