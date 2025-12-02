@@ -69,6 +69,8 @@ public class SimulationEngine {
     for (ProcessThread thread : processThreads) {
         thread.setStateListener(listener, executionStartTimes);
     }
+    ioManager.setStateListener(listener); 
+    
   }
   
   // Notificar cambios a la UI
