@@ -46,11 +46,25 @@ public class SimulationRunner {
 
 
         printSystemConfiguration(config, processes, scheduler, memoryManager);
+        
         System.out.println();
         SimulationEngine engine = new SimulationEngine(
             scheduler, memoryManager, processes, config
         );
         
+        if (mainFx != null && mainFx.getConfigPage() != null) {
+          javafx.application.Platform.runLater(() -> {
+              mainFx.getConfigPage().setCurrentEngine(engine);
+              System.out.println("[SimulationRunner] Engine guardado en ConfigPage");
+          });
+          
+          try {
+              Thread.sleep(300);
+          } catch (InterruptedException e) {
+              e.printStackTrace();
+          }
+        }
+
         //REGISTRAR EL LISTENER ANTES DE INICIAR
 
         if (dashboardPage  != null) {
@@ -82,6 +96,16 @@ public class SimulationRunner {
                     //System.out.println("[SimulationRunner]FIN de ejecución → PID=" + pid +", inicio=" + start + ", fin=" + endTime);
                     dashboardPage.getExePanel().addExecutionEnd(pid, endTime);
                     executionStarts.remove(pid);
+                }
+                @Override
+                public void onIOStarted(String pid, int startTime){
+                    //System.out.println("[SimulationRunner] I/O iniciado → PID=" + pid + ", t=" + startTime);
+                    dashboardPage.getExePanel().addIOStart(pid, startTime);
+                }
+                @Override
+                public void onIOEnded(String pid, int endTime){
+                    //System.out.println("[SimulationRunner] I/O terminado → PID=" + pid + ", t=" + endTime);
+                    dashboardPage.getExePanel().addIOEnd(pid, endTime);
                 }
 
                 @Override

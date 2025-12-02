@@ -38,6 +38,8 @@ public class IOManager implements Runnable {
   private final AtomicInteger totalIOTime;
 
   private final Config config;
+  
+  private SimulationStateListener stateListener;
 
   public IOManager(SyncController syncController, Config config) {
     this.syncController = syncController;
@@ -48,6 +50,11 @@ public class IOManager implements Runnable {
     this.totalIOTime = new AtomicInteger(0);
     this.config = config;
   }
+
+  // metodo para establecer el listener
+  public void setStateListener(SimulationStateListener listener) {
+      this.stateListener = listener;
+    }
 
   public void start() {
     if (!running.compareAndSet(false, true)) {
@@ -186,6 +193,13 @@ public class IOManager implements Runnable {
 
     Logger.procLog(String.format("[T=%d] [I/O] Procesando I/O para %s (duración: %d, fin: t=%d)", 
       startTime, process.getPid(), duration, endTime));
+    
+    //INICIO para gant
+    // Notificar inicio de I/O
+    if (stateListener != null) {
+        stateListener.onIOStarted(process.getPid(), startTime);
+    }
+    //FIN
 
     // Esperar hasta que el tiempo simulado alcance endTime
     waitUntilIOCompletes(process, endTime);
@@ -236,6 +250,14 @@ public class IOManager implements Runnable {
       Logger.procLog(String.format("[T=%d] [I/O] I/O completada para %s (duración: %d unidades)", 
         completionTime, process.getPid(), duration));
       
+      //INICIO para gant
+      //notifica fin de I/O
+      if (stateListener != null) {
+          stateListener.onIOEnded(process.getPid(), completionTime);
+      }
+      //FIN
+
+
       // Actualizar estadísticas (AtomicInteger es thread-safe)
       completedIOOperations.incrementAndGet();
       totalIOTime.addAndGet(duration);

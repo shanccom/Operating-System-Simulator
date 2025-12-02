@@ -89,15 +89,8 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
 
     // metodos publico para actualizar gantt y metricas
 
-    public void addExecution(String pid, int startTime, int endTime) {
-        // System.out.println("[ExePanel] addExecution llamado: " + pid + " [" +
-        // startTime + "-" + endTime + "]");
-        ganttChart.addExecution(pid, startTime, endTime);
-        totalCPUTime += (endTime - startTime);
-        updateMetrics();
-    }
+    //desde que empieza la ejecucion de un proceso
 
-    // desde que empieza la ejecucion de un proceso
     public void addExecutionStart(String pid, int startTime) {
         ganttChart.addExecutionStart(pid, startTime);
     }
@@ -106,6 +99,15 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         ganttChart.addExecutionEnd(pid, endTime);
         totalCPUTime += 1; // Ajustar según la duración real
         updateMetrics();
+    }
+    public void addIOStart(String pid, int startTime) {
+        //System.out.println("[ExePanel] addIOStart: " + pid + " en t=" + startTime);
+        ganttChart.addIOStart(pid, startTime);
+    }
+
+    public void addIOEnd(String pid, int endTime) {
+        //System.out.println("[ExePanel] addIOEnd: " + pid + " en t=" + endTime);
+        ganttChart.addIOEnd(pid, endTime);
     }
 
     public void setCurrentTime(int time) {
