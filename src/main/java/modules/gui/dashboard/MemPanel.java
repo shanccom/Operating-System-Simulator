@@ -21,7 +21,6 @@ public class MemPanel extends VBox implements Logger.PanelHighlightListener {
         setSpacing(10);
         setPadding(new Insets(10));
         setAlignment(Pos.TOP_CENTER);
-        getStyleClass().add("card-mem");
 
         // Crear el visualizer vacío desde el inicio
         visualizer = new MemoryVisualizer();
