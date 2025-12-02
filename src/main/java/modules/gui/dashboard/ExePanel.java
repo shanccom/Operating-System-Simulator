@@ -87,12 +87,12 @@ public class ExePanel extends VBox {
 
     // metodos publico para actualizar gantt y metricas
     
-    public void addExecution(String pid, int startTime, int endTime) {
+    /*public void addExecution(String pid, int startTime, int endTime) {
         //System.out.println("[ExePanel] addExecution llamado: " + pid + " [" + startTime + "-" + endTime + "]");
         ganttChart.addExecution(pid, startTime, endTime);
         totalCPUTime += (endTime - startTime);
         updateMetrics();
-    }
+    }*/
     //desde que empieza la ejecucion de un proceso
     public void addExecutionStart(String pid, int startTime) {
         ganttChart.addExecutionStart(pid, startTime);
