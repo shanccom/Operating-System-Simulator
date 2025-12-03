@@ -16,7 +16,10 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import model.Config.ReplacementType;
 import modules.memory.MemoryEventListener;
-
+/* Aca se visualiza la memoria fisica y las tablas de paginas de los procesos mediante disparadores se realizan efectos visuales 
+con tiempo medido y explicacion en logger para una correcta comprension
+Para esta parte en especifico se implemento pasos de espera entre solo este modulo a cambio del pasos por tiempo del resto del sistema 
+y se implemento el patron singleton en la clase MemoryVisualizer */
 public class MemoryVisualizer extends VBox implements MemoryEventListener {
 
     private int totalFrames;
@@ -124,7 +127,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         bottomPanel.setStyle("-fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 8px;");
         
         algorithmLabel = new Label("Algoritmo: No configurado");
-        algorithmLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #ff00aaff; -fx-font-weight: bold;");
+        algorithmLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #ff36bcff; -fx-font-weight: bold;");
         
         victimInfoLabel = new Label("Esperando configuración...");
         victimInfoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #aaaaaa;");
@@ -137,8 +140,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     public void initialize(ReplacementType algor, int frames) {
         this.totalFrames = frames;
         this.currentAlgorithm = algor.name();
-        
-        System.out.println("[MemoryVisualizer] initialize: algoritmo=" + currentAlgorithm + ", totalFrames=" + totalFrames);
+
         
         // Limpiar datos anteriores
         //pageTablesContainer.clear(); //problemas
@@ -212,7 +214,6 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     
     @Override
     public void onPageAccess(int frameIndex, String pid, int page, boolean hit) {
-        System.out.println("[MemoryVisualizer] onPageAccess: frame=" + frameIndex + ", pid=" + pid + ", page=" + page + ", hit=" + hit);
         Platform.runLater(() -> {
             registerProcessSync(pid, page + 1);  // Registro síncrono
             
@@ -222,7 +223,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
                 } else {
                     System.err.println("[MemoryVisualizer ERROR] Frame " + frameIndex + " no existe en physicalFrames. Total frames: " + physicalFrames.size());
                 }
-                victimInfoLabel.setText("✓ HIT: Página P" + page + " de " + pid + " encontrada en Frame " + frameIndex);
+                victimInfoLabel.setText("✓ HIT: Página P" + page + " de " + pid + " cargada en memoria fisica" + frameIndex);
                 victimInfoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #00ff88;");
             }
         });
@@ -230,7 +231,6 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
 
     @Override
     public void onPageFault(String pid, int page) {
-        System.out.println("[MemoryVisualizer] onPageFault: pid=" + pid + ", page=" + page);
         Platform.runLater(() -> {
             registerProcessSync(pid, page + 1);  // Registro síncrono
             
@@ -444,7 +444,21 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             loaded = true;
             frameLabel.setText("P" + frame);
             frameLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #00ff88; -fx-font-weight: bold;");
-            setStyle("-fx-background-color: rgba(0,255,136,0.1); -fx-background-radius: 4px;");
+            
+            // Delay inicial de 3 segundos antes de aplicar el estilo
+            PauseTransition initialPause = new PauseTransition(Duration.seconds(3));
+            initialPause.setOnFinished(e -> {
+                // Animación lenta usando ANIMATION_SPEED
+                setStyle("-fx-background-color: rgba(0,255,136,0.1); -fx-background-radius: 4px;");
+                
+                PauseTransition animPause = new PauseTransition(Duration.millis(700 * ANIMATION_SPEED));
+                animPause.setOnFinished(ev -> {
+                    // Aquí podrías dejar el estilo final o hacer otra transición
+                });
+                animPause.play();
+            });
+            initialPause.play();
+
         }
         
         public void evict() {

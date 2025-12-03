@@ -8,9 +8,8 @@ import utils.Logger;
 
 import modules.sync.SimulationController;
 
-// NUEVO ADECUAMOS PARA USAR DISPARADORES de eventos
-// NUEVO SI - Atributos necesarios para realizar NRU y optimal
-// Clase base para gestion de memoria virtual
+
+/*Clase base para gestion de memoria virtual aca se maneja la logica y creacion de frames*/
 public abstract class MemoryManager {
 
     // FRAME

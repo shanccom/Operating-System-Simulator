@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
+/* Aca esta la descripción explicativa de cada comportamiento y esta subcategorizada por de cual modulo es */
 public class Logger {
 
     // Interfaz para que los paneles se iluminen cuando se emita un log
