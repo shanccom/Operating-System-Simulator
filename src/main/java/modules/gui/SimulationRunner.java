@@ -147,6 +147,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onTimeChanged(int currentTime) {
+                    //System.out.println("[SimulationRunner]  Tiempo cambiado: " + currentTime);
                     dashboardPage.getExePanel().setCurrentTime(currentTime);
                 }
             });
