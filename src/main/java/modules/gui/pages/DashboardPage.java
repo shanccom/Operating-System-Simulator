@@ -6,8 +6,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.layout.StackPane;
-
 import modules.gui.dashboard.*;
 
 import modules.sync.SimulationEngine;
@@ -129,8 +127,8 @@ public class DashboardPage extends VBox {
 
         getChildren().addAll(topBar, grid);
       
-        
-    
+
+
     }
 
     // para conectar con ConfigPage (llamado desde MainFX)

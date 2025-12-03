@@ -89,13 +89,17 @@ public class MemPanel extends VBox implements Logger.PanelHighlightListener {
         }
     }
 
-    private void highlight() {
+    public void highlight() {
         Platform.runLater(() -> {
-            getStyleClass().add("card-mem-active");
+            if (!getStyleClass().contains("card-mem-active")) {
+                getStyleClass().add("card-mem-active");
+            }
+        });
+    }
 
-            PauseTransition pause = new PauseTransition(Duration.millis(800));
-            pause.setOnFinished(e -> getStyleClass().remove("card-mem-active"));
-            pause.play();
+    public void clearHighlight() {
+        Platform.runLater(() -> {
+            getStyleClass().remove("card-mem-active");
         });
     }
 }

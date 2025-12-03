@@ -183,13 +183,17 @@ public class ProPanel extends VBox implements Logger.PanelHighlightListener {
         }
     }
 
-    private void highlight() {
+    public void highlight() {
         Platform.runLater(() -> {
-            getStyleClass().add("card-proc-active");
+            if (!getStyleClass().contains("card-proc-active")) {
+                getStyleClass().add("card-proc-active");
+            }
+        });
+    }
 
-            PauseTransition pause = new PauseTransition(Duration.millis(800));
-            pause.setOnFinished(e -> getStyleClass().remove("card-proc-active"));
-            pause.play();
+    public void clearHighlight() {
+        Platform.runLater(() -> {
+            getStyleClass().remove("card-proc-active");
         });
     }
 }

@@ -454,7 +454,12 @@ public class ConfigPage extends VBox {
         // Si el modo paso a paso estaba activado, configurarlo ahora
         if (stepModeEnabled && engine != null) {
             System.out.println("[ConfigPage] Activando modo paso a paso en el engine");
+            //Nuevo: Agregamos el exepanel y derivados actuales al simulador
+            //Esto porque lo usamos para llevar un control de cual se esta usando en el paso a paso, solo para estilos.
             engine.getSimulationController().setStepMode(true);
+            engine.getSimulationController().setExePanel(dashboardPage.getExePanel());
+            engine.getSimulationController().setProPanel(dashboardPage.getProPanel());
+            engine.getSimulationController().setMemPanel(dashboardPage.getMemPanel());
         }
     }
 }

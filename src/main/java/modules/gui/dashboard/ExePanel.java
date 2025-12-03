@@ -21,6 +21,7 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
     private VBox cpuUtilLabel;
     private VBox contextSwitchLabel;
     private VBox avgWaitLabel;
+    private PauseTransition exeTimer = new PauseTransition(Duration.millis(300)); //Tiempo de iluminacion
 
     // Metricas
     private int totalCPUTime = 0;
@@ -255,13 +256,19 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         }
     }
 
-    private void highlight() {
+    public void highlight() {
         Platform.runLater(() -> {
-            getStyleClass().add("card-exe-active");
-
-            PauseTransition pause = new PauseTransition(Duration.millis(800));
-            pause.setOnFinished(e -> getStyleClass().remove("card-exe-active"));
-            pause.play();
+            if (!getStyleClass().contains("card-exe-active")) {
+                getStyleClass().add("card-exe-active");
+            }
         });
     }
+
+    public void clearHighlight() {
+        Platform.runLater(() -> {
+            getStyleClass().remove("card-exe-active");
+        });
+    }
+
+
 }
