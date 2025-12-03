@@ -10,7 +10,8 @@ public class RoundRobin extends Scheduler {
     
     private final int quantum;
     private int currentQuantumRemaining;
-    
+    private Process currentProcessInExecution;
+
     public RoundRobin(int quantum) {
         super();
         
@@ -50,32 +51,57 @@ public class RoundRobin extends Scheduler {
     //Decrementa el quantum cuando se ejecuta una unidad de tiempo
     //Porsiaco Este método debe ser llamado por el SyncController después de cada ejecución
      
-    public void decrementaQuantum() {
-        if (currentQuantumRemaining > 0) {
-            currentQuantumRemaining--;
-        }
+    public synchronized void decrementaQuantum() {
+      System.out.println(">>> [DEBUG-RR-DECREMENT] Antes: quantum=" + currentQuantumRemaining);
+      
+      if (currentQuantumRemaining > 0) {
+          currentQuantumRemaining--;
+          System.out.println(">>> [DEBUG-RR-DECREMENT] Después: quantum=" + currentQuantumRemaining);
+      } else {
+          System.out.println(">>> [DEBUG-RR-DECREMENT] ❌ Ya está agotado (quantum=" + 
+                             currentQuantumRemaining + ")");
+      }
     }
     
     //Verifica si el quantum se agotó
 
-    public boolean isQuantumAgotado() {
-        return currentQuantumRemaining <= 0;
+    public synchronized boolean isQuantumAgotado() {
+      boolean agotado = currentQuantumRemaining <= 0;
+      System.out.println(">>> [DEBUG-RR-AGOTADO] isQuantumAgotado: " + agotado + 
+                         " (quantum=" + currentQuantumRemaining + ")");
+      return agotado;
     }
     
     //Reinicia el quantum para un nuevo proceso
-    public void resetQuantum() {
-        this.currentQuantumRemaining = quantum;
+    public synchronized void resetQuantum() {
+      System.out.println(">>> [DEBUG-RR-RESET] Reseteando quantum: " + 
+                         currentQuantumRemaining + " → " + quantum);
+      currentQuantumRemaining = quantum;
     }
     
     // Override para resetear el quantum cuando se confirma la selección
     @Override
     public synchronized void confirmProcessSelection(Process process) {
+        System.out.println(">>> [DEBUG-RR-CONFIRM] Confirmando selección de " + 
+                           (process != null ? process.getPid() : "NULL"));
+        System.out.println(">>>   Antes: currentQuantumRemaining=" + currentQuantumRemaining);
+        
         if (process != null && readyQueue.remove(process)) {
-            // Resetear quantum cuando se confirma la selección de un nuevo proceso
+            // ⭐ IMPORTANTE: Resetear quantum ANTES de usar el proceso
             currentQuantumRemaining = quantum;
+            currentProcessInExecution = process;
+            
+            System.out.println(">>> [DEBUG-RR-CONFIRM] Proceso removido de cola");
+            System.out.println(">>> [DEBUG-RR-CONFIRM] Después: currentQuantumRemaining=" + 
+                               currentQuantumRemaining);
+            
             contextSwitch(process);
+        } else {
+            System.out.println(">>> [DEBUG-RR-CONFIRM] ❌ No se pudo remover de la cola");
         }
     }
+
+    
     
     @Override
     public String getAlgorithmName() {
@@ -86,7 +112,7 @@ public class RoundRobin extends Scheduler {
         return quantum;
     }
     
-    public int getCurrentQuantumRemaining() {
-        return currentQuantumRemaining;
+    public synchronized int getQuantumActual() {
+        return currentQuantumRemaining; 
     }
 }
