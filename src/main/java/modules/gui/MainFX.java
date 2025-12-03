@@ -10,6 +10,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -107,15 +108,33 @@ public class MainFX extends Application {
             }
         });
     }
-
+    //scoroll en config y resultados
     private void switchPage(String key) {
         BorderPane root = (BorderPane) navButtons
                 .values().iterator().next()
                 .getScene().getRoot();
 
-        root.setCenter(pages.get(key));
+        VBox page = pages.get(key);
+
+        // Si la página es Config o Resultados → envolver en ScrollPane
+        if (key.equals("config") || key.equals("resultados")) {
+
+            ScrollPane scroll = new ScrollPane(page);
+            scroll.setFitToWidth(true);
+            scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scroll.setStyle("-fx-background-color: transparent;");
+
+            root.setCenter(scroll);
+
+        } else {
+            // Para DashboardPage → sin scroll
+            root.setCenter(page);
+        }
+
         activarBoton(key);
     }
+
 
     public void showResultados(ResultadosPage nResultados) {
         pages.put("resultados", nResultados);
