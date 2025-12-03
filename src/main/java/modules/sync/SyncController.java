@@ -44,9 +44,7 @@ public class SyncController {
       }
       
       int currentTime = scheduler.getCurrentTime();
-      Logger.memLog(String.format("[PAGE FAULT] %s necesita cargar páginas", 
-       process.getPid()));
-      
+    
       // Intentar cargar páginas
       boolean hadPageFaults = loadRequiredPages(process);
       

@@ -219,7 +219,6 @@ public abstract class MemoryManager {
             accessPage(pid, pageNumber);
             
             notifySnapshot(getMemorySnapshotCompact());
-            waitForVisualStep();// ->Paso
             return true;
         }
 
@@ -249,7 +248,7 @@ public abstract class MemoryManager {
             String oldPid = frames[victimFrame].getProcessId();
             int oldPage = frames[victimFrame].getPageNumber();
 
-            notifyVictimChosen(victimFrame, "Aca incluir reason");
+            notifyVictimChosen(victimFrame, "");
             waitForVisualStep();// ->Paso
             notifyFrameEvicted(victimFrame, oldPid, oldPage);
             waitForVisualStep();// ->Paso
