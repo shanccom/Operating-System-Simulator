@@ -43,8 +43,8 @@ public class SyncController {
       }
       
       int currentTime = scheduler.getCurrentTime();
-      Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s necesita cargar páginas", 
-        currentTime, process.getPid()));
+      Logger.memLog(String.format("[PAGE FAULT] %s necesita cargar páginas", 
+       process.getPid()));
       
       // Intentar cargar páginas
       boolean hadPageFaults = loadRequiredPages(process);
@@ -63,8 +63,8 @@ public class SyncController {
           
           return false;
         } else {
-          Logger.exeLog(String.format("[T=%d] [PAGE FAULT] %s páginas cargadas (penalty=0, continúa)", 
-            currentTime, process.getPid()));
+          Logger.exeLog(String.format("[PAGE FAULT] %s páginas cargadas (penalty=0, continúa)", 
+             process.getPid()));
           process.setState(ProcessState.RUNNING);
           return true;
         }

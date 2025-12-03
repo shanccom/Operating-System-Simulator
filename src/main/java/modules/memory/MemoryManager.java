@@ -179,13 +179,9 @@ public abstract class MemoryManager {
             l.onFrameLoaded(frameIndex, pid, page, lastAccessTime);
     }
 
-    // Problema, no esta funcionando visualmenente no saca el frame
     private void notifyFrameEvicted(int frameIndex, String pid, int page) {
-        System.out.println("ATENCION Listener recibió evento: frame=" + frameIndex + ", pid=" + pid + ", page=" + page);
-
         for (MemoryEventListener l : listeners)
             l.onFrameEvicted(frameIndex, pid, page);
-        System.out.println("ATENCION ES ACA EL PROBLEMA?"); // sINO COMENTAR
 
     }
 
@@ -213,7 +209,6 @@ public abstract class MemoryManager {
     // Evento principal que desencadena todo:: se traduce en que esta pidciendo
     // memoria
     public synchronized boolean loadPage(Process process, int pageNumber) {
-        currentTime++;
         String pid = process.getPid();
 
         // Caso: la pagina YA esta en memoria (HIT)
