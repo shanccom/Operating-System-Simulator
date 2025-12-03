@@ -340,18 +340,10 @@ public class SimulationEngine {
   private void validateAndContinueProcess(Process current) {
     ProcessState state = current.getState();
 
-    System.out.println(">>> [DEBUG-VALIDATE] T=" + currentTime + 
-                       " validando " + current.getPid() + 
-                       " estado=" + state);
-
-
     // Verificar estado válido
     if (state == ProcessState.TERMINATED ||
         state == ProcessState.BLOCKED_IO ||
         state == ProcessState.BLOCKED_MEMORY) {
-
-      System.out.println(">>> [DEBUG-VALIDATE] " + current.getPid() + 
-      " no puede continuar (estado=" + state + ")");
       
       notifyProcessExecutionEnded(current, currentTime, "bloqueado/terminado");
 
@@ -373,24 +365,14 @@ public class SimulationEngine {
       return;
     }
 
-    System.out.println(">>> [DEBUG-VALIDATE] " + current.getPid() + 
-                       " sigue siendo RUNNING, checando quantum...");
-
     // Manejar expropiación por quantum (Round Robin)
     handleQuantumExpropriation(current);
 
     // Si sigue siendo RUNNING, permite continuar
     if (current.getState() == ProcessState.RUNNING) {
-
-      System.out.println(">>> [DEBUG-VALIDATE] " + current.getPid() + 
-                         " continúa en RUNNING");
-
       wakeUpProcessThread(current);
       scheduler.recordCPUTime(1);
     } else {
-      System.out.println(">>> [DEBUG-VALIDATE] " + current.getPid() + 
-                         " cambió de estado (quantum agotado probablemente)");
-
       notifyProcessExecutionEnded(current, currentTime - 1 , "quantum agotado");
 
       selectNextProcess();
@@ -401,28 +383,13 @@ public class SimulationEngine {
     if (scheduler instanceof modules.scheduler.RoundRobin) {
       modules.scheduler.RoundRobin rr = (modules.scheduler.RoundRobin) scheduler;
       
-      System.out.println(">>> [DEBUG-QUANTUM] T=" + currentTime + 
-      " [" + current.getPid() + "] antes de decrementar");
-      System.out.println(">>>   Quantum actual: " + rr.getQuantum());
-      
       rr.decrementaQuantum();
-
-      System.out.println(">>> [DEBUG-QUANTUM] [" + current.getPid() + 
-                         "] después de decrementar");
-      System.out.println(">>>   Quantum: " + rr.getQuantum() + 
-                         " agotado=" + rr.isQuantumAgotado());
-
 
 
       if (rr.isQuantumAgotado()) {
         int currentTime = getCurrentTime();
         int overhead = config.getContextSwitchOverhead();
         int endTime = currentTime;
-
-        System.out.println(">>> [DEBUG-QUANTUM] ⚠️ QUANTUM AGOTADO");
-        System.out.println(">>>   T=" + currentTime + 
-                           " → CONTEXT_SWITCHING hasta T=" + endTime);
-
 
         Logger.exeLog(String.format(
             "[T=%d] [ENGINE] Quantum agotado: %s  CONTEXT_SWITCHING (hasta t=%d)",
@@ -432,7 +399,6 @@ public class SimulationEngine {
         current.setContextSwitchEndTime(endTime);
         scheduler.setCurrentProcess(null);
 
-        System.out.println(">>> [DEBUG-QUANTUM] Reseteando quantum para próximo turno");
         rr.resetQuantum();
       }
     }
@@ -441,12 +407,7 @@ public class SimulationEngine {
   private void selectNextProcess() {
     long inCS = allProcesses.stream().filter(p -> p.getState() == ProcessState.CONTEXT_SWITCHING).count();
     
-    System.out.println("\n>>> [DEBUG-SELECT] T=" + currentTime + 
-                       " - selectNextProcess");
-    System.out.println(">>>   Procesos en CONTEXT_SWITCHING: " + inCS);
-    
     if (inCS > 0) {
-      System.out.println(">>> [DEBUG-SELECT] Hay procesos en context switch, esperando...");
       Logger.syncLog(String.format("[T=%d] [ENGINE] %d proceso(s) en CONTEXT_SWITCHING",
           getCurrentTime(), inCS));
       scheduler.recordIdleTime(1);
@@ -455,28 +416,15 @@ public class SimulationEngine {
 
     Process currentProcess = scheduler.getCurrentProcess();
 
-    System.out.println(">>> [DEBUG-SELECT] Seleccionando siguiente proceso...");
-    System.out.println(">>>   currentProcess (saliente): " + 
-                       (currentProcess != null ? currentProcess.getPid() : "NULL"));
-
     Process nextProcess = scheduler.selectNextProcess();
 
-    System.out.println(">>> [DEBUG-SELECT] nextProcess (entrante): " + 
-                       (nextProcess != null ? nextProcess.getPid() : "NULL"));
-
-
     if (nextProcess == null) {
-      System.out.println(">>> [DEBUG-SELECT] No hay próximo proceso, CPU ociosa");
       scheduler.recordIdleTime(1);
       return;
     }
 
     if (currentProcess != null && currentProcess != nextProcess) {
       int overhead = config.getContextSwitchOverhead();
-
-      System.out.println(">>> [DEBUG-SELECT] CONTEXT SWITCH: " + 
-                         currentProcess.getPid() + " → " + nextProcess.getPid() + 
-                         " (overhead=" + overhead + ")");
 
       int currentTime = getCurrentTime();
 
@@ -493,8 +441,6 @@ public class SimulationEngine {
       //para gant
       String pid = nextProcess.getPid();
 
-      System.out.println(">>> [DEBUG-SELECT] ✅ " + pid + 
-                         " INICIANDO EJECUCIÓN en T=" + currentTime);
 
       if (stateListener != null) {
         stateListener.onProcessExecutionStarted(pid, currentTime);
@@ -512,8 +458,6 @@ public class SimulationEngine {
 
     } else {
       // Vuelve a la cola
-      System.out.println(">>> [DEBUG-SELECT] ❌ " + nextProcess.getPid() + 
-                         " no puede ejecutar aún (esperando recursos)");
       scheduler.recordIdleTime(1);
     }
   }
@@ -618,10 +562,6 @@ public class SimulationEngine {
     Integer startTime = executionStartTimes.get(pid);
     
     if (startTime != null) {
-      System.out.println(">>> [DEBUG-GANTT] onProcessExecutionEnded(" + pid + ", " + 
-                         endTime + ") - razón: " + reason);
-      System.out.println(">>>   Duración: " + startTime + " a " + endTime + 
-                         " (total: " + (endTime - startTime) + " ciclos)");
       
       stateListener.onProcessExecutionEnded(pid, endTime);
       executionStartTimes.remove(pid);
