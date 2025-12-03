@@ -1,5 +1,5 @@
 package modules.sync;
-
+//ACA SE ENCUENTRA LA ESPERA PARA LA FUNCION PASO A PASO
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;

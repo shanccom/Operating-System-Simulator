@@ -104,7 +104,7 @@ public class DashboardPage extends VBox {
         grid.setPadding(new Insets(20, 0, 0, 0));
 
         ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(50);
+        col1.setPercentWidth(70);
         ColumnConstraints col2 = new ColumnConstraints();
         col2.setPercentWidth(50);
         grid.getColumnConstraints().addAll(col1, col2);

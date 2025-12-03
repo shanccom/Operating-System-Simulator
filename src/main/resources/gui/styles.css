@@ -109,10 +109,7 @@
   -fx-border-color: #ff5edfff;
 }
 
-.module-memory:hover {
-  -fx-background-color: rgba(180, 33, 141, 0.15);
-  -fx-border-width: 4;
-}
+
 
 
 .module-process {
@@ -120,10 +117,7 @@
   -fx-border-color: #9bfdcaff;
 }
 
-.module-process:hover {
-  -fx-background-color: rgba(155, 253, 202, 0.12);
-  -fx-border-width: 4;
-}
+
 
 
 .module-execution {
@@ -131,10 +125,7 @@
   -fx-border-color: #9d94fdff;
 }
 
-.module-execution:hover {
-  -fx-background-color: rgba(157, 148, 253, 0.12);
-  -fx-border-width: 4;
-}
+
 
 
 .module-title {
@@ -166,11 +157,7 @@
 }
 
 /*Cambiar los hover a que sean durante la ejeuci+on*/
-.card-mem:hover {
-  -fx-background-color: rgba(180, 33, 141, 0.22);
-  -fx-effect: dropshadow(gaussian, rgba(255, 94, 223, 0.35), 22, 0.25, 0, 10);
-  -fx-border-width: 5;
-}
+
 .card-proc {
   -fx-background-color: rgba(155, 253, 202, 0.05);
   -fx-background-radius: 16;
@@ -184,10 +171,7 @@
   -fx-transition: all 0.3s ease;
 }
 
-.card-proc:hover {
-  -fx-effect: dropshadow(gaussian, rgba(0, 255, 170, 0.35), 22, 0.25, 0, 10);
-  -fx-background-color: rgba(155, 253, 202, 0.12);
-}
+
 
 .card-exe {
   -fx-background-color: rgba(157, 148, 253, 0.05);
@@ -202,10 +186,7 @@
   -fx-transition: all 0.3s ease;
 }
 
-.card-exe:hover {
-  -fx-effect: dropshadow(gaussian, rgba(157, 148, 253, 0.35), 22, 0.25, 0, 10);
-  -fx-background-color: rgba(157, 148, 253, 0.12);
-}
+
 
 /* Estados activos para iluminación de paneles */
 .card-mem-active {

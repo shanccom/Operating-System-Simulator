@@ -101,7 +101,7 @@ public class SimulationControls extends HBox {
         statusLabel.setStyle("-fx-text-fill: #FFA500; -fx-font-size: 12px;");
     }
     
-    private void handleResume() {
+    private void handleResume() { //Boton continuar todo rapido
         if (listener != null) {
             listener.onResume();
         }

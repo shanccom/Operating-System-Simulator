@@ -16,6 +16,7 @@ import utils.Logger;
 public class ExePanel extends VBox implements Logger.PanelHighlightListener {
 
     private GanttChart ganttChart;
+    private ScrollPane scrollPane;
 
     private VBox cpuUtilLabel;
     private VBox contextSwitchLabel;
@@ -36,12 +37,24 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         title.getStyleClass().add("card-title");
 
         // Contenedor con scroll para el Gantt
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setFitToHeight(true);
+        scrollPane = new ScrollPane();
+        scrollPane.setFitToWidth(false);   // permite scroll horizontal
+        scrollPane.setFitToHeight(false);     // Permite scroll vertical cuando sea necesario
         scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
 
+        // Creamos el GanttChart
         ganttChart = new GanttChart();
-        scrollPane.setContent(ganttChart);
+
+        // Envolver el GanttChart en un VBox
+        VBox ganttContainer = new VBox(ganttChart);
+        ganttContainer.setFillWidth(false);
+        ganttContainer.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        ganttContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
+
+        VBox.setVgrow(ganttContainer, Priority.NEVER);
+
+        // Asigna el contenedor al scrollpane 
+        scrollPane.setContent(ganttContainer);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
         // Panel de metricas
@@ -93,6 +106,8 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
 
     public void addExecutionStart(String pid, int startTime) {
         ganttChart.addExecutionStart(pid, startTime);
+        //Auto-scroll al proceso que inicia
+        autoScrollToActiveProcess();
     }
 
     public void addExecutionEnd(String pid, int endTime) {
@@ -100,6 +115,7 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         totalCPUTime += 1; // Ajustar según la duración real
         updateMetrics();
     }
+
     public void addIOStart(String pid, int startTime) {
         //System.out.println("[ExePanel] addIOStart: " + pid + " en t=" + startTime);
         ganttChart.addIOStart(pid, startTime);
@@ -113,7 +129,72 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
     public void setCurrentTime(int time) {
         // System.out.println("[ExePanel] setCurrentTime llamado: " + time);
         ganttChart.setCurrentTime(time);
+        //Auto-scroll para seguir el cursor
+        autoScrollToCurrentTime();
     }
+
+    // metodo para hacer auto-scroll siguiendo el cursor
+    private void autoScrollToCurrentTime() {
+        Platform.runLater(() -> {
+            // scroll horizontal, seguir al cursor
+            double cursorX = ganttChart.getCurrentCursorX();
+            double totalWidth = ganttChart.getTotalWidth();
+            double viewportWidth = scrollPane.getViewportBounds().getWidth();
+            
+            double targetHScrollPosition = (cursorX - (viewportWidth * 0.7)) / (totalWidth - viewportWidth);
+            targetHScrollPosition = Math.max(0, Math.min(1, targetHScrollPosition));
+            
+            double currentHScrollPosition = scrollPane.getHvalue();
+            double cursorRelativePositionH = (cursorX - (currentHScrollPosition * (totalWidth - viewportWidth))) / viewportWidth;
+            
+            if (cursorRelativePositionH > 0.8 || cursorRelativePositionH < 0.1) {
+                scrollPane.setHvalue(targetHScrollPosition);
+            }
+            
+            // scroll vertical seguir el proceso activo
+            int activeRow = ganttChart.getActiveProcessRow();
+            
+            if (activeRow >= 0) { // Hay un proceso activo
+                double processY = ganttChart.getActiveProcessY();
+                double totalHeight = ganttChart.getTotalHeight();
+                double viewportHeight = scrollPane.getViewportBounds().getHeight();
+                
+                // Calcular la posición vertical del scroll para centrar el proceso
+                double targetVScrollPosition = (processY - (viewportHeight * 0.5)) / (totalHeight - viewportHeight);
+                targetVScrollPosition = Math.max(0, Math.min(1, targetVScrollPosition));
+                
+                // Verificar si el proceso está fuera de vista
+                double currentVScrollPosition = scrollPane.getVvalue();
+                double processRelativePositionV = (processY - (currentVScrollPosition * (totalHeight - viewportHeight))) / viewportHeight;
+                
+                // Si el proceso está fuera del 20%-80% del viewport, hacer scroll
+                if (processRelativePositionV < 0.2 || processRelativePositionV > 0.8) {
+                    scrollPane.setVvalue(targetVScrollPosition);
+                }
+            }
+        });
+    }
+    // metodo para hacer scroll inmediato al proceso activo
+    private void autoScrollToActiveProcess() {
+        Platform.runLater(() -> {
+            int activeRow = ganttChart.getActiveProcessRow();
+            
+            if (activeRow >= 0) {
+                double processY = ganttChart.getActiveProcessY();
+                double totalHeight = ganttChart.getTotalHeight();
+                double viewportHeight = scrollPane.getViewportBounds().getHeight();
+                
+                // Centrar el proceso en el viewport
+                double targetVScrollPosition = (processY - (viewportHeight * 0.5)) / (totalHeight - viewportHeight);
+                targetVScrollPosition = Math.max(0, Math.min(1, targetVScrollPosition));
+                
+                scrollPane.setVvalue(targetVScrollPosition);
+                
+                //System.out.println("[ExePanel]Auto-scroll a proceso activo: fila " + activeRow);
+            }
+        });
+    }
+
 
     public void incrementContextSwitch() {
         // System.out.println("[ExePanel] incrementContextSwitch llamado");
@@ -138,6 +219,12 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         contextSwitches = 0;
         avgWaitTime = 0.0;
         updateMetrics();
+        
+        // resetear scroll al inicio
+        Platform.runLater(() -> {
+            scrollPane.setHvalue(0);
+            scrollPane.setVvalue(0);
+        });
     }
 
     public void initializeProcesses(List<String> processIds) {

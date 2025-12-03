@@ -33,6 +33,9 @@ public class GanttChart extends Pane {
 
     private int maxTime = 50;
     private int currentTime = 0;
+
+    private String lastActiveProcess = null;
+
     
     private static final Color[] COLORS = {
         Color.web("#4CAF50"), Color.web("#2196F3"), Color.web("#FF9800"),
@@ -49,28 +52,7 @@ public class GanttChart extends Pane {
         
         draw();
     }
-    /* 
-    public void addExecution(String pid, int startTime, int endTime) {
-        //System.out.println("[GanttChart] addExecution: " + pid + " [" + startTime + "-" + endTime + "]");
-        //para asegurar que se actualiza en el hilo JavaFX
-        Platform.runLater(() -> {
-            if (!processColors.containsKey(pid)) {
-                processOrden.add(pid);
-                processColors.put(pid, COLORS[processColors.size() % COLORS.length]);
-                //System.out.println("[GanttChart] Color asignado a " + pid + ": " + processColors.get(pid));
-            }
-            
-            entries.add(new GanttEntry(pid, startTime, endTime));
-            //System.out.println("[GanttChart] Total entries: " + entries.size());
-            
-            if (endTime > maxTime) {
-                maxTime = endTime + 10;
-            }
-            
-            draw();
-        });
-    }
-    */
+
     //cuando inicie
     public void addExecutionStart(String pid, int startTime) {
         Platform.runLater(() -> {
@@ -84,6 +66,8 @@ public class GanttChart extends Pane {
             openEntries.put(pid, entry);
             entries.add(entry);
 
+            //Marcar este proceso como activo
+            lastActiveProcess = pid;
             //System.out.println("[GanttChart] Inicio de ejecución: " + pid + " en t=" + startTime);
             draw();
         });
@@ -100,6 +84,11 @@ public class GanttChart extends Pane {
                 //System.out.println("[GanttChart] Fin de ejecucion: " + pid + " en t=" + endTime + " (duración: " + (endTime - entry.startTime) + "u)");
             } else {
                 //System.out.println("[GanttChart] No se encontro entrada abierta para " + pid);
+            }
+
+            // Limpiar el proceso activo cuando termina
+            if (pid.equals(lastActiveProcess)) {
+                lastActiveProcess = null;
             }
 
             if (endTime > maxTime) {
@@ -217,12 +206,7 @@ public class GanttChart extends Pane {
             drawProcessRow(gc, pid, i);
         }
 
-        // Dibujar filas de procesos
-        int row = 0;
-        for (String pid : processColors.keySet()) {
-            drawProcessRow(gc, pid, row);
-            row++;
-        }
+
         
         //Dibujar fila de E/S
         drawIORow(gc, processOrden.size());
@@ -408,7 +392,36 @@ public class GanttChart extends Pane {
         gc.setFill(Color.web("#4CAF50"));
         gc.fillOval(x - 4, headerHeight - 8, 8, 8);
     }
+    //Metodos para autoscroll al avanzar el cursor
+     public int getActiveProcessRow() {
+        if (lastActiveProcess == null) {
+            return -1; // No hay proceso activo
+        }
+        return processOrden.indexOf(lastActiveProcess);
+    }
+     // Obtener la posición Y del proceso activo
+    public double getActiveProcessY() {
+        int row = getActiveProcessRow();
+        if (row < 0) {
+            return 0;
+        }
+        return headerHeight + (row * rowHeight) + (rowHeight / 2.0); // Centro de la fila
+    }
+    public double getRowHeight() {
+        return rowHeight;
+    }
+
+    public double getCurrentCursorX() {
+        return labelWidth + (currentTime * cellWidth);
+    }
     
+    public double getTotalWidth() {
+        return canvas.getWidth();
+    }
+    public double getTotalHeight() {
+        return canvas.getHeight();
+    }
+
     private static class GanttEntry {
         String pid;
         int startTime;

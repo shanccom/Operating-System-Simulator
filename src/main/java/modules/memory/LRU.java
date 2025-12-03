@@ -23,7 +23,7 @@ public class LRU extends MemoryManager {
             }
         }
 
-        Logger.memLog("LRU selecciono marco " + victimIndex + " como victima");
+        Logger.memLog("[MEM][LRU]Se selecciono marco " + victimIndex + " como victima");
 
         return victimIndex;
     }
