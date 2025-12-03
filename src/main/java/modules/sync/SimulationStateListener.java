@@ -13,7 +13,7 @@ public interface SimulationStateListener {
     //para CPU
     void onProcessExecutionStarted(String pid, int startTime);
     void onProcessExecutionEnded(String pid, int endTime);
-    void onContextSwitch();
+    void onContextSwitch(String pid, int startTime, int duration);
 
     //para I/O
     void onIOStarted(String pid, int startTime);

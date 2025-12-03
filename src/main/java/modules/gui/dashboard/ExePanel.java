@@ -209,6 +209,11 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         ganttChartSimple.addIOEnd(pid, endTime);
     }
 
+    public void addContextSwitchBlock(String pid, int startTime, int duration) {
+        ganttChart.addContextSwitchBlock(pid, startTime, duration);
+        ganttChartSimple.addContextSwitchBlock(pid, startTime, duration);
+    }
+
     public void setCurrentTime(int time) {
         // System.out.println("[ExePanel] setCurrentTime llamado: " + time);
         ganttChart.setCurrentTime(time);

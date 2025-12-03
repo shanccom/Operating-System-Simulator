@@ -444,10 +444,10 @@ public class SimulationEngine {
 
       if (stateListener != null) {
         stateListener.onProcessExecutionStarted(pid, currentTime);
-        // Solo notificar context switch si hubo un proceso anterior
+        /* Solo notificar context switch si hubo un proceso anterior
         if (currentProcess != null) {
           stateListener.onContextSwitch();
-        }
+        }*/
       }
       executionStartTimes.put(pid, currentTime);
       // fin

@@ -313,6 +313,9 @@ public class ProcessThread extends Thread {
         
         // Notificar fin de ejecución para Gantt
         notifyExecutionEnd("context switch CPU→I/O");
+        // Notificar el context switch con duración para gant
+        //+1 para que se dibuje despues
+        notifyContextSwitch(currentTime+1, overhead);
         
         process.setState(ProcessState.CONTEXT_SWITCHING);
         process.setContextSwitchEndTime(endTime);
@@ -365,6 +368,14 @@ public class ProcessThread extends Thread {
         stateListener.onProcessExecutionEnded(pid, currentTime);
         executionStartTimes.remove(pid);
       }
+    }
+  }
+
+  // metodo para notificar context switch
+  private void notifyContextSwitch(int startTime, int duration) {
+    if (stateListener != null) {
+      String pid = process.getPid();
+      stateListener.onContextSwitch(pid, startTime, duration);
     }
   }
 
