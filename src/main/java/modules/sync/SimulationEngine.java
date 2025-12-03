@@ -266,7 +266,7 @@ public class SimulationEngine {
 
     if (contextswitchingCount > 0) {
       scheduler.recordIdleTime((int) contextswitchingCount);
-      Logger.exeLog(String.format("[T=%d] [ENGINE] %d proceso(s) en CONTEXT_SWITCHING (CPU ociosa)",
+      Logger.exeLog(String.format("[T=%d] [ENGINE] %d proceso(s) en CONTEXT_SWITCHING (CPU ociosa)------------------------------------------",
           getCurrentTime(), contextswitchingCount));
     }
   }
@@ -420,7 +420,6 @@ public class SimulationEngine {
     if (inCS > 0) {
       Logger.syncLog(String.format("[T=%d] [ENGINE] %d proceso(s) en CONTEXT_SWITCHING",
           getCurrentTime(), inCS));
-      scheduler.recordIdleTime(1);
       return;
     }
 
