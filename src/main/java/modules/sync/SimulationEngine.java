@@ -288,7 +288,13 @@ public class SimulationEngine {
   private void updateWaitingTimes() {
     synchronized (engineMonitor) {
       for (Process p : allProcesses) {
-        if (p.getState() == ProcessState.READY) {
+        ProcessState state = p.getState();
+        
+        // Incrementar si está en READY
+        // O si llegó en este ciclo (aunque todavía esté en NEW)
+        if (state == ProcessState.READY || 
+            (state == ProcessState.NEW && p.getArrivalTime() == currentTime)) {
+          //System.out.println(currentTime + " ---------------------------------Actualizando incrementWaitingTime ++ " + p.getPid()+ " "+ p.getWaitingTime());
           p.incrementWaitingTime();
         }
       }

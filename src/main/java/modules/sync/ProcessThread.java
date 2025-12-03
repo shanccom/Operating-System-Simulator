@@ -322,6 +322,7 @@ public class ProcessThread extends Thread {
 
 
         // El scheduler debe seleccionar otro proceso
+        syncController.getScheduler().incrementContextSwitch();
         syncController.triggerReschedule();
       }
 

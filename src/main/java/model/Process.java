@@ -81,11 +81,11 @@ public class Process {
       this.responseTime = currentTime - arrivalTime;
     }
   }
-
+  //se esta verificando antes
   public void incrementWaitingTime() {
-    if (state == ProcessState.READY) {
+    
       waitingTime++;
-    }
+    
   }
 
   public void loadPage(int pageNumber) {

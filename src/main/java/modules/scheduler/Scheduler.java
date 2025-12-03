@@ -119,6 +119,11 @@ public abstract class Scheduler {
     public void recordIdleTime(int time) {
         idleTime += time;
     }
+
+    public synchronized void incrementContextSwitch() {
+        contextSwitches++;
+    }
+
     
     // Getters para metricas
     
