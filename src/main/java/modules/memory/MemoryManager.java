@@ -140,7 +140,7 @@ public abstract class MemoryManager {
     }
     //A continuacuon un metodo para poner espera o pare entre cada accion importante en que se imprime informacion en el logger
     // NUEVO: ESPERA INDEPENDIENTE DE MEMORY MANUAL ________________________________
-    private void waitForVisualStep(){
+    public void waitForVisualStep(){
         if(simulationController == null){
             return;
         }
@@ -212,7 +212,7 @@ public abstract class MemoryManager {
             waitForVisualStep();
             accessPage(pid, pageNumber);
             notifySnapshot(getMemorySnapshotCompact());
-            Logger.memSnapshot(frames);
+            //Logger.memSnapshot(frames);
             waitForVisualStep();//->Paso
             return true;
         }
@@ -237,7 +237,6 @@ public abstract class MemoryManager {
         // Si no hay marcos libres → elegir víctima
         int victimFrame = selectVictimFrame(process, pageNumber);
         notifySnapshot(getMemorySnapshotCompact());
-        waitForVisualStep();//->Paso
 
         if (victimFrame != -1) {
             // Guardar datos del frame que será reemplazado
@@ -303,7 +302,7 @@ public abstract class MemoryManager {
         totalPageLoads++;
 
         Logger.memLoad(pid, pageNumber, frameIndex, currentTime);
-        Logger.memSnapshot(frames);
+        //Logger.memSnapshot(frames);
     }
 
     protected void replacePage(int frameIndex, String newPid, int newPage) {
@@ -323,7 +322,7 @@ public abstract class MemoryManager {
         totalPageLoads++;
 
         Logger.memReplace(oldPid, oldPage, newPid, newPage, frameIndex, "Algoritmo: " + getAlgorithmName(), currentTime );
-        Logger.memSnapshot(frames);
+        //Logger.memSnapshot(frames);
     }
 
     public synchronized boolean isPageLoaded(String pid, int pageNumber) {
@@ -348,7 +347,7 @@ public abstract class MemoryManager {
         }
         processPageMap.remove(pid);
         Logger.memLog("[MEM] Paginas del proceso " + pid + " liberadas");
-        Logger.memSnapshot(frames);
+        //Logger.memSnapshot(frames);
         waitForVisualStep(); //->Paso
     }
 // Creo que se utiliza para le visualizer, no se imprime en el logger 

@@ -254,7 +254,8 @@ public class Logger {
                 "[T=%d][MEM][REPLACE] Se reemplazo %s:P%d por %s:P%d en el marco %d | Motivo: %s",
                 time, oldPid, oldPage, newPid, newPage, frame, reason), LogLevel.MEM);
     }
-    //Este si se imprime
+    //Este si se imprimia
+    /* 
     public static void memSnapshot(Frame[] frames) {
         StringBuilder sb = new StringBuilder();
         sb.append("\nMEMORIA FISICA ____________________________________\n");
@@ -271,4 +272,5 @@ public class Logger {
         sb.append("_____________________________________________________\n");
         log(sb.toString(), LogLevel.MEM);
     }
+        */
 }
