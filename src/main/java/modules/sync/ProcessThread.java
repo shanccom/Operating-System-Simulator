@@ -116,8 +116,10 @@ public class ProcessThread extends Thread {
       // Ejecutar según tipo
       if (currentBurst.isCPU()) {
         executeCPUBurst(currentBurst);
+        syncController.getMemoryManager().updateProcessPagesAccessTime(process.getPid()); // Actualizar acceso a páginas CUIDADO
       } else {
         executeIOBurst(currentBurst);
+        syncController.getMemoryManager().updateProcessPagesAccessTime(process.getPid()); // Actualizar acceso a páginas CUIDADO
       }
       
       handleBurstCompletion(currentBurst);
@@ -161,7 +163,7 @@ public class ProcessThread extends Thread {
       
       // Ejecutar una unidad de CPU
       executeOneCPUUnit(burst);
-      
+      syncController.getMemoryManager().updateProcessPagesAccessTime(process.getPid()); // Actualizar acceso a páginas CUIDADO
       // CRÍTICO: Verificar si completó DENTRO del loop
       if (burst.isCompleted()) {
         int currentTime;
@@ -271,9 +273,9 @@ public class ProcessThread extends Thread {
       syncController.releaseProcessResources(process);
     }
     
-    printFinalMetrics();
+    //printFinalMetrics();
   }
-
+  //Comentado porque ya esta visualmente
   private void printFinalMetrics() {
     System.out.println();
     Logger.syncLog("METRICAS FINALES: " + process.getPid() + " ===");

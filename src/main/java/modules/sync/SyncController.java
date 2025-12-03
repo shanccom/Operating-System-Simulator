@@ -1,12 +1,11 @@
 package modules.sync;
+import model.Config;
 //NUEVO CAMBIO DE PARTE DE BRANCH MEM_MOD CAMBIOS DE DEFINICION DE PASO ACA TAMBIEN EN EVENTOS DE MEMORIA EN SINCRONIZACION
 import model.Process;
 import model.ProcessState;
 import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
 import utils.Logger;
-import model.Config;
-import modules.sync.SimulationController;
 public class SyncController {
   
   private final Scheduler scheduler;
@@ -34,7 +33,6 @@ public class SyncController {
           Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s completó page fault handling", 
             currentTime, process.getPid()));
           process.clearPageFault();
-          memoryManager.waitForVisualStep(); //->Paso OJO 
         }
       } 
       
@@ -142,8 +140,9 @@ public class SyncController {
       int currentTime = scheduler.getCurrentTime();
       Logger.procLog(String.format("[T=%d] [%s] TERMINATED", 
         currentTime, process.getPid()));
-      
+        
       memoryManager.freeProcessPages(process.getPid());
+      
       scheduler.onProcessComplete(process);
       
       coordinationMonitor.notifyAll();

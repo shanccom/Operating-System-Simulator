@@ -24,6 +24,8 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     private VBox pageTablesContainer;
     private Label algorithmLabel;
     private Label victimInfoLabel;
+    private static double ANIMATION_SPEED = 6; // 1.0 = normal, 2.0 = más lento
+
 
     // Mapa de procesos -> sus tablas de páginas visuales
     private Map<String, ProcessPageTable> processPageTables = new LinkedHashMap<>();
@@ -312,6 +314,17 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     public void onSnapshot(String snapshot) {
         
     }
+    @Override
+    public void onPageAccessed(int frameIndex, String pid, int page, long newAccessTime) {
+        Platform.runLater(() -> {
+            PhysicalFrameCard frameBox = physicalFrames.get(frameIndex);
+            if (frameBox != null) {
+                frameBox.updateAccessTime(newAccessTime);
+            }
+        });
+    }
+    
+    
     
     private class ProcessPageTable extends VBox {
         private String pid;
@@ -443,7 +456,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         
         public void fault() {
             setStyle("-fx-background-color: rgba(255,79,109,0.2); -fx-background-radius: 4px;");
-            PauseTransition pause = new PauseTransition(Duration.millis(500));
+            PauseTransition pause = new PauseTransition(Duration.millis(700*ANIMATION_SPEED));
             pause.setOnFinished(e -> {
                 if (!loaded) {
                     setStyle("-fx-background-color: rgba(0,0,0,0.3); -fx-background-radius: 4px;");
@@ -511,6 +524,9 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             setStyle("-fx-background-color: rgba(26,16,43,0.6); -fx-background-radius: 6px; -fx-border-color: #333; -fx-border-radius: 6px;");
         }
 
+        public void updateAccessTime(long newAccessTime) {
+            timeLabel.setText("⏱ Last Access : " + newAccessTime);
+        }
         public void highlightHit() {
             String currentStyle = getStyle();
             setStyle(currentStyle + "; -fx-background-color: rgba(0,255,136,0.3);");
@@ -518,7 +534,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             // Actualizar el label de tiempo con efecto
             timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #00ff88; -fx-font-weight: bold;");
             
-            PauseTransition pause = new PauseTransition(Duration.millis(400));
+            PauseTransition pause = new PauseTransition(Duration.millis(400*ANIMATION_SPEED));
             pause.setOnFinished(e -> {
                 setStyle(currentStyle);
                 timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #00ff88;");
@@ -535,7 +551,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #ff6666ff; -fx-font-weight: bold;");
             contentLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #ffd427ff; -fx-font-weight: bold;");
             setStyle(currentStyle + "; -fx-border-color: #ffe066; -fx-border-width: 3px;");
-            PauseTransition pause = new PauseTransition(Duration.millis(800));
+            PauseTransition pause = new PauseTransition(Duration.millis(1500*ANIMATION_SPEED));
             pause.setOnFinished(e -> {
                 contentLabel.setText(currentContent);
                 contentLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #ffffff; -fx-font-weight: bold;");
@@ -548,7 +564,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
         public void flashFault() {
             String currentStyle = getStyle();
             setStyle(currentStyle + "; -fx-background-color: rgba(255,79,109,0.2);");
-            PauseTransition pause = new PauseTransition(Duration.millis(300));
+            PauseTransition pause = new PauseTransition(Duration.millis(400*ANIMATION_SPEED));
             pause.setOnFinished(e -> setStyle(currentStyle));
             pause.play();
         }

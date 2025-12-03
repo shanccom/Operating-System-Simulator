@@ -138,25 +138,29 @@ public abstract class MemoryManager {
     public void addListener(MemoryEventListener listener) {
         listeners.add(listener);
     }
-    //A continuacuon un metodo para poner espera o pare entre cada accion importante en que se imprime informacion en el logger
+
+    // A continuacuon un metodo para poner espera o pare entre cada accion
+    // importante en que se imprime informacion en el logger
     // NUEVO: ESPERA INDEPENDIENTE DE MEMORY MANUAL ________________________________
-    public void waitForVisualStep(){
-        if(simulationController == null){
+    public void waitForVisualStep() {
+        if (simulationController == null) {
             return;
         }
-        try{
+        try {
             simulationController.waitForNextStep();
-        }
-        catch(InterruptedException e){
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
+
     // _____________________________________________________________________________
-    //setController
-    public void setSimulationController(SimulationController cont){
+    // setController
+    public void setSimulationController(SimulationController cont) {
         simulationController = cont;
     }
-    //Notify aa todos los listener :: Patron singleton________________________________________________________________
+
+    // Notify aa todos los listener :: Patron
+    // singleton________________________________________________________________
     private void notifyPageFault(String pid, int page) {
         for (MemoryEventListener listener : listeners) {
             listener.onPageFault(pid, page);
@@ -184,6 +188,7 @@ public abstract class MemoryManager {
         System.out.println("ATENCION ES ACA EL PROBLEMA?"); // sINO COMENTAR
 
     }
+
     private void notifyVictimChosen(int frameIndex, String reason) {
         Frame frame = frames[frameIndex];
         long lastAccessTime = frame.getLastAccessTime();
@@ -191,15 +196,22 @@ public abstract class MemoryManager {
             l.onVictimChosen(frameIndex, reason, lastAccessTime);
         }
     }
+
     private void notifySnapshot(String snapshot) {
         for (MemoryEventListener l : listeners)
             l.onSnapshot(snapshot);
     }
-    //____________________________________________________________________________________________________________
-    //FIN NOTIFADORES A LISTENERS
 
+    private void notifyPageAccessed(int frameIndex, String pid, int page, long newAccessTime) {
+        for (MemoryEventListener l : listeners) {
+            l.onPageAccessed(frameIndex, pid, page, newAccessTime);
+        }
+    }
+    // ____________________________________________________________________________________________________________
+    // FIN NOTIFADORES A LISTENERS
 
-    //Evento principal que desencadena todo:: se traduce en que esta pidciendo memoria
+    // Evento principal que desencadena todo:: se traduce en que esta pidciendo
+    // memoria
     public synchronized boolean loadPage(Process process, int pageNumber) {
         currentTime++;
         String pid = process.getPid();
@@ -212,8 +224,8 @@ public abstract class MemoryManager {
             waitForVisualStep();
             accessPage(pid, pageNumber);
             notifySnapshot(getMemorySnapshotCompact());
-            //Logger.memSnapshot(frames);
-            waitForVisualStep();//->Paso
+            // Logger.memSnapshot(frames);
+            waitForVisualStep();// ->Paso
             return true;
         }
 
@@ -221,9 +233,8 @@ public abstract class MemoryManager {
         pageFaults++;
         process.incrementPageFaults();
         Logger.memFault(pid, pageNumber, currentTime);
-        waitForVisualStep(); //->Paso
+        waitForVisualStep(); // ->Paso
         notifyPageFault(pid, pageNumber);
-        
 
         // Intentar cargar en frame libre
         int freeFrame = findFreeFrame();
@@ -231,7 +242,7 @@ public abstract class MemoryManager {
             loadPageToFrame(freeFrame, pid, pageNumber);
             notifyFrameLoaded(freeFrame, pid, pageNumber);
             notifySnapshot(getMemorySnapshotCompact());
-            waitForVisualStep();//->Paso
+            waitForVisualStep();// ->Paso
             return true;
         }
 
@@ -245,13 +256,13 @@ public abstract class MemoryManager {
             int oldPage = frames[victimFrame].getPageNumber();
 
             notifyVictimChosen(victimFrame, "Aca incluir reason");
-            waitForVisualStep();//->Paso
+            waitForVisualStep();// ->Paso
             notifyFrameEvicted(victimFrame, oldPid, oldPage);
-            waitForVisualStep();//->Paso
+            waitForVisualStep();// ->Paso
 
             replacePage(victimFrame, pid, pageNumber);
             notifyFrameLoaded(victimFrame, pid, pageNumber);
-            waitForVisualStep();//->Paso
+            waitForVisualStep();// ->Paso
             notifySnapshot(getMemorySnapshotCompact());
 
             return true;
@@ -283,6 +294,8 @@ public abstract class MemoryManager {
                     && frame.getProcessId().equals(pid)
                     && frame.getPageNumber() == pageNumber) {
                 frame.access(currentTime);
+                // Notificar que se actualizó el lastAccessTime
+                notifyPageAccessed(i, pid, pageNumber, currentTime);
                 return;
             }
         }
@@ -303,7 +316,7 @@ public abstract class MemoryManager {
         totalPageLoads++;
 
         Logger.memLoad(pid, pageNumber, frameIndex, currentTime);
-        //Logger.memSnapshot(frames);
+        // Logger.memSnapshot(frames);
     }
 
     protected void replacePage(int frameIndex, String newPid, int newPage) {
@@ -322,19 +335,30 @@ public abstract class MemoryManager {
         pageReplacements++;
         totalPageLoads++;
 
-        Logger.memReplace(oldPid, oldPage, newPid, newPage, frameIndex, "Algoritmo: " + getAlgorithmName(), currentTime );
-        //Logger.memSnapshot(frames);
+        Logger.memReplace(oldPid, oldPage, newPid, newPage, frameIndex, "Algoritmo: " + getAlgorithmName(),
+                currentTime);
+        // Logger.memSnapshot(frames);
     }
 
     public synchronized boolean isPageLoaded(String pid, int pageNumber) {
         return processPageMap.containsKey(pid)
                 && processPageMap.get(pid).contains(pageNumber);
-                
+
     }
 
     public synchronized Set<Integer> getLoadedPages(String pid) {
         return new HashSet<>(processPageMap.getOrDefault(pid, new HashSet<>()));
     }
+
+     // NUEVO: Actualizar access time de todas las páginas de un proceso durante ejecución__________________
+    public synchronized void updateProcessPagesAccessTime(String pid) {
+        Set<Integer> loadedPages = processPageMap.getOrDefault(pid, new HashSet<>());
+        for (Integer page : loadedPages) {
+            accessPage(pid, page);
+        }
+    }
+    //_________________________________________________________
+
     // Aca tmb se agrega este metodo se usa en la simulacion
     public synchronized void freeProcessPages(String pid) {
         for (int i = 0; i < totalFrames; i++) {
@@ -342,16 +366,17 @@ public abstract class MemoryManager {
                     && frames[i].getProcessId().equals(pid)) {
                 int oldPage = frames[i].getPageNumber();
                 notifyFrameEvicted(i, pid, oldPage); // Notificar evicción visual
-                waitForVisualStep(); //->Paso OJO
+                waitForVisualStep(); // ->Paso OJO
                 frames[i].unload();
             }
         }
         processPageMap.remove(pid);
         Logger.memLog("[MEM] Paginas del proceso " + pid + " liberadas");
-        //Logger.memSnapshot(frames);
-        waitForVisualStep(); //->Paso
+        // Logger.memSnapshot(frames);
+        waitForVisualStep(); // ->Paso
     }
-// Creo que se utiliza para le visualizer, no se imprime en el logger 
+
+    // Creo que se utiliza para le visualizer, no se imprime en el logger
     public synchronized String getMemorySnapshotCompact() {
         StringBuilder sb = new StringBuilder();
         sb.append("MEMORIA FISICA ================================================================================\n");
