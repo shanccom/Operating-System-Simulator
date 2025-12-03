@@ -41,6 +41,7 @@
 -  Log de eventos del sistema
 
 ---
+
 ## 2. Estructura del Proyecto
 ```
 Operating-System-Simulator/
