@@ -109,9 +109,15 @@ public class SimulationRunner {
                 }
 
                 @Override
-                public void onContextSwitch() {
-                    //System.out.println("[SimulationRunner] Context Switch detectado");
+                public void onContextSwitch(String pid, int startTime, int duration) {
+                    System.out.println("[SimulationRunner] Context Switch detectado: " + pid + 
+                                    " en t=" + startTime + ", duración=" + duration);
+                    
+                    // Incrementar contador de context switches
                     dashboardPage.getExePanel().incrementContextSwitch();
+                    
+                    // Agregar el bloque visual de context switch en el diagrama de Gantt
+                    dashboardPage.getExePanel().addContextSwitchBlock(pid, startTime, duration);
                 }
                 
 

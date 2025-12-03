@@ -64,26 +64,22 @@ public abstract class Scheduler {
       }
     }
 
-    /**
-     * Selecciona el siguiente proceso a ejecutar
-     * DEBE ser implementado por cada algoritmo
-     */
+    //Selecciona el siguiente proceso a ejecutar
+    //DEBE ser implementado por cada algoritmo
+    
     public abstract Process selectNextProcess();
     
-    /**
-     * Verifica si el proceso actual debe ser reemplazado
-     * Para algoritmos apropiativos como Round Robin
-     */
+    //Verifica si el proceso actual debe ser reemplazado
+    //Para algoritmos apropiativos como Round Robin
+     
     public abstract boolean shouldPreempt(Process current, Process candidate);
     
-    /**
-     * Obtiene el nombre del algoritmo
-     */
+    //Obtiene el nombre del algoritmo
+    
     public abstract String getAlgorithmName();
     
-    /**
-     * Ejecuta el cambio de contexto
-     */
+    //Ejecuta el cambio de contexto
+    
     protected void contextSwitch(Process newProcess) {
         if (currentProcess != null && 
             newProcess != null && 
@@ -97,9 +93,8 @@ public abstract class Scheduler {
         currentProcess = newProcess;
     }
     
-    /**
-     * Actualiza las metricas cuando un proceso se completa
-     */
+    //Actualiza las metricas cuando un proceso se completa
+    
     public void onProcessComplete(Process process) {
         completedProcesses++;
         totalWaitingTime += process.getWaitingTime();
@@ -217,9 +212,8 @@ public abstract class Scheduler {
       currentProcess = null;
     }
     
-    /**
-     * Imprime el reporte de metricas
-     */
+    //Imprime el reporte de metricas
+    
     public void printMetrics() {
         System.out.println();
         Logger.exeLog("[SCHE] METRICAS DEL SCHEDULER - " + getAlgorithmName());
@@ -234,9 +228,8 @@ public abstract class Scheduler {
         System.out.println();
     }
     
-    /**
-     * Resetea el planificador para una nueva simulacion
-     */
+    // Resetea el planificador para una nueva simulacion
+    
     public synchronized void reset() {
         readyQueue.clear();
         currentProcess = null;

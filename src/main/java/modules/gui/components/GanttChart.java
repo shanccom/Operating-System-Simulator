@@ -26,6 +26,7 @@ public class GanttChart extends Pane {
     private final Map<String, Color> processColors = new HashMap<>();
     private final List<String> processOrden = new ArrayList<>();//para dibujar antes los procesos
     private final Map<String, GanttEntry> openEntries = new HashMap<>(); //para dibujar desde que empieza
+    private final List<GanttEntry> contextSwitchEntries = new ArrayList<>(); //cambio de contexto
 
     //para I/O
     private final List<GanttEntry> ioEntries = new ArrayList<>();
@@ -44,6 +45,9 @@ public class GanttChart extends Pane {
     };
 
     private static final Color IO_COLOR = Color.web("#FF6B6B");
+
+    private static final Color CAMBIO_CONTEXTO_COLOR = Color.web("#727272ff"); 
+
     
     public GanttChart() {
         canvas = new Canvas(800, 400);
@@ -134,6 +138,22 @@ public class GanttChart extends Pane {
         });
     }
 
+    public void addContextSwitchBlock(String pid, int startTime, int duration) {
+        Platform.runLater(() -> {
+            int endTime = startTime + duration;
+            GanttEntry entry = new GanttEntry(pid, startTime, endTime);
+            contextSwitchEntries.add(entry);
+            
+            if (endTime > maxTime) {
+                maxTime = endTime + 10;
+            }
+            
+            System.out.println("[GanttChart] Context Switch agregado: " + pid + 
+                            " desde t=" + startTime + " hasta t=" + endTime);
+            draw();
+        });
+    }
+
     public void setCurrentTime(int time) {
         //System.out.println("[GanttChart] setCurrentTime: " + time);
          Platform.runLater(() -> {
@@ -160,6 +180,7 @@ public class GanttChart extends Pane {
 
             ioEntries.clear();
             openIOEntries.clear();
+            contextSwitchEntries.clear();
 
             currentTime = 0;
             maxTime = 50;
@@ -252,6 +273,12 @@ public class GanttChart extends Pane {
             if (entry.pid.equals(pid)) {
                 boolean isOpen = openEntries.containsKey(pid);
                 drawExecutionBlock(gc, entry, y,isOpen);
+            }
+        }
+        // Dibujar bloques de cambio de contetxo
+        for (GanttEntry entry : contextSwitchEntries) {
+            if (entry.pid.equals(pid)) {
+                drawContextSwitchBlock(gc, entry, y);
             }
         }
     }
@@ -392,6 +419,40 @@ public class GanttChart extends Pane {
         gc.setFill(Color.web("#4CAF50"));
         gc.fillOval(x - 4, headerHeight - 8, 8, 8);
     }
+
+    // metodo para dibujar el bloque de context switch
+    private void drawContextSwitchBlock(GraphicsContext gc, GanttEntry entry, double y) {
+        double x = labelWidth + (entry.startTime * cellWidth);
+        double width = (entry.endTime - entry.startTime) * cellWidth;
+        
+        if (width < 1) {
+            return;
+        }
+        
+        // Bloque principal con patron de rayas
+        gc.setFill(CAMBIO_CONTEXTO_COLOR);
+        gc.fillRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
+        
+        // Patrón de rayas diagonales para distinguirlo
+        gc.setStroke(Color.web("#FFFFFF"));
+        gc.setLineWidth(1);
+        for (int i = 0; i < width; i += 4) {
+            gc.strokeLine(x + 2 + i, y + 5, x + 2 + i + 5, y + rowHeight - 10);
+        }
+        
+        // Borde
+        gc.setStroke(Color.web("#c5c5c5ff")); 
+        gc.setLineWidth(2);
+        gc.strokeRoundRect(x + 2, y + 5, width - 4, rowHeight - 15, 4, 4);
+        
+        // Texto "CS" (Context Switch)
+        if (width > 15) {
+            gc.setFill(Color.WHITE);
+            gc.setFont(Font.font("Monospace", FontWeight.BOLD, 10));
+            gc.fillText("CS", x + width / 2 - 8, y + 22);
+        }
+    }
+
     //Metodos para autoscroll al avanzar el cursor
      public int getActiveProcessRow() {
         if (lastActiveProcess == null) {
