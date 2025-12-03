@@ -7,7 +7,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
-import javafx.scene.control.ScrollPane;   // <-- IMPORTANTE
+import javafx.scene.control.ScrollPane;  
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -20,6 +20,43 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import model.DatosResultados;
 import model.ResultadoProceso;
+
+/*
+Pagina : ResultadosPage
+Vista encargada de mostrar todos los resultados finales de la simulacion.
+Organiza metricas, graficos y la tabla por proceso dentro de un ScrollPane.
+
+FUNCION PRINCIPAL:
+Muestra el resumen completo del simulador: algoritmos usados, metricas del
+scheduler, metricas de memoria, uso de CPU y tiempos individuales por proceso.
+
+ESTRUCTURA:
+- ScrollPane principal para permitir desplazamiento vertical
+- Bloque de datos generales
+- Bloque de metricas del scheduler
+- Bloque de metricas de memoria
+- Graficos de CPU y tiempo de espera
+- Tabla con metricas por proceso
+
+METODOS CLAVE:
+- actualizarDatos(datos):
+  Coloca los valores calculados por el motor del simulador.
+- construirEncabezado():
+  Crea la cabecera de la pagina.
+- construirDatosGenerales():
+  Muestra algoritmos e informacion base.
+- construirBloqueMetricasJuntas():
+  Junta las metricas de scheduler y memoria.
+- construirVisualizaciones():
+  Crea los graficos circulares y barras.
+- construirTabla():
+  Genera la tabla de procesos con sus metricas.
+OBJETIVO:
+Presentar toda la informacion de rendimiento del sistema de manera clara
+y ordenada, permitiendo revisar el comportamiento de la simulacion.
+
+*/
+
 
 public class ResultadosPage extends VBox {
 
@@ -68,7 +105,7 @@ public class ResultadosPage extends VBox {
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
         getChildren().add(scrollPane);
 
-        // A partir de aquí, TODO se agrega a "content" en vez de al VBox raíz
+        // A partir de aquí todo se agrega a "content" en vez de al VBox raíz
         construirEncabezado();
 
         content.getChildren().addAll(
@@ -91,7 +128,7 @@ public class ResultadosPage extends VBox {
 
         barra.setLeft(textos);
         VBox.setMargin(barra, new Insets(0, 0, 3, 0));
-        content.getChildren().add(barra);   // <-- antes era getChildren()
+        content.getChildren().add(barra); 
     }
 
     private Node construirDatosGenerales() {
@@ -189,7 +226,7 @@ public class ResultadosPage extends VBox {
 
         graficas.getChildren().addAll(graficaCpuCard, graficaEspera);
 
-        content.getChildren().addAll(subtitulo, graficas);  // <-- antes era getChildren()
+        content.getChildren().addAll(subtitulo, graficas); 
     }
 
     private void construirTabla() {
@@ -235,7 +272,7 @@ public class ResultadosPage extends VBox {
         tablaProcesos.setStyle("-fx-background-color: #0f0a1a;");
 
         VBox.setVgrow(tablaProcesos, Priority.ALWAYS);
-        content.getChildren().addAll(titulo, tablaProcesos);   // <-- antes era getChildren()
+        content.getChildren().addAll(titulo, tablaProcesos);  
     }
 
     public void actualizarDatos(DatosResultados datos) {

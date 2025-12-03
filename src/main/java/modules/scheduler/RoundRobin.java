@@ -26,7 +26,7 @@ confirmProcessSelection():
 
 getAlgorithmName():
  - Retorna el nombre del algoritmo con su quantum configurado.
- 
+
 */
 
 public class RoundRobin extends Scheduler {
@@ -81,7 +81,7 @@ public class RoundRobin extends Scheduler {
           currentQuantumRemaining--;
           System.out.println(">>> [DEBUG-RR-DECREMENT] Después: quantum=" + currentQuantumRemaining);
       } else {
-          System.out.println(">>> [DEBUG-RR-DECREMENT] ❌ Ya está agotado (quantum=" + 
+          System.out.println(">>> [DEBUG-RR-DECREMENT] Ya está agotado (quantum=" + 
                              currentQuantumRemaining + ")");
       }
     }
@@ -110,7 +110,6 @@ public class RoundRobin extends Scheduler {
         System.out.println(">>>   Antes: currentQuantumRemaining=" + currentQuantumRemaining);
         
         if (process != null && readyQueue.remove(process)) {
-            // ⭐ IMPORTANTE: Resetear quantum ANTES de usar el proceso
             currentQuantumRemaining = quantum;
             currentProcessInExecution = process;
             
@@ -120,7 +119,7 @@ public class RoundRobin extends Scheduler {
             
             contextSwitch(process);
         } else {
-            System.out.println(">>> [DEBUG-RR-CONFIRM] ❌ No se pudo remover de la cola");
+            System.out.println(">>> [DEBUG-RR-CONFIRM] No se pudo remover de la cola");
         }
     }
 

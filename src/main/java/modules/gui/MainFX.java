@@ -20,6 +20,43 @@ import modules.gui.pages.ConfigPage;
 import modules.gui.pages.DashboardPage;
 import modules.gui.pages.ResultadosPage;
 
+/*
+Clase Principal : MainFX
+Administra la ventana, la navegacion y el cambio entre paginas.
+
+FUNCION PRINCIPAL:
+Inicia la interfaz grafica del simulador y maneja las paginas:
+configuracion, visualizacion y resultados.
+
+ESTRUCTURA:
+- pages: mapa que guarda las paginas principales
+- navButtons: mapa con los botones de navegacion
+- DashboardPage: vista de simulacion
+- ConfigPage: configuracion inicial
+- ResultadosPage: metricas finales
+
+METODOS CLAVE:
+- start(stage):
+  Configura la ventana, carga estilos y muestra la pagina inicial.
+- crearPaginas(stage):
+  Crea las paginas principales y las registra en el mapa.
+- crearNavbar():
+  Construye la barra de navegacion superior.
+- crearNavButton():
+  Crea los botones que permiten cambiar de pagina.
+- switchPage(key):
+  Cambia la pagina mostrada. Agrega ScrollPane a Config y Resultados.
+- showResultados(nResultados):
+  Actualiza la pagina de resultados y la muestra.
+- activarBoton(key):
+  Marca visualmente el boton activo en la barra.
+
+OBJETIVO:
+Controlar la interfaz grafica del simulador y permitir navegar
+de forma simple entre las vistas principales.
+*/
+
+
 public class MainFX extends Application {
 
     private final Map<String, VBox> pages = new LinkedHashMap<>();
@@ -128,7 +165,7 @@ public class MainFX extends Application {
             root.setCenter(scroll);
 
         } else {
-            // Para DashboardPage → sin scroll
+            // Para DashboardPage sin scroll
             root.setCenter(page);
         }
 

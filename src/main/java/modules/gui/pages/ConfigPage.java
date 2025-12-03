@@ -13,6 +13,45 @@ import javafx.stage.Stage;
 
 import modules.sync.SimulationEngine;
 
+
+/*
+ Pagina : ConfigPage.java
+ DESCRIPCION GENERAL:
+ Esta clase construye la pagina principal de configuracion del simulador de
+ sistemas operativos. Aqui el usuario puede seleccionar el archivo de procesos,
+ el tipo de scheduler, el algoritmo de reemplazo de paginas, los parametros
+ de memoria y varias opciones avanzadas antes de iniciar la simulacion.
+
+ FUNCIONES PRINCIPALES:
+ - buildConsiderationsCard(): muestra una tarjeta informativa sobre los
+   modulos del simulador (memoria, procesos, ejecucion).
+ - buildFileSection(): permite cargar el archivo de procesos desde el sistema.
+ - buildConfigGrid(): crea el formulario donde se configuran memoria,
+   CPU, scheduler, quantum y opciones avanzadas.
+ - wrapInConfigCard(): envuelve el formulario dentro de un contenedor con
+   estilo visual de tarjeta.
+ - buildStartButton(): crea el boton que inicia la simulacion.
+ - runSimulation(): valida la configuracion, prepara los modulos visuales
+   y llama al motor de simulacion.
+
+ ELEMENTOS CONFIGURABLES POR EL USUARIO:
+ - Cantidad de frames.
+ - Tamano del frame.
+ - Algoritmo de reemplazo (FIFO, LRU, OPTIMAL, NRU).
+ - Scheduler (FCFS, SJF, SRT, RR, PRIORITY).
+ - Quantum en caso de Round Robin.
+ - Activacion de operaciones I/O.
+ - Tiempo por unidad de simulacion en milisegundos.
+ - Archivo de procesos a cargar.
+
+ OBJETIVO:
+ Centralizar toda la configuracion del simulador antes de ejecutar la
+ simulacion principal y permitir al usuario modificar parametros sin
+ interactuar directamente con el motor interno.
+
+*/
+
+
 public class ConfigPage extends VBox {
 
     private File processFile = new File("src/main/resources/data/procesos.txt");
@@ -455,7 +494,7 @@ public class ConfigPage extends VBox {
         // Si el modo paso a paso estaba activado, configurarlo ahora
         if (stepModeEnabled && engine != null) {
             System.out.println("[ConfigPage] Activando modo paso a paso en el engine");
-            //Nuevo: Agregamos el exepanel y derivados actuales al simulador
+            //Agregamos el exepanel y derivados actuales al simulador
             //Esto porque lo usamos para llevar un control de cual se esta usando en el paso a paso, solo para estilos.
             engine.getSimulationController().setStepMode(true);
             engine.getSimulationController().setExePanel(dashboardPage.getExePanel());

@@ -10,6 +10,39 @@ import modules.gui.dashboard.*;
 
 import modules.sync.SimulationEngine;
 
+/*
+  Pagina: DashboardPage
+  Pagina principal del simulador. Organiza la interfaz de ejecucion,
+  memoria, procesos y logs en un panel de control unificado.
+
+  FUNCION PRINCIPAL:
+  Muestra todos los modulos visuales del simulador y permite iniciar la
+  simulacion, activar el modo paso a paso y controlar su avance.
+
+  COMPONENTES:
+  - ExePanel: muestra la ejecucion de la CPU
+  - ProPanel: muestra las colas de procesos
+  - MemPanel: muestra el estado de la memoria
+  - LogsPanel: muestra los registros del simulador
+  - ConfigPage: permite acceder a la configuracion previa a la simulacion
+
+  CONTROLES DEL USUARIO:
+  - Boton para iniciar la simulacion
+  - Modo paso a paso con botones siguiente paso y continuar
+  - Indicador de estado de la simulacion
+
+  FUNCIONES CLAVE:
+  - iniciarSimulacion(): valida la configuracion y conecta el engine
+  - expandExePanel(): expande el panel de CPU a pantalla completa
+  - collapseExePanel(): restaura la vista normal
+  - avanzarPaso(): ejecuta un paso en modo manual
+  - continuarSimulacion(): reanuda el modo automatico
+
+  OBJETIVO:
+  Servir como panel general de control y visualizacion de la simulacion.
+*/
+
+
 public class DashboardPage extends VBox {
 
     private ExePanel exePanel;
@@ -32,6 +65,7 @@ public class DashboardPage extends VBox {
 
     private SimulationEngine currentEngine;
 
+    
     public DashboardPage() {
         setSpacing(20);
         setPadding(new Insets(20));

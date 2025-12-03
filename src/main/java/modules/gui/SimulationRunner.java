@@ -22,6 +22,45 @@ import utils.Logger;
 import utils.SimulationFactory;
 
 
+/*
+SimulationRunner
+Coordina toda la simulacion del sistema operativo. Carga procesos,
+crea el planificador, inicializa la memoria y conecta la simulacion
+con la interfaz grafica.
+
+FUNCION PRINCIPAL:
+runSimulation(...)
+Ejecuta la simulacion completa en un hilo separado. Configura todo
+el entorno antes de iniciar.
+
+FLUJO GENERAL:
+1. Validar configuracion.
+2. Leer procesos desde archivo.
+3. Crear scheduler y administrador de memoria.
+4. Conectar visualizador de memoria si existe.
+5. Crear SimulationEngine.
+6. Registrar listeners para actualizar la GUI:
+   - Gantt (inicio, fin, IO, context switch)
+   - Colas de procesos (ready, blockedIO, blockedMemory)
+   - Proceso en ejecucion
+   - Tiempo actual
+7. Ejecutar la simulacion en un thread independiente.
+8. Al finalizar, mostrar la pagina de resultados.
+
+PARTES IMPORTANTES:
+- printSystemConfiguration:
+  Imprime la configuracion del sistema y detalles de los procesos cargados.
+
+- SimulationStateListener:
+  Notifica cambios del engine hacia la interfaz. Actualiza diagramas,
+  colas, tiempo y eventos de I/O.
+
+- showResultados:
+  Al terminar, genera la pagina de metricas y la muestra en la UI.
+
+*/
+
+
 public class SimulationRunner {
 
 
@@ -65,7 +104,7 @@ public class SimulationRunner {
           }
         }
 
-        //REGISTRAR EL LISTENER ANTES DE INICIAR
+        //registrar el listener antes de iniciar
 
         if (dashboardPage  != null) {
             //System.out.println("[SimulationRunner] Registrando listener en el engine...");
@@ -92,7 +131,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onProcessExecutionEnded(String pid, int endTime) {
-                    Integer start = executionStarts.get(pid);
+                    
                     //System.out.println("[SimulationRunner]FIN de ejecución → PID=" + pid +", inicio=" + start + ", fin=" + endTime);
                     dashboardPage.getExePanel().addExecutionEnd(pid, endTime);
                     executionStarts.remove(pid);
@@ -133,7 +172,8 @@ public class SimulationRunner {
                 @Override
                 public void onBlockedIOChanged(List<Process> blockedIO) {
 
-                    System.out.println("[SimulationRunner]  Blocked I/O actualizada: " + blockedIO.size());
+                    
+                    //System.out.println("[SimulationRunner]  Blocked I/O actualizada: " + blockedIO.size());
                     dashboardPage.getProPanel().updateBlockedIO(blockedIO);
 
                 }
@@ -154,7 +194,7 @@ public class SimulationRunner {
 
                 @Override
                 public void onProcessStateChanged(Process process) {
-                    // aun nada
+                    
                 }
 
                 @Override
@@ -166,7 +206,7 @@ public class SimulationRunner {
         } else {
         }
         
-        // EJECUTAR EN THREAD SEPARADO PARA NO BLOQUEAR LA UI
+        // ejecutar en un thread separado para no bloquear la UI 
         Thread simulationThread = new Thread(() -> {
             try {
                 engine.run();
