@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import model.Process;
 import utils.Logger;
-import modules.memory.MemoryEventListener; // PARA manejar el listener y esperar 
+
 import modules.sync.SimulationController;
 
 // NUEVO ADECUAMOS PARA USAR DISPARADORES de eventos

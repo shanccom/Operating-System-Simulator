@@ -24,7 +24,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
     private VBox pageTablesContainer;
     private Label algorithmLabel;
     private Label victimInfoLabel;
-    private static double ANIMATION_SPEED = 6; // 1.0 = normal, 2.0 = más lento
+    private static double ANIMATION_SPEED = 10; // mas lento
 
 
     // Mapa de procesos -> sus tablas de páginas visuales

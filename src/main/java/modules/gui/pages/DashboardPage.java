@@ -21,12 +21,14 @@ public class DashboardPage extends VBox {
     private Label statusLabel;
 
     //paso a paso
-    private Button stepButton;
-    private Button continueButton;
-    private ToggleButton stepModeToggle;
-    private boolean isStepMode = false;
+    private Button stepButtonExe;
+    private Button continueButtonExe;
+    private ToggleButton stepModeToggleExe;
+    private boolean isStepModeExe = false;
 
-    
+    // Para manejar la expansión
+    private GridPane grid;
+    private HBox topBar;
 
     private SimulationEngine currentEngine;
 
@@ -36,7 +38,7 @@ public class DashboardPage extends VBox {
         setAlignment(Pos.TOP_LEFT);
         getStyleClass().add("page-container");
 
-        HBox topBar = new HBox(10);
+        topBar = new HBox(10);
         topBar.setAlignment(Pos.CENTER_LEFT);
 
         Label title = new Label("Simulación");
@@ -59,32 +61,32 @@ public class DashboardPage extends VBox {
         Label toggleLabel = new Label("Modo Paso a Paso:");
         toggleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12px;");
 
-        stepModeToggle = new ToggleButton();
-        stepModeToggle.getStyleClass().add("toggle-button");
+        stepModeToggleExe = new ToggleButton();
+        stepModeToggleExe.getStyleClass().add("toggle-button");
         StackPane thumb = new StackPane();
         thumb.getStyleClass().add("thumb");
-        stepModeToggle.setGraphic(thumb);
+        stepModeToggleExe.setGraphic(thumb);
 
         // Cambiar el listener para usar el toggle sin texto
-        stepModeToggle.setOnAction(e -> {
-            isStepMode = stepModeToggle.isSelected();
-            statusLabel.setText(isStepMode ? 
+        stepModeToggleExe.setOnAction(e -> {
+            isStepModeExe = stepModeToggleExe.isSelected();
+            statusLabel.setText(isStepModeExe ? 
                 "Modo paso a paso activado" : 
                 "Modo continuo activado");
         });
 
-        toggleContainer.getChildren().addAll(toggleLabel, stepModeToggle);
+        toggleContainer.getChildren().addAll(toggleLabel, stepModeToggleExe);
 
 
-        stepButton = new Button("Siguiente Paso →");
-        stepButton.getStyleClass().add("secondary-button");
-        stepButton.setDisable(true);
-        stepButton.setOnAction(e -> avanzarPaso());
+        stepButtonExe = new Button("Siguiente Paso →");
+        stepButtonExe.getStyleClass().add("secondary-button");
+        stepButtonExe.setDisable(true);
+        stepButtonExe.setOnAction(e -> avanzarPaso());
 
-        continueButton = new Button("Continuar");
-        continueButton.getStyleClass().add("primary-button");
-        continueButton.setDisable(true);
-        continueButton.setOnAction(e -> continuarSimulacion());
+        continueButtonExe = new Button("Continuar");
+        continueButtonExe.getStyleClass().add("primary-button");
+        continueButtonExe.setDisable(true);
+        continueButtonExe.setOnAction(e -> continuarSimulacion());
 
 
         topBar.getChildren().addAll(
@@ -92,11 +94,11 @@ public class DashboardPage extends VBox {
                 spacer,
                 runButton,
                 toggleContainer,
-                stepButton,
-                continueButton
+                stepButtonExe,
+                continueButtonExe
         );
 
-        GridPane grid = new GridPane();
+        grid = new GridPane();
         grid.setHgap(14);
         grid.setVgap(14);
         grid.setPadding(new Insets(20, 0, 0, 0));
@@ -120,15 +122,50 @@ public class DashboardPage extends VBox {
 
         logsPanel = new LogsPanel();
 
+        // configurar los callbacks de expansión
+        exePanel.setOnExpand(() -> expandExePanel());
+        exePanel.setOnCollapse(() -> collapseExePanel());
+
         grid.add(exePanel, 0, 0);
         grid.add(proPanel, 1, 0);
         grid.add(memPanel, 0, 1);
         grid.add(logsPanel, 1, 1);
 
         getChildren().addAll(topBar, grid);
-      
+    }
+    
+    private void expandExePanel() {
+        // Ocultar los otros paneles
+        proPanel.setVisible(false);
+        proPanel.setManaged(false);
+        memPanel.setVisible(false);
+        memPanel.setManaged(false);
+        logsPanel.setVisible(false);
+        logsPanel.setManaged(false);
 
+        // Hacer que ExePanel ocupe toda la grilla
+        GridPane.setColumnSpan(exePanel, 2);
+        GridPane.setRowSpan(exePanel, 2);
 
+        // Aumentar el tamaño del panel
+        VBox.setVgrow(grid, Priority.ALWAYS);
+    }
+    //Restaurar todo
+    private void collapseExePanel() {
+        // Restaurar la visibilidad de los otros paneles
+        proPanel.setVisible(true);
+        proPanel.setManaged(true);
+        memPanel.setVisible(true);
+        memPanel.setManaged(true);
+        logsPanel.setVisible(true);
+        logsPanel.setManaged(true);
+
+        // Restaurar el span original de ExePanel
+        GridPane.setColumnSpan(exePanel, 1);
+        GridPane.setRowSpan(exePanel, 1);
+
+        // Restaurar el tamaño del grid
+        VBox.setVgrow(grid, Priority.SOMETIMES);
     }
 
     // para conectar con ConfigPage (llamado desde MainFX)
@@ -151,7 +188,7 @@ public class DashboardPage extends VBox {
       memPanel.setConfig(configPage.getCurrentConfig());
       runButton.setDisable(true);
       
-      configPage.setStepModeEnabled(isStepMode);
+      configPage.setStepModeEnabled(isStepModeExe);
 
       // Llamar al método de ConfigPage para iniciar
       configPage.runSimulation();
@@ -168,9 +205,9 @@ public class DashboardPage extends VBox {
                     currentEngine = configPage.getCurrentEngine();
                     
                     if (currentEngine != null) {
-                        if (isStepMode) {
-                            stepButton.setDisable(false);
-                            continueButton.setDisable(false);
+                        if (isStepModeExe) {
+                            stepButtonExe.setDisable(false);
+                            continueButtonExe.setDisable(false);
                             statusLabel.setText("");
                         } else {
                             statusLabel.setText("");
@@ -205,10 +242,10 @@ public class DashboardPage extends VBox {
   private void continuarSimulacion() {
     if (currentEngine != null && currentEngine.getSimulationController() != null) {
         currentEngine.getSimulationController().continueExecution();
-        isStepMode = false;
-        stepModeToggle.setSelected(false);
-        stepButton.setDisable(true);
-        continueButton.setDisable(true);
+        isStepModeExe = false;
+        stepModeToggleExe.setSelected(false);
+        stepButtonExe.setDisable(true);
+        continueButtonExe.setDisable(true);
     }
   }
 

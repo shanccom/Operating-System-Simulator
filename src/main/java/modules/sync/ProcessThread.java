@@ -13,7 +13,8 @@ public class ProcessThread extends Thread {
   private final Process process;
   private final SyncController syncController;
   private final IOManager ioManager;
-  
+  private final Config config;
+
   // Monitor local para sincronización interna del thread
   private final Object threadMonitor = new Object();
   private volatile boolean running;
@@ -29,6 +30,7 @@ public class ProcessThread extends Thread {
     this.syncController = syncController;
     this.ioManager = ioManager;
     this.running = true;
+    this.config = config;
   }
 
   // metodo para establecer el listener
@@ -102,6 +104,20 @@ public class ProcessThread extends Thread {
           break;
         }
         
+        if (state == ProcessState.CONTEXT_SWITCHING) {
+          continue;
+        }
+
+        Burst currentBurst = process.getCurrentBurst();
+
+      if (currentBurst != null && !currentBurst.isCPU() && 
+          state == ProcessState.RUNNING) {
+        
+        executeIOBurst(currentBurst);
+        handleBurstCompletion(currentBurst);
+        continue; // Volver a esperar el siguiente
+      }
+
         if (state != ProcessState.RUNNING) {
           continue; // Volver a esperar
         }
@@ -112,7 +128,7 @@ public class ProcessThread extends Thread {
       if (currentBurst == null) {
         break;
       }
-      
+
       // Ejecutar según tipo
       if (currentBurst.isCPU()) {
         executeCPUBurst(currentBurst);
@@ -123,6 +139,7 @@ public class ProcessThread extends Thread {
       }
       
       handleBurstCompletion(currentBurst);
+
     }
     
     terminateProcess();
@@ -134,6 +151,14 @@ public class ProcessThread extends Thread {
         ProcessState state;
         synchronized(syncController.getCoordinationMonitor()) {
           state = process.getState();
+          
+          Burst currentBurst = process.getCurrentBurst();
+          if (currentBurst != null && !currentBurst.isCPU() && 
+              state != ProcessState.CONTEXT_SWITCHING && 
+              state != ProcessState.BLOCKED_IO) {
+            break; // Puede ejecutar I/O
+          }
+        
         }
         
         if (state == ProcessState.RUNNING || state == ProcessState.TERMINATED) {
@@ -170,8 +195,20 @@ public class ProcessThread extends Thread {
         synchronized(syncController.getCoordinationMonitor()) {
           currentTime = syncController.getCurrentTime();
         }
+
+
         Logger.exeLog(String.format("[T=%d] [%s] Rafaga CPU completada (%d unidades)", 
           currentTime, process.getPid(), burst.getDuration()));
+
+        synchronized(syncController.getCoordinationMonitor()) {
+          if (!process.isCompleted()) {
+            // Notificar que este proceso liberó la CPU voluntariamente
+            syncController.getScheduler().setCurrentProcess(null);
+            Logger.exeLog(String.format("[T=%d] [%s] Libera CPU (ráfaga completada)", 
+              currentTime, process.getPid()));
+          }
+        }
+
         break; // Salir del loop inmediatamente sin wait
       }
       
@@ -217,6 +254,7 @@ public class ProcessThread extends Thread {
     int currentTime;
     synchronized(syncController.getCoordinationMonitor()) {
       currentTime = syncController.getCurrentTime();
+      
       Logger.procLog(String.format("[T=%d] [%s] Solicita I/O (duración: %d unidades)", 
         currentTime, process.getPid(), burst.getDuration()));
       
@@ -229,12 +267,12 @@ public class ProcessThread extends Thread {
         process.setState(ProcessState.BLOCKED_IO);
       }
     }
-    
+
     // Notificar cambio de contexto
     syncController.triggerReschedule();
     
-    // Solicitar I/O (IOManager manejará la sincronización)
     ioManager.requestIO(process, burst);
+
   }
 
   private void handleBurstCompletion(Burst currentBurst) {
@@ -242,18 +280,48 @@ public class ProcessThread extends Thread {
       if (!currentBurst.isCompleted()) {
         return;
       }
+
       
       ProcessState state = process.getState();
       if (state == ProcessState.TERMINATED) {
         return;
       }
       
+
       process.advanceBurst();
       Burst nextBurst = process.getCurrentBurst();
-      
-      if (nextBurst != null && nextBurst.isCPU() && state != ProcessState.RUNNING) {
-        syncController.notifyProcessReady(process, "siguiente ráfaga CPU");
+
+
+      if (nextBurst == null) {
+
+        return;
       }
+
+      if (nextBurst.isCPU()) {
+        // Siguiente es CPU → volver a READY
+        if (state != ProcessState.RUNNING) {
+          syncController.notifyProcessReady(process, "siguiente ráfaga CPU");
+        }
+      } else {
+        int currentTime = syncController.getCurrentTime();
+        int overhead = config.getContextSwitchOverhead();
+        int endTime = currentTime + overhead;
+        
+        
+        Logger.exeLog(String.format("[T=%d] [%s] CPU→I/O: CONTEXT_SWITCHING hasta t=%d", 
+          currentTime, process.getPid(), endTime));
+        
+        // Notificar fin de ejecución para Gantt
+        notifyExecutionEnd("context switch CPU→I/O");
+        
+        process.setState(ProcessState.CONTEXT_SWITCHING);
+        process.setContextSwitchEndTime(endTime);
+
+
+        // El scheduler debe seleccionar otro proceso
+        syncController.triggerReschedule();
+      }
+
     }
   }
 
@@ -294,7 +362,6 @@ public class ProcessThread extends Thread {
       
       if (startTime != null) {
         int currentTime = syncController.getScheduler().getCurrentTime();
-        System.out.println("[ProcessThread-Gant]Proceso " + pid + " termina ejecución en t=" + currentTime + " (" + reason + ")");
         stateListener.onProcessExecutionEnded(pid, currentTime);
         executionStartTimes.remove(pid);
       }
