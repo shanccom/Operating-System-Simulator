@@ -173,6 +173,9 @@ public class SimulationEngine {
   }
 
   private void coordinationLoop() { 
+    System.out.println("=== INICIO coordinationLoop ===");
+    System.out.println("currentTime inicial: " + currentTime);
+    
     while (isRunning() && !allProcessesCompleted()) {
       
       try {
@@ -184,17 +187,19 @@ public class SimulationEngine {
       
       synchronized(syncController.getCoordinationMonitor()) {
         int t = getCurrentTime();
-        
+        System.out.println("\n>>> ITERACIÓN: currentTime=" + t);
         // Actualizar tiempo en SyncController
         syncController.synchronizeTime(t);
-        
+
+        System.out.println("  Antes de notifyProcessArrivals");
         // Notificar procesos en tiempo de llegada
         notifyProcessArrivals(t);
 
         handleContextSwitchCompletion(t);
 
         countContextSwitchingCycles();
-        
+
+        System.out.println("  Antes de coordinateScheduler");
         // Coordinar ejecución
         coordinateScheduler();
         
@@ -210,8 +215,9 @@ public class SimulationEngine {
       
       sleep(config.getTimeUnit());
       
-      // Avanzar tiempo fuera del lock extendido
+      System.out.println("  Antes de advanceTime: " + currentTime);  // ← AÑADIR
       advanceTime();
+      System.out.println("  Después de advanceTime: " + currentTime);
     }
   }
 
@@ -405,6 +411,9 @@ public class SimulationEngine {
 
     boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
     
+    System.out.println("  [selectNextProcess] nextProcess=" + nextProcess.getPid() + 
+                       ", canExecute=" + canExecute + 
+                       ", currentTime=" + currentTime);
     if (canExecute) {
       //para gant
       String pid = nextProcess.getPid();

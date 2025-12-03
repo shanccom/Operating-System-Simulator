@@ -26,7 +26,7 @@ public class Config {
   private int timeUnit;
   
   private int systemCallOverhead = 1;
-  private int pageFaultPenalty = 3;
+  private int pageFaultPenalty = 0;
   private int contextSwitchOverhead = 1;
 
   public Config() { //Por defecto

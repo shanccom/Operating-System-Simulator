@@ -52,15 +52,23 @@ public class SyncController {
       
       if (hadPageFaults) {
         int pageFaultPenalty = config.getPageFaultPenalty();
-        int endTime = currentTime + pageFaultPenalty;
         
-        process.setState(ProcessState.BLOCKED_MEMORY);
-        process.setPageFaultEndTime(endTime);
-        
-        Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s bloqueado hasta t=%d (penalty: %d ciclos)", 
-          currentTime, process.getPid(), endTime, pageFaultPenalty));
-        
-        return false;
+        if (pageFaultPenalty > 0) {
+          int endTime = currentTime + pageFaultPenalty;
+          
+          process.setState(ProcessState.BLOCKED_MEMORY);
+          process.setPageFaultEndTime(endTime);
+          
+          Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s bloqueado hasta t=%d (penalty: %d ciclos)", 
+            currentTime, process.getPid(), endTime, pageFaultPenalty));
+          
+          return false;
+        } else {
+          Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s páginas cargadas (penalty=0, continúa)", 
+            currentTime, process.getPid()));
+          process.setState(ProcessState.RUNNING);
+          return true;
+        }
       } else {
         process.setState(ProcessState.RUNNING);
         return true;
