@@ -4,6 +4,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import modules.gui.dashboard.*;
+
 public class SimulationController {
     private final Lock lock = new ReentrantLock();
     private final Condition stepCondition = lock.newCondition();
@@ -11,6 +13,19 @@ public class SimulationController {
     private volatile boolean stepMode = false;
     private volatile boolean waitingForStep = false;
     private volatile boolean shouldContinue = false;
+    private ExePanel exePanel;
+    private ProPanel proPanel;
+    private MemPanel memPanel;
+
+    public void setExePanel(ExePanel exePanel) {
+        this.exePanel = exePanel;
+    }
+    public void setProPanel(ProPanel proPanel) {
+        this.proPanel = proPanel;
+    }
+    public void setMemPanel(MemPanel memPanel) {
+        this.memPanel = memPanel;
+    }
     
     public void setStepMode(boolean enabled) {
         lock.lock();
@@ -46,6 +61,15 @@ public class SimulationController {
         try {
             shouldContinue = true;
             stepCondition.signal();
+            if (exePanel != null) {
+                exePanel.clearHighlight();
+            }
+            if (proPanel != null) {
+                proPanel.clearHighlight();
+            }
+            if (memPanel != null) {
+                memPanel.clearHighlight();
+            }   
         } finally {
             lock.unlock();
         }

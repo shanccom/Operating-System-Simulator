@@ -7,4 +7,6 @@ public interface MemoryEventListener {
     void onFrameEvicted(int frameIndex, String oldPid, int oldPage);            // eviction
     void onVictimChosen(int frameIndex, String reason, long lastAccessTime);                         // candidato (resaltar)
     void onSnapshot(String snapshot);                              // snapshot textual opcional
+    void onPageAccessed(int frameIndex, String pid, int page, long newAccessTime); // actualizar lastAccessTime durante
+                                                                                   // ejecución 
 }

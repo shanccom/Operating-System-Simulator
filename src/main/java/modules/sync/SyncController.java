@@ -1,12 +1,11 @@
 package modules.sync;
+import model.Config;
 //NUEVO CAMBIO DE PARTE DE BRANCH MEM_MOD CAMBIOS DE DEFINICION DE PASO ACA TAMBIEN EN EVENTOS DE MEMORIA EN SINCRONIZACION
 import model.Process;
 import model.ProcessState;
 import modules.memory.MemoryManager;
 import modules.scheduler.Scheduler;
 import utils.Logger;
-import model.Config;
-import modules.sync.SimulationController;
 public class SyncController {
   
   private final Scheduler scheduler;
@@ -34,7 +33,6 @@ public class SyncController {
           Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s completó page fault handling", 
             currentTime, process.getPid()));
           process.clearPageFault();
-          memoryManager.waitForVisualStep(); //->Paso OJO 
         }
       } 
       
@@ -60,12 +58,12 @@ public class SyncController {
           process.setState(ProcessState.BLOCKED_MEMORY);
           process.setPageFaultEndTime(endTime);
           
-          Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s bloqueado hasta t=%d (penalty: %d ciclos)", 
+          Logger.exeLog(String.format("[T=%d] [PAGE FAULT] %s bloqueado hasta t=%d (penalty: %d ciclos)", 
             currentTime, process.getPid(), endTime, pageFaultPenalty));
           
           return false;
         } else {
-          Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s páginas cargadas (penalty=0, continúa)", 
+          Logger.exeLog(String.format("[T=%d] [PAGE FAULT] %s páginas cargadas (penalty=0, continúa)", 
             currentTime, process.getPid()));
           process.setState(ProcessState.RUNNING);
           return true;
@@ -150,8 +148,9 @@ public class SyncController {
       int currentTime = scheduler.getCurrentTime();
       Logger.procLog(String.format("[T=%d] [%s] TERMINATED", 
         currentTime, process.getPid()));
-      
+        
       memoryManager.freeProcessPages(process.getPid());
+      
       scheduler.onProcessComplete(process);
       
       coordinationMonitor.notifyAll();
