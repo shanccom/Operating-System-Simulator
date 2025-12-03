@@ -197,15 +197,15 @@ public class ProcessThread extends Thread {
         }
 
 
-        Logger.exeLog(String.format("[T=%d] [%s] Rafaga CPU completada (%d unidades)", 
+        Logger.exeLog(String.format("[T=%d] [%s] Rafaga CPU completada (%d unidades), se libera CPU voluntariamente", 
           currentTime, process.getPid(), burst.getDuration()));
 
         synchronized(syncController.getCoordinationMonitor()) {
           if (!process.isCompleted()) {
             // Notificar que este proceso liberó la CPU voluntariamente
             syncController.getScheduler().setCurrentProcess(null);
-            Logger.exeLog(String.format("[T=%d] [%s] Libera CPU (ráfaga completada)", 
-              currentTime, process.getPid()));
+            //Logger.exeLog(String.format("[T=%d] [%s] Libera CPU (ráfaga completada)", 
+              //currentTime, process.getPid()));
           }
         }
 

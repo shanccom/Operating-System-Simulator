@@ -8,9 +8,8 @@ import utils.Logger;
 
 import modules.sync.SimulationController;
 
-// NUEVO ADECUAMOS PARA USAR DISPARADORES de eventos
-// NUEVO SI - Atributos necesarios para realizar NRU y optimal
-// Clase base para gestion de memoria virtual
+
+/*Clase base para gestion de memoria virtual aca se maneja la logica y creacion de frames*/
 public abstract class MemoryManager {
 
     // FRAME
@@ -179,13 +178,9 @@ public abstract class MemoryManager {
             l.onFrameLoaded(frameIndex, pid, page, lastAccessTime);
     }
 
-    // Problema, no esta funcionando visualmenente no saca el frame
     private void notifyFrameEvicted(int frameIndex, String pid, int page) {
-        System.out.println("ATENCION Listener recibió evento: frame=" + frameIndex + ", pid=" + pid + ", page=" + page);
-
         for (MemoryEventListener l : listeners)
             l.onFrameEvicted(frameIndex, pid, page);
-        System.out.println("ATENCION ES ACA EL PROBLEMA?"); // sINO COMENTAR
 
     }
 
@@ -213,7 +208,6 @@ public abstract class MemoryManager {
     // Evento principal que desencadena todo:: se traduce en que esta pidciendo
     // memoria
     public synchronized boolean loadPage(Process process, int pageNumber) {
-        currentTime++;
         String pid = process.getPid();
 
         // Caso: la pagina YA esta en memoria (HIT)
@@ -223,9 +217,8 @@ public abstract class MemoryManager {
             notifyPageAccess(frameIndex, pid, pageNumber, true);
             waitForVisualStep();
             accessPage(pid, pageNumber);
+            
             notifySnapshot(getMemorySnapshotCompact());
-            // Logger.memSnapshot(frames);
-            waitForVisualStep();// ->Paso
             return true;
         }
 
@@ -255,7 +248,7 @@ public abstract class MemoryManager {
             String oldPid = frames[victimFrame].getProcessId();
             int oldPage = frames[victimFrame].getPageNumber();
 
-            notifyVictimChosen(victimFrame, "Aca incluir reason");
+            notifyVictimChosen(victimFrame, "");
             waitForVisualStep();// ->Paso
             notifyFrameEvicted(victimFrame, oldPid, oldPage);
             waitForVisualStep();// ->Paso
