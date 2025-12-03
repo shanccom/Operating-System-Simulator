@@ -13,6 +13,8 @@ import utils.Logger;
 
 import java.util.List;
 
+import model.ProcessState;
+
 public class ProPanel extends VBox implements Logger.PanelHighlightListener {
 
     private VBox readyContainer;
@@ -91,24 +93,20 @@ public class ProPanel extends VBox implements Logger.PanelHighlightListener {
 
     // MÉTODOS PARA ACTUALIZAR COLAS
     public void updateReadyQueue(List<Process> processes) {
-
-        // System.out.println("[UI]
-        // ------------------------------------------------***************************READY
-        // recibido: " + processes.size());
-        for (Process p : processes) {
-            // System.out.println(" READY -> " + p.getPid() + " | state=" + p.getState());
-        }
-
-        Platform.runLater(() -> {
-            readyContainer.getChildren().clear();
-
-            if (processes.isEmpty()) {
-                readyContainer.getChildren().add(emptyLabel());
-            } else {
-                for (Process p : processes)
-                    readyContainer.getChildren().add(createProcessBadge(p, "#4CAF50"));
-            }
-        });
+      Platform.runLater(() -> {
+          readyContainer.getChildren().clear();
+          
+          List<Process> actuallyReady = processes.stream()
+              .filter(p -> p.getState() == ProcessState.READY)
+              .toList();
+  
+          if (actuallyReady.isEmpty()) {
+              readyContainer.getChildren().add(emptyLabel());
+          } else {
+              for (Process p : actuallyReady)
+                  readyContainer.getChildren().add(createProcessBadge(p, "#4CAF50"));
+          }
+      });
     }
 
     public void updateBlockedIO(List<Process> processes) {
