@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+
 public abstract class Scheduler {
     
     protected final Queue<Process> readyQueue;
@@ -249,4 +250,6 @@ public abstract class Scheduler {
         idleTime = 0;
         Logger.exeLog("Planificador reseteado");
     }
+
+
 }
