@@ -28,7 +28,9 @@ public class DashboardPage extends VBox {
     private ToggleButton stepModeToggle;
     private boolean isStepMode = false;
 
-    
+    // Para manejar la expansión
+    private GridPane grid;
+    private HBox topBar;
 
     private SimulationEngine currentEngine;
 
@@ -38,7 +40,7 @@ public class DashboardPage extends VBox {
         setAlignment(Pos.TOP_LEFT);
         getStyleClass().add("page-container");
 
-        HBox topBar = new HBox(10);
+        topBar = new HBox(10);
         topBar.setAlignment(Pos.CENTER_LEFT);
 
         Label title = new Label("Simulación");
@@ -98,7 +100,7 @@ public class DashboardPage extends VBox {
                 continueButton
         );
 
-        GridPane grid = new GridPane();
+        grid = new GridPane();
         grid.setHgap(14);
         grid.setVgap(14);
         grid.setPadding(new Insets(20, 0, 0, 0));
@@ -122,15 +124,50 @@ public class DashboardPage extends VBox {
 
         logsPanel = new LogsPanel();
 
+        // configurar los callbacks de expansión
+        exePanel.setOnExpand(() -> expandExePanel());
+        exePanel.setOnCollapse(() -> collapseExePanel());
+
         grid.add(exePanel, 0, 0);
         grid.add(proPanel, 1, 0);
         grid.add(memPanel, 0, 1);
         grid.add(logsPanel, 1, 1);
 
         getChildren().addAll(topBar, grid);
-      
-        
+    }
     
+    private void expandExePanel() {
+        // Ocultar los otros paneles
+        proPanel.setVisible(false);
+        proPanel.setManaged(false);
+        memPanel.setVisible(false);
+        memPanel.setManaged(false);
+        logsPanel.setVisible(false);
+        logsPanel.setManaged(false);
+
+        // Hacer que ExePanel ocupe toda la grilla
+        GridPane.setColumnSpan(exePanel, 2);
+        GridPane.setRowSpan(exePanel, 2);
+
+        // Aumentar el tamaño del panel
+        VBox.setVgrow(grid, Priority.ALWAYS);
+    }
+    //Restaurar todo
+    private void collapseExePanel() {
+        // Restaurar la visibilidad de los otros paneles
+        proPanel.setVisible(true);
+        proPanel.setManaged(true);
+        memPanel.setVisible(true);
+        memPanel.setManaged(true);
+        logsPanel.setVisible(true);
+        logsPanel.setManaged(true);
+
+        // Restaurar el span original de ExePanel
+        GridPane.setColumnSpan(exePanel, 1);
+        GridPane.setRowSpan(exePanel, 1);
+
+        // Restaurar el tamaño del grid
+        VBox.setVgrow(grid, Priority.SOMETIMES);
     }
 
     // para conectar con ConfigPage (llamado desde MainFX)

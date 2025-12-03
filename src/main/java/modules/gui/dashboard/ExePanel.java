@@ -6,6 +6,7 @@ import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
@@ -28,13 +29,32 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
     private int contextSwitches = 0;
     private double avgWaitTime = 0.0;
 
+    private Button expandButton; // boton para expandir y reducir panel
+    private boolean isExpanded = false;
+    private Runnable onExpandCallback;
+    private Runnable onCollapseCallback;
+
     public ExePanel() {
         setSpacing(10);
         setPadding(new Insets(16));
         getStyleClass().add("card-exe");
 
-        Label title = new Label("Diagrama de Gantt - Ejecucion");
+        // header con titulo y boton de expandir
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label title = new Label("Diagrama de Gantt - Ejecución");
         title.getStyleClass().add("card-title");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        expandButton = new Button("⛶");
+        expandButton.getStyleClass().add("icon-button");
+        expandButton.setStyle("-fx-font-size: 16px; -fx-padding: 5 10; -fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: white; -fx-cursor: hand;");
+        expandButton.setOnAction(e -> toggleExpand());
+
+        header.getChildren().addAll(title, spacer, expandButton);
 
         // Contenedor con scroll para el Gantt
         scrollPane = new ScrollPane();
@@ -60,10 +80,41 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         // Panel de metricas
         HBox metricsPanel = createMetricsPanel();
 
-        getChildren().addAll(title, scrollPane, metricsPanel);
+        getChildren().addAll(header, scrollPane, metricsPanel);
 
         // Registrar como listener para iluminarse en logs EXE
         Logger.addPanelListener(this);
+    }
+
+    private void toggleExpand() {
+        isExpanded = !isExpanded;
+        
+        if (isExpanded) {
+            expandButton.setText("⛶"); // Cambiar a icono de reducir
+            expandButton.setStyle("-fx-font-size: 16px; -fx-padding: 5 10; -fx-background-color: rgba(76, 175, 80, 0.3); -fx-text-fill: white; -fx-cursor: hand;");
+            if (onExpandCallback != null) {
+                onExpandCallback.run();
+            }
+        } else {
+            expandButton.setText("⛶");
+            expandButton.setStyle("-fx-font-size: 16px; -fx-padding: 5 10; -fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: white; -fx-cursor: hand;");
+            if (onCollapseCallback != null) {
+                onCollapseCallback.run();
+            }
+        }
+    }
+
+    // metodos para configurar callbacks desde dashboard page
+    public void setOnExpand(Runnable callback) {
+        this.onExpandCallback = callback;
+    }
+
+    public void setOnCollapse(Runnable callback) {
+        this.onCollapseCallback = callback;
+    }
+
+    public boolean isExpanded() {
+        return isExpanded;
     }
 
     private HBox createMetricsPanel() {
