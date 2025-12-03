@@ -516,7 +516,7 @@ public class MemoryVisualizer extends VBox implements MemoryEventListener {
             timeLabel = new Label("");  
             timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
             infoBox.getChildren().addAll(contentLabel, timeLabel);
-            getChildren().addAll(frameLabel, colorIndicator, contentLabel, infoBox);
+            getChildren().addAll(frameLabel, colorIndicator, infoBox);
         }
         
         public void load(String pid, int page, Color processColor, long lastAccessTime) {

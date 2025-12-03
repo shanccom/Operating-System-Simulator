@@ -215,7 +215,6 @@ public abstract class MemoryManager {
             int frameIndex = findFrame(pid, pageNumber);
             Logger.memHit(pid, pageNumber, frameIndex, currentTime);
             notifyPageAccess(frameIndex, pid, pageNumber, true);
-            waitForVisualStep();
             accessPage(pid, pageNumber);
             
             notifySnapshot(getMemorySnapshotCompact());
@@ -226,8 +225,9 @@ public abstract class MemoryManager {
         pageFaults++;
         process.incrementPageFaults();
         Logger.memFault(pid, pageNumber, currentTime);
-        waitForVisualStep(); // ->Paso
         notifyPageFault(pid, pageNumber);
+        waitForVisualStep(); // ->Paso
+        
 
         // Intentar cargar en frame libre
         int freeFrame = findFreeFrame();
@@ -235,7 +235,6 @@ public abstract class MemoryManager {
             loadPageToFrame(freeFrame, pid, pageNumber);
             notifyFrameLoaded(freeFrame, pid, pageNumber);
             notifySnapshot(getMemorySnapshotCompact());
-            waitForVisualStep();// ->Paso
             return true;
         }
 
@@ -255,7 +254,6 @@ public abstract class MemoryManager {
 
             replacePage(victimFrame, pid, pageNumber);
             notifyFrameLoaded(victimFrame, pid, pageNumber);
-            waitForVisualStep();// ->Paso
             notifySnapshot(getMemorySnapshotCompact());
 
             return true;
@@ -366,7 +364,6 @@ public abstract class MemoryManager {
         processPageMap.remove(pid);
         Logger.memLog("[MEM] Paginas del proceso " + pid + " liberadas");
         // Logger.memSnapshot(frames);
-        waitForVisualStep(); // ->Paso
     }
 
     // Creo que se utiliza para le visualizer, no se imprime en el logger

@@ -208,11 +208,10 @@ public class SyncController {
       String pid = process.getPid();
       boolean hadPageFault = false;
 
-      for (int pageNum = 0; pageNum < numPages; pageNum++) {
+      for (int pageNum = 0; pageNum < numPages; pageNum++) { // Carga la pagina si no esta cargada
         if (!memoryManager.isPageLoaded(pid, pageNum)) {
           hadPageFault = true;
           boolean loaded = memoryManager.loadPage(process, pageNum);
-          
           if (!loaded) {
             Logger.memLog(String.format("[PAGE FAULT] No se pudo cargar página %d de %s", 
               pageNum, pid));
