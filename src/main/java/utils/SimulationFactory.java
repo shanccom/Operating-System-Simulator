@@ -13,6 +13,7 @@ public class SimulationFactory {
       case SRT -> new modules.scheduler.SRT();
       case ROUND_ROBIN -> new modules.scheduler.RoundRobin(config.getQuantum());
       case PRIORITY -> new modules.scheduler.Priority();
+      case PRIORITYPREEMPTIVE -> new modules.scheduler.PriorityPreemptive();
     };
   }
   

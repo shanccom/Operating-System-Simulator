@@ -7,7 +7,8 @@ public class Config {
       SJF,         // Shortest Job First
       SRT,
       ROUND_ROBIN, // Round Robin
-      PRIORITY     // Por Prioridades (opcional)
+      PRIORITY,     // Por Prioridades (opcional)
+      PRIORITYPREEMPTIVE
   }
   
   public enum ReplacementType {
