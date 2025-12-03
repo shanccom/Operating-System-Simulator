@@ -221,8 +221,9 @@ public abstract class MemoryManager {
         pageFaults++;
         process.incrementPageFaults();
         Logger.memFault(pid, pageNumber, currentTime);
-        notifyPageFault(pid, pageNumber);
         waitForVisualStep(); //->Paso
+        notifyPageFault(pid, pageNumber);
+        
 
         // Intentar cargar en frame libre
         int freeFrame = findFreeFrame();

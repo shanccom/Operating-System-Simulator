@@ -245,7 +245,7 @@ public class Logger {
 
     public static void memFault(String pid, int page, int time) {
         log(String.format(
-                "[T=%d][MEM][PAGE FAULT] El proceso %s pidio la pagina %d, pero NO estaba en memoria",
+                "[T=%d][PAGE FAULT] El proceso %s pidio la pagina %d, pero NO estaba en memoria",
                 time, pid, page), LogLevel.MEM);
     }
 

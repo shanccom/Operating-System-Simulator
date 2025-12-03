@@ -110,15 +110,10 @@
 }
 
 
-
-
 .module-process {
   -fx-background-color: rgba(155, 253, 202, 0.05);
   -fx-border-color: #9bfdcaff;
 }
-
-
-
 
 .module-execution {
   -fx-background-color: rgba(157, 148, 253, 0.05);
@@ -144,7 +139,6 @@
 }
 /*Cartas de paneles de simulacion*/
 .card-mem {
-  -fx-background-color: rgba(180, 33, 141, 0.12); 
   -fx-background-radius: 16;
   -fx-background-insets: 2;
   -fx-border-width: 4;

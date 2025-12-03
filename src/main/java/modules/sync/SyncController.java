@@ -58,7 +58,7 @@ public class SyncController {
         process.setState(ProcessState.BLOCKED_MEMORY);
         process.setPageFaultEndTime(endTime);
         
-        Logger.memLog(String.format("[T=%d] Proceso %s bloqueado hasta t=%d debido al PageFault", 
+        Logger.exeLog(String.format("[T=%d] Proceso %s bloqueado hasta t=%d debido al PageFault", 
           currentTime, process.getPid(), endTime));
         
         return false;
