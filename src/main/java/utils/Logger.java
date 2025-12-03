@@ -233,25 +233,25 @@ public class Logger {
     /// memoria
     public static void memLoad(String pid, int page, int frame) {
         log(String.format(
-                "[MEM][LOAD] Se carga la pagina %d del proceso %s en el marco %d",
+                "[T=%d][MEM][LOAD] Se carga la pagina %d del proceso %s en el marco %d",
                 page, pid, frame), LogLevel.MEM);
     }
 
     public static void memHit(String pid, int page, int frame) {
         log(String.format(
-                "[MEM][HIT] La pagina %d del proceso %s ya estaba cargada (marco %d)",
+                "[T=%d][MEM][HIT] La pagina %d del proceso %s ya estaba cargada (marco %d)",
                 page, pid, frame), LogLevel.MEM);
     }
 
     public static void memFault(String pid, int page) {
         log(String.format(
-                "[MEM][PAGE FAULT] El proceso %s pidio la pagina %d, pero NO estaba en memoria",
+                "[T=%d][MEM][PAGE FAULT] El proceso %s pidio la pagina %d, pero NO estaba en memoria",
                 pid, page), LogLevel.MEM);
     }
 
     public static void memReplace(String oldPid, int oldPage, String newPid, int newPage, int frame, String reason) {
         log(String.format(
-                "[MEM][REPLACE] Se reemplazo %s:P%d por %s:P%d en el marco %d | Motivo: %s",
+                "[T=%d][MEM][REPLACE] Se reemplazo %s:P%d por %s:P%d en el marco %d | Motivo: %s",
                 oldPid, oldPage, newPid, newPage, frame, reason), LogLevel.MEM);
     }
 

@@ -5,7 +5,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import model.Process;
 import utils.Logger;
-import modules.memory.MemoryEventListener;
+import modules.memory.MemoryEventListener; // PARA manejar el listener y esperar 
+import modules.sync.SimulationController;
 
 // NUEVO ADECUAMOS PARA USAR DISPARADORES de eventos
 // NUEVO SI - Atributos necesarios para realizar NRU y optimal
@@ -113,6 +114,7 @@ public abstract class MemoryManager {
     protected int pageFaults;
     protected int pageReplacements;
     protected int totalPageLoads;
+    private SimulationController simulationController;
 
     public MemoryManager(int totalFrames) {
         if (totalFrames <= 0) {
@@ -136,7 +138,25 @@ public abstract class MemoryManager {
     public void addListener(MemoryEventListener listener) {
         listeners.add(listener);
     }
-
+    //A continuacuon un metodo para poner espera o pare entre cada accion importante en que se imprime informacion en el logger
+    // NUEVO: ESPERA INDEPENDIENTE DE MEMORY MANUAL ________________________________
+    private void waitForVisualStep(){
+        if(simulationController == null){
+            return;
+        }
+        try{
+            simulationController.waitForNextStep();
+        }
+        catch(InterruptedException e){
+            Thread.currentThread().interrupt();
+        }
+    }
+    // _____________________________________________________________________________
+    //setController
+    public void setSimulationController(SimulationController cont){
+        simulationController = cont;
+    }
+    //Notify aa todos los listener :: Patron singleton________________________________________________________________
     private void notifyPageFault(String pid, int page) {
         for (MemoryEventListener listener : listeners) {
             listener.onPageFault(pid, page);
@@ -164,7 +184,6 @@ public abstract class MemoryManager {
         System.out.println("ATENCION ES ACA EL PROBLEMA?"); // sINO COMENTAR
 
     }
-
     private void notifyVictimChosen(int frameIndex, String reason) {
         Frame frame = frames[frameIndex];
         long lastAccessTime = frame.getLastAccessTime();
@@ -172,25 +191,29 @@ public abstract class MemoryManager {
             l.onVictimChosen(frameIndex, reason, lastAccessTime);
         }
     }
-
     private void notifySnapshot(String snapshot) {
         for (MemoryEventListener l : listeners)
             l.onSnapshot(snapshot);
     }
+    //____________________________________________________________________________________________________________
+    //FIN NOTIFADORES A LISTENERS
 
+
+    //Evento principal que desencadena todo:: se traduce en que esta pidciendo memoria
     public synchronized boolean loadPage(Process process, int pageNumber) {
         currentTime++;
         String pid = process.getPid();
 
         // Caso: la pagina YA esta en memoria (HIT)
-
         if (isPageLoaded(pid, pageNumber)) {
             int frameIndex = findFrame(pid, pageNumber);
             Logger.memHit(pid, pageNumber, frameIndex);
             notifyPageAccess(frameIndex, pid, pageNumber, true);
+            waitForVisualStep();
             accessPage(pid, pageNumber);
             notifySnapshot(getMemorySnapshotCompact());
             Logger.memSnapshot(frames);
+            waitForVisualStep();//->Paso
             return true;
         }
 
@@ -199,18 +222,23 @@ public abstract class MemoryManager {
         process.incrementPageFaults();
         Logger.memFault(pid, pageNumber);
         notifyPageFault(pid, pageNumber);
+        waitForVisualStep(); //->Paso
 
         // Intentar cargar en frame libre
         int freeFrame = findFreeFrame();
         if (freeFrame != -1) {
             loadPageToFrame(freeFrame, pid, pageNumber);
             notifyFrameLoaded(freeFrame, pid, pageNumber);
+            waitForVisualStep(); //->Paso
             notifySnapshot(getMemorySnapshotCompact());
+            waitForVisualStep();//->Paso
             return true;
         }
 
         // Si no hay marcos libres → elegir víctima
         int victimFrame = selectVictimFrame(process, pageNumber);
+        notifySnapshot(getMemorySnapshotCompact());
+        waitForVisualStep();//->Paso
 
         if (victimFrame != -1) {
             // Guardar datos del frame que será reemplazado
@@ -218,20 +246,15 @@ public abstract class MemoryManager {
             int oldPage = frames[victimFrame].getPageNumber();
 
             notifyVictimChosen(victimFrame, "Aca incluir reason");
-            System.out.println(
-                    "ATENCION Listener recibió evento: frame=" + victimFrame + ", pid=" + oldPid + ", page=" + oldPage);
+            waitForVisualStep();//->Paso
             notifyFrameEvicted(victimFrame, oldPid, oldPage);
-
-            // Dar tiempo para que el visualizador procese la evicción antes de reemplazar
-            try {
-                Thread.sleep(100); // Pequeño delay para sincronización visual
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            waitForVisualStep();//->Paso
 
             replacePage(victimFrame, pid, pageNumber);
             notifyFrameLoaded(victimFrame, pid, pageNumber);
+            waitForVisualStep();//->Paso
             notifySnapshot(getMemorySnapshotCompact());
+            waitForVisualStep();//->Paso
 
             return true;
         }
@@ -308,24 +331,27 @@ public abstract class MemoryManager {
     public synchronized boolean isPageLoaded(String pid, int pageNumber) {
         return processPageMap.containsKey(pid)
                 && processPageMap.get(pid).contains(pageNumber);
+                
     }
 
     public synchronized Set<Integer> getLoadedPages(String pid) {
         return new HashSet<>(processPageMap.getOrDefault(pid, new HashSet<>()));
     }
-
+    // Aca tmb se agrega este metodo se usa en la simulacion
     public synchronized void freeProcessPages(String pid) {
         for (int i = 0; i < totalFrames; i++) {
             if (frames[i].isOccupied()
                     && frames[i].getProcessId().equals(pid)) {
                 int oldPage = frames[i].getPageNumber();
                 notifyFrameEvicted(i, pid, oldPage); // Notificar evicción visual
+                waitForVisualStep(); //->Paso OJO
                 frames[i].unload();
             }
         }
         processPageMap.remove(pid);
         Logger.memLog("[MEM] Paginas del proceso " + pid + " liberadas");
         Logger.memSnapshot(frames);
+        waitForVisualStep(); //->Paso
     }
 
     public synchronized String getMemorySnapshotCompact() {
@@ -341,12 +367,13 @@ public abstract class MemoryManager {
         }
         sb.append(
                 "=================================================================================================\n");
-
+        waitForVisualStep(); //->Paso
         sb.append("Paginas de Proceso: ");
         for (Map.Entry<String, Set<Integer>> e : processPageMap.entrySet()) {
             Set<Integer> pages = new TreeSet<>(e.getValue());
             sb.append(String.format("%s=%s; ", e.getKey(), pages));
         }
+        waitForVisualStep(); //->Paso
         return sb.toString();
     }
 
