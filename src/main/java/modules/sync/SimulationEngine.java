@@ -315,7 +315,33 @@ public class SimulationEngine {
             Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s completó penalty",
                 currentTime, p.getPid()));
             p.clearPageFault();
-            thread.wakeUp();
+            
+            // Reintentar carga de páginas
+            if (syncController.hasAllRequiredPages(p)) {
+              syncController.notifyProcessReady(p, "páginas disponibles tras penalty");
+              thread.wakeUp();
+            } else {
+              // Aún falta memoria, mantener bloqueado
+              Logger.memLog(String.format("[T=%d] [%s] Aún sin memoria suficiente",
+                  currentTime, p.getPid()));
+            }
+          }
+        } else {
+
+          if (currentTime % 2 == 0) { // Revisar cada 2 ciclos
+            if (syncController.hasAllRequiredPages(p)) {
+              Logger.memLog(String.format("[T=%d] [%s] Memoria disponible, reintentando carga",
+                  currentTime, p.getPid()));
+              syncController.notifyProcessReady(p, "memoria liberada");
+              thread.wakeUp();
+            } else {
+              // Intentar cargar las páginas ahora que puede haber espacio
+              boolean loaded = syncController.prepareProcessForExecution(p);
+              if (loaded) {
+                  syncController.notifyProcessReady(p, "páginas cargadas exitosamente");
+                  thread.wakeUp();
+              }
+            }
           }
         }
       }
