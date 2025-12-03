@@ -6,6 +6,7 @@ import model.ProcessState;
 import utils.Logger;
 import model.Config;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,8 +41,9 @@ public class IOManager implements Runnable {
   private final Config config;
   
   private SimulationStateListener stateListener;
+  private final List<Process> allProcesses; 
 
-  public IOManager(SyncController syncController, Config config) {
+  public IOManager(SyncController syncController, Config config,List<Process> allProcesses) {
     this.syncController = syncController;
     this.ioQueue = new LinkedBlockingQueue<>();
     this.running = new AtomicBoolean(false);
@@ -49,6 +51,7 @@ public class IOManager implements Runnable {
     this.completedIOOperations = new AtomicInteger(0);
     this.totalIOTime = new AtomicInteger(0);
     this.config = config;
+    this.allProcesses = allProcesses;
   }
 
   // metodo para establecer el listener
@@ -166,6 +169,9 @@ public class IOManager implements Runnable {
       
       Logger.procLog(String.format("[T=%d] [%s] I/O encolada (pendientes: %d)", 
         currentTime, process.getPid(), ioQueue.size()));
+      // Notificar con la cola COMPLETA de procesos en BLOCKED_IO
+      notifyBlockedIOQueueChanged();
+        
         
     } catch (InterruptedException e) {
       Logger.error("[IOMANAGER] Error encolando solicitud: " + e.getMessage());
@@ -271,6 +277,9 @@ public class IOManager implements Runnable {
     }
     
     syncController.notifyProcessReady(process, "completó I/O");
+    // Notificar con la cola COMPLETA de procesos en BLOCKED_IO
+    notifyBlockedIOQueueChanged();
+    
   }
 
   private void waitForSystemCallCompletion(Process process) throws InterruptedException {
@@ -329,6 +338,33 @@ public class IOManager implements Runnable {
       ioQueue.size()
     );
   }
+  // Método para notificar cambios en la cola de BLOCKED_IO
+  private void notifyBlockedIOQueueChanged() {
+    if (stateListener == null) {
+      return;
+    }
+    
+    java.util.List<Process> blockedIO = new java.util.ArrayList<>();
+    
+    // Obtener TODOS los procesos que están en estado BLOCKED_IO
+    for (Process p : allProcesses) {
+      if (p.getState() == ProcessState.BLOCKED_IO) {
+        blockedIO.add(p);
+      }
+    }
+    
+    // Notificar a la UI con la cola completa
+    stateListener.onBlockedIOChanged(blockedIO);
+    
+    int currentTime;
+    synchronized(syncController.getCoordinationMonitor()) {
+      currentTime = syncController.getCurrentTime();
+    }
+    
+    Logger.syncLog(String.format("[T=%d] [IOMANAGER] UI notificada: %d proceso(s) en BLOCKED_IO (cola completa)", 
+      currentTime, blockedIO.size()));
+  }
+
 
   public static class IOStatistics {
     public final int totalRequests;

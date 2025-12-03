@@ -133,7 +133,7 @@ public class SimulationRunner {
                 @Override
                 public void onBlockedIOChanged(List<Process> blockedIO) {
 
-                    //System.out.println("[SimulationRunner]  Blocked I/O actualizada: " + blockedIO.size());
+                    System.out.println("[SimulationRunner]  Blocked I/O actualizada: " + blockedIO.size());
                     dashboardPage.getProPanel().updateBlockedIO(blockedIO);
 
                 }
@@ -144,6 +144,12 @@ public class SimulationRunner {
                     //System.out.println("[SimulationRunner]  Blocked Memory actualizada: " + blockedMemory.size());
                     dashboardPage.getProPanel().updateBlockedMemory(blockedMemory);
 
+                }
+                @Override
+                public void onRunningChanged(Process runningProcess) {
+                    //System.out.println("[SimulationRunner] Running actualizado: " + 
+                    //    (runningProcess != null ? runningProcess.getPid() : "null"));
+                    dashboardPage.getProPanel().updateRunning(runningProcess);
                 }
 
                 @Override

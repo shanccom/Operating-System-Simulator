@@ -20,6 +20,7 @@ public class ProPanel extends VBox implements Logger.PanelHighlightListener {
     private VBox readyContainer;
     private VBox blockedIOContainer;
     private VBox blockedMemoryContainer;
+    private VBox runningContainer;
 
     public ProPanel() {
         setSpacing(10);
@@ -40,6 +41,18 @@ public class ProPanel extends VBox implements Logger.PanelHighlightListener {
         HBox content = new HBox(24);
         content.setPadding(new Insets(8));
         content.setAlignment(Pos.TOP_LEFT);
+
+
+        // COLUMNA RUNNING
+        Label runningTitle = new Label("Running");
+        runningTitle.getStyleClass().add("section-title");
+        runningTitle.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #008cffff;");
+
+        runningContainer = new VBox(6);
+        runningContainer.setAlignment(Pos.TOP_LEFT);
+
+        VBox colRunning = new VBox(10, runningTitle, runningContainer);
+        colRunning.setPrefWidth(180);
 
         // COLUMNA READY
         Label readyTitle = new Label("Ready");
@@ -75,7 +88,7 @@ public class ProPanel extends VBox implements Logger.PanelHighlightListener {
         colMem.setPrefWidth(180);
 
         // Agregar columnas al HBox
-        content.getChildren().addAll(colReady, colIO, colMem);
+        content.getChildren().addAll(colRunning,colReady, colIO, colMem);
 
         scrollPane.setContent(content);
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
@@ -83,12 +96,27 @@ public class ProPanel extends VBox implements Logger.PanelHighlightListener {
         getChildren().addAll(title, scrollPane);
 
         // Mostrar valores iniciales vacíos
+        updateRunning(null);
         updateReadyQueue(List.of());
         updateBlockedIO(List.of());
         updateBlockedMemory(List.of());
 
         // Registrar como listener para iluminarse en logs PROC
         Logger.addPanelListener(this);
+    }
+
+    public void updateRunning(Process process) {
+        Platform.runLater(() -> {
+            runningContainer.getChildren().clear();
+
+            if (process == null || process.getState() != ProcessState.RUNNING) {
+                Label cpuIdle = new Label("— CPU Idle —");
+                cpuIdle.setStyle("-fx-text-fill: rgba(255, 255, 255, 0.3); -fx-font-size: 11px;");
+                runningContainer.getChildren().add(cpuIdle);
+            } else {
+                runningContainer.getChildren().add(createProcessBadge(process, "#2196F3"));
+            }
+        });
     }
 
     // MÉTODOS PARA ACTUALIZAR COLAS
@@ -194,4 +222,21 @@ public class ProPanel extends VBox implements Logger.PanelHighlightListener {
             getStyleClass().remove("card-proc-active");
         });
     }
+
+    public void clearAllQueues() {
+        Platform.runLater(() -> {
+            // Limpiar contenedores
+            runningContainer.getChildren().clear();
+            readyContainer.getChildren().clear();
+            blockedIOContainer.getChildren().clear();
+            blockedMemoryContainer.getChildren().clear();
+
+            // Mostrar etiquetas de cola vacía
+            runningContainer.getChildren().add(new Label("— CPU Idle —"));
+            readyContainer.getChildren().add(emptyLabel());
+            blockedIOContainer.getChildren().add(emptyLabel());
+            blockedMemoryContainer.getChildren().add(emptyLabel());
+        });
+    }
+
 }

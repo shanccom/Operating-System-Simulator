@@ -45,7 +45,8 @@ public class SimulationEngine {
     this.scheduler = scheduler;
     this.memoryManager = memoryManager;
     this.syncController = new SyncController(scheduler, memoryManager, config);
-    this.ioManager = new IOManager(syncController, config);
+    
+    this.ioManager = new IOManager(syncController, config, processes);
     this.allProcesses = processes;
     this.config = config;
     this.currentTime = 0;
@@ -77,6 +78,7 @@ public class SimulationEngine {
   private void notifyUIUpdate() {
     if (stateListener != null) {
       List<Process> readyQueue = scheduler.getReadyQueueSnapshot();
+      Process runningProcess = scheduler.getCurrentProcess();
 
       List<Process> blockedIO;
       List<Process> blockedMemory;
@@ -92,8 +94,10 @@ public class SimulationEngine {
       }
 
       stateListener.onReadyQueueChanged(readyQueue);
-      stateListener.onBlockedIOChanged(blockedIO);
+      
+      //stateListener.onBlockedIOChanged(blockedIO);
       stateListener.onBlockedMemoryChanged(blockedMemory);
+      stateListener.onRunningChanged(runningProcess); 
       stateListener.onTimeChanged(currentTime);
     }
   }
@@ -169,9 +173,9 @@ public class SimulationEngine {
   }
 
   private void coordinationLoop() { 
-
+    notifyUIUpdate();
     while (isRunning() && !allProcessesCompleted()) {
-
+      
       try {
         simulationController.waitForNextStep();
       } catch (InterruptedException e) {

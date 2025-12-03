@@ -182,6 +182,7 @@ public class DashboardPage extends VBox {
       }
       
       System.out.println("[DashboardPage] Iniciando simulación...");
+      proPanel.clearAllQueues();
       
       statusLabel.setText("Simulación en curso...");
       statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 12px;");
