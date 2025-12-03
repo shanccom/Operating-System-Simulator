@@ -4,12 +4,24 @@ import model.Burst;
 import model.Process;
 import utils.Logger;
 
-/*Priority Scheduling
-Se asocia un número de prioridad (entero) a cada proceso
-EL planificador asigna el procesador al proceso con la más alta prioridad
-• Preemptive
-• No preemptive
- */
+
+/*
+Implementacion del algoritmo de planificacion por Prioridad.
+Permite modo expropiativo o no expropiativo segun el valor recibido en el constructor.
+
+selectNextProcess():
+ - Busca en la cola el proceso con mayor prioridad (numero mas pequeño).
+ - En caso de empate, elige el que llego primero.
+ - Devuelve el proceso con mejor prioridad sin removerlo de la cola.
+
+shouldPreempt():
+ - Solo funciona en modo expropiativo.
+ - Expropia si el proceso candidato tiene mayor prioridad que el actual.
+
+getAlgorithmName():
+ - Retorna el nombre del algoritmo indicando si es preemptive o non-preemptive.
+*/
+
 
 public class Priority extends Scheduler {
     

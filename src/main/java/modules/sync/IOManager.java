@@ -200,7 +200,7 @@ public class IOManager implements Runnable {
     synchronized(syncController.getCoordinationMonitor()) {
       startTime = syncController.getCurrentTime();
     }
-    int endTime = startTime + duration ;
+    int endTime = startTime + duration -1;
 
     Logger.procLog(String.format("[T=%d] [I/O] Procesando I/O para %s (duración: %d, fin: t=%d)", 
       startTime, process.getPid(), duration, endTime));

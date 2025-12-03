@@ -3,9 +3,32 @@ package modules.scheduler;
 import model.Process;
 import utils.Logger;
 
-/** Round Robin
- * Algoritmo apropiativo que asigna un quantum de tiempo a cada proceso
- */
+/*
+Round Robin : Asigna un quantum fijo a cada proceso y es un planificador apropiativo.
+
+selectNextProcess():
+ - Devuelve el siguiente proceso en la cola sin removerlo.
+
+shouldPreempt():
+ - Interrumpe cuando el quantum llega a cero.
+
+decrementaQuantum():
+ - Reduce el quantum en cada unidad de tiempo ejecutada.
+
+isQuantumAgotado():
+ - Indica si el quantum ya se agoto.
+
+resetQuantum():
+ - Restaura el quantum completo para un nuevo proceso.
+
+confirmProcessSelection():
+ - Remueve el proceso de la cola, reinicia su quantum y realiza el cambio de contexto.
+
+getAlgorithmName():
+ - Retorna el nombre del algoritmo con su quantum configurado.
+ 
+*/
+
 public class RoundRobin extends Scheduler {
     
     private final int quantum;

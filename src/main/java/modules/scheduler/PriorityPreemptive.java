@@ -4,6 +4,22 @@ import model.Process;
 import utils.Logger;
 
 
+/*
+Implementacion del algoritmo Priority en modo expropiativo.
+Selecciona siempre el proceso con mayor prioridad (numero mas pequeno).
+
+selectNextProcess():
+ - Recorre la cola y elige el proceso con mejor prioridad.
+ - Si hay empate, selecciona el que llego primero.
+ - Solo devuelve el proceso sin removerlo.
+
+shouldPreempt():
+ - Expropia si el proceso candidato tiene mayor prioridad que el actual.
+
+getAlgorithmName():
+ - Retorna el nombre del algoritmo en modo preemptive.
+*/
+
 
 public class PriorityPreemptive extends Scheduler {
     
