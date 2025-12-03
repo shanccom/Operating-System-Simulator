@@ -1,14 +1,50 @@
 package model;
 
+/*
+Clase Burst
+Representa una rafaga de CPU o IO dentro de un proceso.
+Cada rafaga tiene un tipo, una duracion total y un tiempo restante.
+
+PARTES PRINCIPALES:
+
+type:
+  Indica si la rafaga es CPU o IO.
+
+duration:
+  Tiempo total que la rafaga debe ejecutarse.
+
+remainingTime:
+  Tiempo que falta para completarla.
+
+METODOS:
+execute(time):
+  Reduce el tiempo restante segun el tiempo ejecutado.
+  Devuelve true si la rafaga ya termino.
+
+isCompleted():
+  Indica si remainingTime llego a cero.
+
+reset():
+  Reinicia el tiempo restante al valor original.
+
+isCPU() / isIO():
+  Indican si la rafaga es de CPU o de IO.
+
+OBJETIVO:
+Modelar la unidad basica de trabajo de un proceso en un simulador
+de sistemas operativos.
+*/
+
+
 public class Burst {
     
   public enum BurstType {
-    CPU,  // Ráfaga de CPU
-    IO    // Ráfaga de E/S
+    CPU,  // Rafaga de CPU
+    IO    // Rafaga de E/S
   }
   
   private final BurstType type;
-  private final int duration;        // Duración total en unidades de tiempo
+  private final int duration;        // Duracion total en unidades de tiempo
   private int remainingTime;         // Tiempo restante para completar
   
   public Burst(BurstType type, int duration) {

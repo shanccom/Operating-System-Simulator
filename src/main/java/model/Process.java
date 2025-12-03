@@ -4,6 +4,58 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/*
+Clase Process
+Representa un proceso dentro del simulador del sistema operativo.
+
+OBJETIVO:
+Modelar toda la información necesaria para ejecutar y monitorear un proceso:
+ráfagas, tiempos, estado y manejo de memoria.
+
+PRINCIPALES ELEMENTOS:
+
+Datos básicos:
+  pid: identificador del proceso.
+  arrivalTime: tiempo de llegada.
+  priority: prioridad asignada.
+  bursts: lista de ráfagas CPU/IO.
+  currentBurstIndex: índice de la ráfaga actual.
+
+Estado y métricas:
+  state: estado del proceso (NEW, READY, RUNNING…).
+  startTime: primera ejecución.
+  completionTime: finalización.
+  waitingTime: tiempo total en READY.
+  responseTime: tiempo hasta la primera ejecución.
+  hasStarted: indica si ya comenzó a ejecutarse.
+
+Memoria:
+  requiredPages: páginas que necesita.
+  loadedPages: páginas actualmente cargadas.
+  pageFaults: cantidad de fallos de página.
+  pageFaultEndTime: fin de atención de fallo.
+
+Control del sistema:
+  contextSwitchEndTime: fin del cambio de contexto.
+  systemCallEndTime: fin de llamada al sistema.
+
+MÉTODOS PRINCIPALES:
+getCurrentBurst(): devuelve la ráfaga activa.
+advanceBurst(): pasa a la siguiente ráfaga.
+isCompleted(): verifica si terminó todas las ráfagas.
+incrementWaitingTime(): suma tiempo en READY.
+markFirstExecution(): registra el tiempo de respuesta.
+loadPage(), unloadPage(), isPageLoaded(): manejo de páginas.
+incrementPageFaults(): suma fallos.
+getTurnaroundTime(): tiempo total del proceso.
+getRemainingTime(): tiempo restante por ejecutar.
+
+USO:
+Se utiliza durante la simulación para planificar, calcular métricas
+y administrar la memoria paginada del proceso.
+*/
+
+
 public class Process {
 
   private final String pid;

@@ -4,6 +4,54 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/*
+Clase DatosResultados
+Almacena todos los resultados generados por la simulacion del sistema operativo.
+
+OBJETIVO:
+Reunir en un solo objeto todas las metricas obtenidas despues de ejecutar
+los algoritmos de planificacion y administracion de memoria.
+
+ELEMENTOS PRINCIPALES:
+
+Metricas de graficas:
+  tiempoEsperaPromedio: promedio del tiempo que los procesos permanecen en espera.
+  tiempoRetornoPromedio: promedio del tiempo total que tarda cada proceso en completarse.
+  tiempoRespuestaPromedio: tiempo promedio hasta la primera respuesta de CPU.
+  usoCpu: porcentaje de tiempo en el que la CPU estuvo activa.
+  ocioCpu: porcentaje de tiempo en el que la CPU estuvo sin uso.
+
+Datos del planificador:
+  procesosCompletados: cantidad total de procesos finalizados.
+  totalProcesos: numero de procesos ingresados en el sistema.
+  cambiosContexto: numero total de cambios de contexto.
+  tiempoCpu: tiempo total donde la CPU estuvo ejecutando procesos.
+  tiempoOcioso: tiempo total donde la CPU estuvo en inactividad.
+
+Datos de memoria:
+  cargasTotales: cantidad de cargas de paginas.
+  fallosPagina: numero de fallos de pagina ocurridos.
+  reemplazosPagina: numero de reemplazos realizados.
+  marcosTotales: cantidad total de marcos disponibles.
+  marcosLibres: cantidad de marcos sin usar durante la simulacion.
+
+Datos generales:
+  resumenProcesos:
+    Lista inmutable con el resumen de cada proceso.
+    Incluye tiempos de espera, retorno, respuesta y uso de CPU.
+  algPlanificacion: nombre del algoritmo de planificacion utilizado.
+  algMemoria: nombre del algoritmo de reemplazo de paginas utilizado.
+
+Constructor:
+  Recibe todas las metricas generadas por la simulacion
+  y calcula automaticamente el porcentaje de ocio de CPU.
+
+Uso:
+Se utiliza para mostrar resultados en tablas, graficas, dashboards
+y exportaciones dentro del simulador de sistema operativo.
+*/
+
+
 public class DatosResultados {
     //Graficas
     private final double tiempoEsperaPromedio;

@@ -1,5 +1,26 @@
 package model;
 
+/*
+Clase ResultadoProceso
+Guarda el resumen final de un proceso después de la simulación.
+
+OBJETIVO:
+Almacenar los datos principales que se muestran en tablas o reportes,
+como tiempos y fallos de página.
+
+DATOS QUE GUARDA:
+  pid: identificador del proceso.
+  tiempoEspera: cuánto tiempo estuvo en READY.
+  tiempoRetorno: tiempo total desde que llegó hasta que terminó.
+  tiempoRespuesta: cuánto tardó en ejecutarse por primera vez.
+  fallosPagina: cantidad de fallos de página del proceso.
+
+USO:
+Se crea al final de la simulación para mostrar los resultados
+de cada proceso sin modificar el objeto original.
+*/
+
+
 public class ResultadoProceso {
     private final String pid;
     private final int tiempoEspera;

@@ -1,5 +1,47 @@
 package model;
 
+/*
+Clase Config
+Administra todos los parametros de configuracion del sistema de simulacion.
+
+OBJETIVO:
+Centralizar opciones para el planificador, memoria, penalidades y tamanos.
+
+ELEMENTOS PRINCIPALES:
+
+SchedulerType:
+  Define el tipo de planificador usado:
+  FCFS, SJF, SRT, ROUND_ROBIN, PRIORITY, PRIORITYPREEMPTIVE.
+
+ReplacementType:
+  Define el algoritmo de reemplazo de paginas:
+  FIFO, LRU, OPTIMAL, NRU.
+
+Atributos configurables:
+  totalFrames: cantidad total de marcos de memoria.
+  frameSize: tamano de cada marco.
+  schedulerType: planificador seleccionado.
+  quantum: usado solo si el planificador es Round Robin.
+  replacementType: algoritmo para manejo de paginas.
+  ENABLE_IO: bandera global para permitir operaciones de IO.
+  timeUnit: tiempo base usado por la simulacion.
+
+Overheads:
+  systemCallOverhead: costo de llamada al sistema.
+  pageFaultPenalty: penalizacion por fallo de pagina.
+  contextSwitchOverhead: costo por cambio de contexto.
+
+Metodos:
+  getters/setters para modificar configuraciones.
+  validate():
+    Verifica que los valores basicos sean correctos.
+  toString():
+    Devuelve un resumen legible de la configuracion.
+
+Uso:
+Proveer configuracion global a los modulos de CPU, memoria, IO y planificacion.
+*/
+
 public class Config {
   
   public enum SchedulerType {
