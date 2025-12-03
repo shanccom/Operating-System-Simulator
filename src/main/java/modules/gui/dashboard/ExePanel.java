@@ -36,13 +36,30 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         title.getStyleClass().add("card-title");
 
         // Contenedor con scroll para el Gantt
+        // ---- Crear el scrollpane ----
         ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setFitToHeight(true);
+        scrollPane.setFitToWidth(false);   // permite scroll horizontal
+        scrollPane.setFitToHeight(false);     // Permite scroll vertical cuando sea necesario
         scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
 
+        // ---- Crear el GanttChart ----
         ganttChart = new GanttChart();
-        scrollPane.setContent(ganttChart);
+
+        // ---- Envolver el GanttChart en un VBox ----
+        VBox ganttContainer = new VBox(ganttChart);
+        ganttContainer.setFillWidth(false);
+        ganttContainer.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        ganttContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
+
+        // Esto permite que el Gantt crezca con la ventana, pero si se pasa → scroll vertical
+        VBox.setVgrow(ganttContainer, Priority.NEVER);
+
+        // ---- Asignar el contenedor al scrollpane ----
+        scrollPane.setContent(ganttContainer);
+
+        // ---- Permitir que el scrollpane ocupe el espacio disponible ----
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
 
         // Panel de metricas
         HBox metricsPanel = createMetricsPanel();

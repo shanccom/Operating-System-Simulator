@@ -217,12 +217,7 @@ public class GanttChart extends Pane {
             drawProcessRow(gc, pid, i);
         }
 
-        // Dibujar filas de procesos
-        int row = 0;
-        for (String pid : processColors.keySet()) {
-            drawProcessRow(gc, pid, row);
-            row++;
-        }
+
         
         //Dibujar fila de E/S
         drawIORow(gc, processOrden.size());
