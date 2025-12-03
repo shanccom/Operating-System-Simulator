@@ -12,12 +12,16 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import modules.gui.components.GanttChart;
+import modules.gui.components.GanttChartSimple;
 import utils.Logger;
 
 public class ExePanel extends VBox implements Logger.PanelHighlightListener {
 
     private GanttChart ganttChart;
+    private GanttChartSimple ganttChartSimple;
     private ScrollPane scrollPane;
+    private VBox ganttContainer;
+    private boolean useSimpleVersion = false; // false = version original
 
     private VBox cpuUtilLabel;
     private VBox contextSwitchLabel;
@@ -30,6 +34,7 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
     private double avgWaitTime = 0.0;
 
     private Button expandButton; // boton para expandir y reducir panel
+    private Button switchViewButton; // Boton para cambiar de vista
     private boolean isExpanded = false;
     private Runnable onExpandCallback;
     private Runnable onCollapseCallback;
@@ -39,7 +44,7 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         setPadding(new Insets(16));
         getStyleClass().add("card-exe");
 
-        // header con titulo y boton de expandir
+        // header con titulo y botones de expandir y cambiar
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
 
@@ -49,24 +54,32 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // Boton para cambiar de vista
+        switchViewButton = new Button("Vista 2 Líneas");
+        switchViewButton.getStyleClass().add("ghost-button");
+        switchViewButton.setStyle("-fx-font-size: 12px; -fx-padding: 5 10; -fx-background-color: rgba(33, 150, 243, 0.2); -fx-text-fill: white; -fx-cursor: hand;");
+        switchViewButton.setOnAction(e -> switchView());
+
         expandButton = new Button("+");
         expandButton.getStyleClass().add("ghost-button");
         expandButton.setStyle("-fx-font-size: 16px; -fx-padding: 5 10; -fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: white; -fx-cursor: hand;");
         expandButton.setOnAction(e -> toggleExpand());
 
-        header.getChildren().addAll(title, spacer, expandButton);
+        header.getChildren().addAll(title, spacer, switchViewButton, expandButton);
 
         // Contenedor con scroll para el Gantt
         scrollPane = new ScrollPane();
-        scrollPane.setFitToWidth(false);   // permite scroll horizontal
-        scrollPane.setFitToHeight(false);     // Permite scroll vertical cuando sea necesario
+        scrollPane.setFitToWidth(false);
+        scrollPane.setFitToHeight(false);
         scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
 
-        // Creamos el GanttChart
+        // Crear ambas versiones del Gantt
         ganttChart = new GanttChart();
+        ganttChartSimple = new GanttChartSimple();
 
         // Envolver el GanttChart en un VBox
-        VBox ganttContainer = new VBox(ganttChart);
+        ganttContainer = new VBox();
+        ganttContainer.getChildren().add(ganttChart); // Empezar con version original
         ganttContainer.setFillWidth(false);
         ganttContainer.setPrefWidth(Region.USE_COMPUTED_SIZE);
         ganttContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
@@ -86,11 +99,25 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         Logger.addPanelListener(this);
     }
 
+    private void switchView() {
+        useSimpleVersion = !useSimpleVersion;
+        
+        // Cambiar el contenido del container
+        ganttContainer.getChildren().clear();
+        if (useSimpleVersion) {
+            ganttContainer.getChildren().add(ganttChartSimple);
+            switchViewButton.setText("Vista Multi-Línea");
+        } else {
+            ganttContainer.getChildren().add(ganttChart);
+            switchViewButton.setText("Vista 2 Líneas");
+        }
+    }
+
     private void toggleExpand() {
         isExpanded = !isExpanded;
         
         if (isExpanded) {
-            expandButton.setText("--"); // Cambiar a icono de reducir
+            expandButton.setText("-"); // Cambiar a icono de reducir
             expandButton.setStyle("-fx-font-size: 16px; -fx-padding: 5 10; -fx-background-color: rgba(76, 175, 80, 0.3); -fx-text-fill: white; -fx-cursor: hand;");
             if (onExpandCallback != null) {
                 onExpandCallback.run();
@@ -157,12 +184,14 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
 
     public void addExecutionStart(String pid, int startTime) {
         ganttChart.addExecutionStart(pid, startTime);
+        ganttChartSimple.addExecutionStart(pid, startTime);
         //Auto-scroll al proceso que inicia
         autoScrollToActiveProcess();
     }
 
     public void addExecutionEnd(String pid, int endTime) {
         ganttChart.addExecutionEnd(pid, endTime);
+        ganttChartSimple.addExecutionEnd(pid, endTime);
         totalCPUTime += 1; // Ajustar según la duración real
         updateMetrics();
     }
@@ -170,16 +199,19 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
     public void addIOStart(String pid, int startTime) {
         //System.out.println("[ExePanel] addIOStart: " + pid + " en t=" + startTime);
         ganttChart.addIOStart(pid, startTime);
+        ganttChartSimple.addIOStart(pid, startTime);
     }
 
     public void addIOEnd(String pid, int endTime) {
         //System.out.println("[ExePanel] addIOEnd: " + pid + " en t=" + endTime);
         ganttChart.addIOEnd(pid, endTime);
+        ganttChartSimple.addIOEnd(pid, endTime);
     }
 
     public void setCurrentTime(int time) {
         // System.out.println("[ExePanel] setCurrentTime llamado: " + time);
         ganttChart.setCurrentTime(time);
+        ganttChartSimple.setCurrentTime(time);
         //Auto-scroll para seguir el cursor
         autoScrollToCurrentTime();
     }
@@ -187,9 +219,8 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
     // metodo para hacer auto-scroll siguiendo el cursor
     private void autoScrollToCurrentTime() {
         Platform.runLater(() -> {
-            // scroll horizontal, seguir al cursor
-            double cursorX = ganttChart.getCurrentCursorX();
-            double totalWidth = ganttChart.getTotalWidth();
+            double cursorX = useSimpleVersion ? ganttChartSimple.getCurrentCursorX() : ganttChart.getCurrentCursorX();
+            double totalWidth = useSimpleVersion ? ganttChartSimple.getTotalWidth() : ganttChart.getTotalWidth();
             double viewportWidth = scrollPane.getViewportBounds().getWidth();
             
             double targetHScrollPosition = (cursorX - (viewportWidth * 0.7)) / (totalWidth - viewportWidth);
@@ -202,31 +233,35 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
                 scrollPane.setHvalue(targetHScrollPosition);
             }
             
-            // scroll vertical seguir el proceso activo
-            int activeRow = ganttChart.getActiveProcessRow();
-            
-            if (activeRow >= 0) { // Hay un proceso activo
-                double processY = ganttChart.getActiveProcessY();
-                double totalHeight = ganttChart.getTotalHeight();
-                double viewportHeight = scrollPane.getViewportBounds().getHeight();
+            // scroll vertical solo para version multi-linea
+            if (!useSimpleVersion) {
+                int activeRow = ganttChart.getActiveProcessRow();
                 
+                if (activeRow >= 0) {
+                    double processY = ganttChart.getActiveProcessY();
+                    double totalHeight = ganttChart.getTotalHeight();
+                    double viewportHeight = scrollPane.getViewportBounds().getHeight();
+                    
                 // Calcular la posición vertical del scroll para centrar el proceso
-                double targetVScrollPosition = (processY - (viewportHeight * 0.5)) / (totalHeight - viewportHeight);
-                targetVScrollPosition = Math.max(0, Math.min(1, targetVScrollPosition));
-                
+                    double targetVScrollPosition = (processY - (viewportHeight * 0.5)) / (totalHeight - viewportHeight);
+                    targetVScrollPosition = Math.max(0, Math.min(1, targetVScrollPosition));
+                    
                 // Verificar si el proceso está fuera de vista
-                double currentVScrollPosition = scrollPane.getVvalue();
-                double processRelativePositionV = (processY - (currentVScrollPosition * (totalHeight - viewportHeight))) / viewportHeight;
-                
+                    double currentVScrollPosition = scrollPane.getVvalue();
+                    double processRelativePositionV = (processY - (currentVScrollPosition * (totalHeight - viewportHeight))) / viewportHeight;
+                    
                 // Si el proceso está fuera del 20%-80% del viewport, hacer scroll
-                if (processRelativePositionV < 0.2 || processRelativePositionV > 0.8) {
-                    scrollPane.setVvalue(targetVScrollPosition);
+                    if (processRelativePositionV < 0.2 || processRelativePositionV > 0.8) {
+                        scrollPane.setVvalue(targetVScrollPosition);
+                    }
                 }
             }
         });
     }
     // metodo para hacer scroll inmediato al proceso activo
     private void autoScrollToActiveProcess() {
+        if (useSimpleVersion) return;
+        
         Platform.runLater(() -> {
             int activeRow = ganttChart.getActiveProcessRow();
             
@@ -265,6 +300,7 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
 
     public void clearGantt() {
         ganttChart.clear();
+        ganttChartSimple.clear();
         totalCPUTime = 0;
         totalIdleTime = 0;
         contextSwitches = 0;
@@ -280,6 +316,7 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
 
     public void initializeProcesses(List<String> processIds) {
         ganttChart.initializeProcesses(processIds);
+        ganttChartSimple.initializeProcesses(processIds);
     }
 
     private void updateMetrics() {
