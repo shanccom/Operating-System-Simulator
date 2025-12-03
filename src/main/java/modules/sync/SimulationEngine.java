@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import model.Burst;
 
 public class SimulationEngine {
   
@@ -173,8 +174,7 @@ public class SimulationEngine {
   }
 
   private void coordinationLoop() { 
-    System.out.println("=== INICIO coordinationLoop ===");
-    System.out.println("currentTime inicial: " + currentTime);
+
     
     while (isRunning() && !allProcessesCompleted()) {
       
@@ -187,11 +187,11 @@ public class SimulationEngine {
       
       synchronized(syncController.getCoordinationMonitor()) {
         int t = getCurrentTime();
-        System.out.println("\n>>> ITERACIÓN: currentTime=" + t);
+
         // Actualizar tiempo en SyncController
         syncController.synchronizeTime(t);
 
-        System.out.println("  Antes de notifyProcessArrivals");
+
         // Notificar procesos en tiempo de llegada
         notifyProcessArrivals(t);
 
@@ -199,7 +199,7 @@ public class SimulationEngine {
 
         countContextSwitchingCycles();
 
-        System.out.println("  Antes de coordinateScheduler");
+
         // Coordinar ejecución
         coordinateScheduler();
         
@@ -215,13 +215,15 @@ public class SimulationEngine {
       
       sleep(config.getTimeUnit());
       
-      System.out.println("  Antes de advanceTime: " + currentTime);  // ← AÑADIR
+
       advanceTime();
-      System.out.println("  Después de advanceTime: " + currentTime);
+
     }
   }
 
   private void handleContextSwitchCompletion(int currentTime) {
+
+    
     for (ProcessThread thread : processThreads) {
       Process p = thread.getProcess();
       
@@ -229,15 +231,34 @@ public class SimulationEngine {
       if (p.getState() == ProcessState.CONTEXT_SWITCHING) {
         int endTime = p.getContextSwitchEndTime();
         
+
         // Si el tiempo de overhead ya pasó
-        if (currentTime >= endTime) {
-          Logger.exeLog(String.format("[T=%d] [ENGINE] %s CONTEXT_SWITCHING a READY", 
-            currentTime, p.getPid()));
+        if (currentTime > endTime) {
+
+          Burst nextBurst = p.getCurrentBurst();
           
-          // Volver a READY
-          p.setState(ProcessState.READY);
-          scheduler.addProcess(p);
-          p.clearContextSwitch();
+          if (nextBurst != null && !nextBurst.isCPU()) {
+            
+            // Siguiente es I/O → cambiar a RUNNING para que ejecute I/O
+            Logger.exeLog(String.format("[T=%d] [ENGINE] %s CONTEXT_SWITCHING → RUNNING (ejecutará I/O)", 
+              currentTime, p.getPid()));
+            
+            p.setState(ProcessState.RUNNING);
+            p.clearContextSwitch();
+            thread.wakeUp(); // Despertar para que ejecute I/O
+            
+          } else {
+
+
+            // Siguiente es CPU → volver a READY
+            Logger.exeLog(String.format("[T=%d] [ENGINE] %s CONTEXT_SWITCHING → READY", 
+              currentTime, p.getPid()));
+            
+            p.setState(ProcessState.READY);
+            scheduler.addProcess(p);
+            p.clearContextSwitch();
+          }
+        } else {
         }
       }
     }
@@ -320,6 +341,7 @@ public class SimulationEngine {
   private void coordinateScheduler() {
     Process currentProcess = scheduler.getCurrentProcess();
     
+
     if (currentProcess != null) {
       validateAndContinueProcess(currentProcess);
     } else {
@@ -330,6 +352,8 @@ public class SimulationEngine {
   private void validateAndContinueProcess(Process current) {
     ProcessState state = current.getState();
     
+    
+
     // Verificar estado válido
     if (state == ProcessState.TERMINATED || 
         state == ProcessState.BLOCKED_IO || 
@@ -384,6 +408,9 @@ public class SimulationEngine {
 
   private void selectNextProcess() {
     long inCS = allProcesses.stream().filter(p -> p.getState() == ProcessState.CONTEXT_SWITCHING).count();
+    
+    
+    
     if (inCS > 0) {
       Logger.syncLog(String.format("[T=%d] [ENGINE] %d proceso(s) en CONTEXT_SWITCHING", 
         getCurrentTime(), inCS));
@@ -393,7 +420,9 @@ public class SimulationEngine {
     
     Process currentProcess = scheduler.getCurrentProcess();
     Process nextProcess = scheduler.selectNextProcess();
-    
+
+
+
     if (nextProcess == null) {
       scheduler.recordIdleTime(1);
       return;
@@ -403,6 +432,8 @@ public class SimulationEngine {
       int overhead = config.getContextSwitchOverhead();
       int currentTime = getCurrentTime();
       
+      
+      
       Logger.exeLog(String.format("[T=%d] [ENGINE] Context Switch: %s  %s (overhead: %d ciclos)", 
         currentTime, currentProcess.getPid(), nextProcess.getPid(), overhead));
       
@@ -411,14 +442,13 @@ public class SimulationEngine {
 
     boolean canExecute = syncController.prepareProcessForExecution(nextProcess);
     
-    System.out.println("  [selectNextProcess] nextProcess=" + nextProcess.getPid() + 
-                       ", canExecute=" + canExecute + 
-                       ", currentTime=" + currentTime);
+
     if (canExecute) {
+      
+      
       //para gant
       String pid = nextProcess.getPid();
-      System.out.println("[Engine-Gant] Proceso " + pid + " inicia ejecución en t=" + currentTime);
-      
+
       if (stateListener != null) {
           stateListener.onProcessExecutionStarted(pid, currentTime);
           // Solo notificar context switch si hubo un proceso anterior
@@ -461,7 +491,6 @@ public class SimulationEngine {
       for (String pid : new ArrayList<>(executionStartTimes.keySet())) {
         Integer startTime = executionStartTimes.get(pid);
         if (startTime != null && stateListener != null) {
-          System.out.println("[Engine-gant] 🏁 Proceso " + pid + " completado en t=" + currentTime);
           stateListener.onProcessExecutionEnded(pid, currentTime);
         }
       }
