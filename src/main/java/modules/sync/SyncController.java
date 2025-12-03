@@ -33,6 +33,7 @@ public class SyncController {
           Logger.memLog(String.format("[T=%d] [PAGE FAULT] %s completó page fault handling", 
             currentTime, process.getPid()));
           process.clearPageFault();
+          memoryManager.waitForVisualStep();
         }
       } 
       
@@ -60,11 +61,12 @@ public class SyncController {
           
           Logger.exeLog(String.format("[T=%d] [PAGE FAULT] %s bloqueado hasta t=%d (penalty: %d ciclos)", 
             currentTime, process.getPid(), endTime, pageFaultPenalty));
-          
+          memoryManager.waitForVisualStep();
           return false;
         } else {
           Logger.exeLog(String.format("[PAGE FAULT] %s páginas cargadas (penalty=0, continúa)", 
              process.getPid()));
+          memoryManager.waitForVisualStep();
           process.setState(ProcessState.RUNNING);
           return true;
         }

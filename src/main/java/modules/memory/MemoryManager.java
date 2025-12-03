@@ -218,8 +218,8 @@ public abstract class MemoryManager {
             notifyPageAccess(frameIndex, pid, pageNumber, true);
             waitForVisualStep();
             accessPage(pid, pageNumber);
+            
             notifySnapshot(getMemorySnapshotCompact());
-            // Logger.memSnapshot(frames);
             waitForVisualStep();// ->Paso
             return true;
         }
