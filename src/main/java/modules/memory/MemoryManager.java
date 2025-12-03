@@ -207,7 +207,7 @@ public abstract class MemoryManager {
         // Caso: la pagina YA esta en memoria (HIT)
         if (isPageLoaded(pid, pageNumber)) {
             int frameIndex = findFrame(pid, pageNumber);
-            Logger.memHit(pid, pageNumber, frameIndex);
+            Logger.memHit(pid, pageNumber, frameIndex, currentTime);
             notifyPageAccess(frameIndex, pid, pageNumber, true);
             waitForVisualStep();
             accessPage(pid, pageNumber);
@@ -220,7 +220,7 @@ public abstract class MemoryManager {
         // PAGE FAULT
         pageFaults++;
         process.incrementPageFaults();
-        Logger.memFault(pid, pageNumber);
+        Logger.memFault(pid, pageNumber, currentTime);
         notifyPageFault(pid, pageNumber);
         waitForVisualStep(); //->Paso
 
@@ -229,7 +229,6 @@ public abstract class MemoryManager {
         if (freeFrame != -1) {
             loadPageToFrame(freeFrame, pid, pageNumber);
             notifyFrameLoaded(freeFrame, pid, pageNumber);
-            waitForVisualStep(); //->Paso
             notifySnapshot(getMemorySnapshotCompact());
             waitForVisualStep();//->Paso
             return true;
@@ -254,7 +253,6 @@ public abstract class MemoryManager {
             notifyFrameLoaded(victimFrame, pid, pageNumber);
             waitForVisualStep();//->Paso
             notifySnapshot(getMemorySnapshotCompact());
-            waitForVisualStep();//->Paso
 
             return true;
         }
@@ -304,7 +302,7 @@ public abstract class MemoryManager {
         processPageMap.computeIfAbsent(pid, k -> new HashSet<>()).add(pageNumber);
         totalPageLoads++;
 
-        Logger.memLoad(pid, pageNumber, frameIndex);
+        Logger.memLoad(pid, pageNumber, frameIndex, currentTime);
         Logger.memSnapshot(frames);
     }
 
@@ -324,7 +322,7 @@ public abstract class MemoryManager {
         pageReplacements++;
         totalPageLoads++;
 
-        Logger.memReplace(oldPid, oldPage, newPid, newPage, frameIndex, "Algoritmo: " + getAlgorithmName());
+        Logger.memReplace(oldPid, oldPage, newPid, newPage, frameIndex, "Algoritmo: " + getAlgorithmName(), currentTime );
         Logger.memSnapshot(frames);
     }
 
@@ -353,7 +351,7 @@ public abstract class MemoryManager {
         Logger.memSnapshot(frames);
         waitForVisualStep(); //->Paso
     }
-
+// Creo que se utiliza para le visualizer, no se imprime en el logger 
     public synchronized String getMemorySnapshotCompact() {
         StringBuilder sb = new StringBuilder();
         sb.append("MEMORIA FISICA ================================================================================\n");
@@ -367,13 +365,12 @@ public abstract class MemoryManager {
         }
         sb.append(
                 "=================================================================================================\n");
-        waitForVisualStep(); //->Paso
         sb.append("Paginas de Proceso: ");
         for (Map.Entry<String, Set<Integer>> e : processPageMap.entrySet()) {
             Set<Integer> pages = new TreeSet<>(e.getValue());
             sb.append(String.format("%s=%s; ", e.getKey(), pages));
         }
-        waitForVisualStep(); //->Paso
+
         return sb.toString();
     }
 

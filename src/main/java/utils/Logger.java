@@ -231,30 +231,30 @@ public class Logger {
     }
 
     /// memoria
-    public static void memLoad(String pid, int page, int frame) {
+    public static void memLoad(String pid, int page, int frame, int time) {
         log(String.format(
                 "[T=%d][MEM][LOAD] Se carga la pagina %d del proceso %s en el marco %d",
-                page, pid, frame), LogLevel.MEM);
+                time, page, pid, frame), LogLevel.MEM);
     }
 
-    public static void memHit(String pid, int page, int frame) {
+    public static void memHit(String pid, int page, int frame, int time) {
         log(String.format(
                 "[T=%d][MEM][HIT] La pagina %d del proceso %s ya estaba cargada (marco %d)",
-                page, pid, frame), LogLevel.MEM);
+                time, page, pid, frame), LogLevel.MEM);
     }
 
-    public static void memFault(String pid, int page) {
+    public static void memFault(String pid, int page, int time) {
         log(String.format(
                 "[T=%d][MEM][PAGE FAULT] El proceso %s pidio la pagina %d, pero NO estaba en memoria",
-                pid, page), LogLevel.MEM);
+                time, pid, page), LogLevel.MEM);
     }
 
-    public static void memReplace(String oldPid, int oldPage, String newPid, int newPage, int frame, String reason) {
+    public static void memReplace(String oldPid, int oldPage, String newPid, int newPage, int frame, String reason, int time) {
         log(String.format(
                 "[T=%d][MEM][REPLACE] Se reemplazo %s:P%d por %s:P%d en el marco %d | Motivo: %s",
-                oldPid, oldPage, newPid, newPage, frame, reason), LogLevel.MEM);
+                time, oldPid, oldPage, newPid, newPage, frame, reason), LogLevel.MEM);
     }
-
+    //Este si se imprime
     public static void memSnapshot(Frame[] frames) {
         StringBuilder sb = new StringBuilder();
         sb.append("\nMEMORIA FISICA ____________________________________\n");
