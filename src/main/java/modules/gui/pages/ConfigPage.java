@@ -23,7 +23,7 @@ public class ConfigPage extends VBox {
     private final Spinner<Integer> quantumSpinner = new Spinner<>(1, 20, 2);
     private final ComboBox<String> replacementCombo = new ComboBox<>();
     private final CheckBox enableIOCheck = new CheckBox("Habilitar I/O");
-    private final Spinner<Integer> timeUnitSpinner = new Spinner<>(10, 100, 100, 10); //Problema moviendolo mejor no tocarlo
+    private final Spinner<Integer> timeUnitSpinner = new Spinner<>(10, 100, 100, 10);
     private final MainFX mainFx;
 
     private final Label labelProcess = new Label();
