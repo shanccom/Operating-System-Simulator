@@ -2,10 +2,21 @@ package modules.scheduler;
 
 import model.Process;
 
-/**
- * First Come First Served (FCFS)
- * Algoritmo no apropiativo que ejecuta procesos en orden de llegada
- */
+/*
+Implementacion del algoritmo FCFS (First Come First Served).
+Atiende los procesos segun el orden de llegada, sin apropiacion.
+
+selectNextProcess():
+ - Si el proceso actual sigue ejecutando su rafaga, se mantiene.
+ - Si termino o no tiene rafagas, se limpia y se toma el siguiente de la cola.
+
+shouldPreempt():
+ - FCFS nunca interrumpe procesos (retorna false).
+
+getAlgorithmName():
+ - Retorna el nombre del algoritmo.
+*/
+
 public class FCFS extends Scheduler {
     
     public FCFS() {

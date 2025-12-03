@@ -7,6 +7,7 @@ public interface SimulationStateListener {
     void onReadyQueueChanged(List<Process> readyQueue);
     void onBlockedIOChanged(List<Process> blockedIO);
     void onBlockedMemoryChanged(List<Process> blockedMemory);
+    void onRunningChanged(Process runningProcess); 
     void onProcessStateChanged(Process process);
     void onTimeChanged(int currentTime);
 

@@ -10,6 +10,38 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
+/*
+Clase base para todos los algoritmos de planificacion.
+Administra la cola READY, el proceso actual y todas las metricas generales.
+
+addProcess():
+ - Agrega un proceso a la cola READY si esta en un estado valido.
+
+selectNextProcess():
+ - Metodo abstracto que cada algoritmo implementa para decidir el siguiente proceso.
+
+shouldPreempt():
+ - Indica si el algoritmo debe reemplazar el proceso en ejecucion.
+
+confirmProcessSelection():
+ - Remueve el proceso elegido y ejecuta el cambio de contexto.
+
+contextSwitch():
+ - Registra y realiza un cambio de contexto entre procesos.
+
+onProcessComplete():
+ - Actualiza las metricas cuando un proceso finaliza.
+
+Metricas:
+ - Tiempo de espera, retorno, respuesta, uso de CPU y cambios de contexto.
+
+reset():
+ - Limpia todas las metricas y la cola para iniciar una nueva simulacion.
+
+Incluye getters para acceder al estado del planificador y sus metricas.
+*/
+
+
 public abstract class Scheduler {
     
     protected final Queue<Process> readyQueue;

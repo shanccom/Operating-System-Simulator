@@ -23,14 +23,12 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
     private VBox ganttContainer;
     private boolean useSimpleVersion = false; // false = version original
 
-    private VBox cpuUtilLabel;
+    
     private VBox contextSwitchLabel;
-    private VBox avgWaitLabel;
+    
     private PauseTransition exeTimer = new PauseTransition(Duration.millis(300)); //Tiempo de iluminacion
 
     // Metricas
-    private int totalCPUTime = 0;
-    private int totalIdleTime = 0;
     private int contextSwitches = 0;
     private double avgWaitTime = 0.0;
 
@@ -150,11 +148,10 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         panel.setAlignment(Pos.CENTER);
         panel.setPadding(new Insets(10, 0, 0, 0));
 
-        cpuUtilLabel = createMetricBox("CPU Utilization", "0%", "#4CAF50");
+       
         contextSwitchLabel = createMetricBox("Context Switches", "0", "#2196F3");
-        avgWaitLabel = createMetricBox("Avg Wait Time", "0u", "#FF9800");
 
-        panel.getChildren().addAll(cpuUtilLabel, contextSwitchLabel, avgWaitLabel);
+        panel.getChildren().addAll(contextSwitchLabel);
         return panel;
     }
 
@@ -193,7 +190,6 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
     public void addExecutionEnd(String pid, int endTime) {
         ganttChart.addExecutionEnd(pid, endTime);
         ganttChartSimple.addExecutionEnd(pid, endTime);
-        totalCPUTime += 1; // Ajustar según la duración real
         updateMetrics();
     }
 
@@ -294,10 +290,6 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         updateMetrics();
     }
 
-    public void setIdleTime(int idleTime) {
-        this.totalIdleTime = idleTime;
-        updateMetrics();
-    }
 
     public void setAvgWaitTime(double waitTime) {
         this.avgWaitTime = waitTime;
@@ -307,8 +299,6 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
     public void clearGantt() {
         ganttChart.clear();
         ganttChartSimple.clear();
-        totalCPUTime = 0;
-        totalIdleTime = 0;
         contextSwitches = 0;
         avgWaitTime = 0.0;
         updateMetrics();
@@ -327,17 +317,11 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
 
     private void updateMetrics() {
         Platform.runLater(() -> {
-            int totalTime = totalCPUTime + totalIdleTime;
-            double cpuUtil = totalTime > 0 ? (totalCPUTime * 100.0 / totalTime) : 0;
-
-            Label cpuValue = (Label) ((VBox) cpuUtilLabel).getChildren().get(1);
-            cpuValue.setText(String.format("%.1f%%", cpuUtil));
+            
 
             Label csValue = (Label) ((VBox) contextSwitchLabel).getChildren().get(1);
             csValue.setText(String.valueOf(contextSwitches));
 
-            Label waitValue = (Label) ((VBox) avgWaitLabel).getChildren().get(1);
-            waitValue.setText(String.format("%.1fu", avgWaitTime));
         });
     }
 

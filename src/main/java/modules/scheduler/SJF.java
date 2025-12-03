@@ -4,9 +4,20 @@ import model.Burst;
 import model.Process;
 import utils.Logger;
 
-/* Shortest Job First (SJF)
-   Algoritmo no apropiativo que ejecuta el proceso con la ráfaga de CPU más corta
+/*
+Implementacion del algoritmo SJF (Shortest Job First).
+Selecciona el proceso con la rafaga de CPU mas corta y no es apropiativo.
+
+selectNextProcess():
+ - Recorre la cola READY y elige el proceso con menor tiempo de CPU restante.
+
+shouldPreempt():
+ - Siempre retorna false porque SJF no interrumpe procesos.
+
+getAlgorithmName():
+ - Retorna el nombre del algoritmo.
 */
+
 public class SJF extends Scheduler {
     
     public SJF() {
