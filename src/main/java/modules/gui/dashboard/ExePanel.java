@@ -49,8 +49,8 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        expandButton = new Button("⛶");
-        expandButton.getStyleClass().add("icon-button");
+        expandButton = new Button("+");
+        expandButton.getStyleClass().add("ghost-button");
         expandButton.setStyle("-fx-font-size: 16px; -fx-padding: 5 10; -fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: white; -fx-cursor: hand;");
         expandButton.setOnAction(e -> toggleExpand());
 
@@ -90,13 +90,13 @@ public class ExePanel extends VBox implements Logger.PanelHighlightListener {
         isExpanded = !isExpanded;
         
         if (isExpanded) {
-            expandButton.setText("⛶"); // Cambiar a icono de reducir
+            expandButton.setText("--"); // Cambiar a icono de reducir
             expandButton.setStyle("-fx-font-size: 16px; -fx-padding: 5 10; -fx-background-color: rgba(76, 175, 80, 0.3); -fx-text-fill: white; -fx-cursor: hand;");
             if (onExpandCallback != null) {
                 onExpandCallback.run();
             }
         } else {
-            expandButton.setText("⛶");
+            expandButton.setText("+");
             expandButton.setStyle("-fx-font-size: 16px; -fx-padding: 5 10; -fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: white; -fx-cursor: hand;");
             if (onCollapseCallback != null) {
                 onCollapseCallback.run();
