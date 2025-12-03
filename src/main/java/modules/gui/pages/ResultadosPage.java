@@ -7,6 +7,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.ScrollPane;   // <-- IMPORTANTE
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -21,7 +22,11 @@ import model.DatosResultados;
 import model.ResultadoProceso;
 
 public class ResultadosPage extends VBox {
-private final Label algPlanLabel = new Label();
+
+    // Contenedor interno que irá dentro del ScrollPane
+    private final VBox content = new VBox(20);
+
+    private final Label algPlanLabel = new Label();
     private final Label algMemLabel = new Label();
     private final Label totalProcesosLabel = new Label();
     private final Label procesosCompletadosLabel = crearValorPrincipal();
@@ -42,23 +47,39 @@ private final Label algPlanLabel = new Label();
     public ResultadosPage() {
         this(DatosResultados.prueba());
     }
-    public ResultadosPage(DatosResultados datos) {
-        setSpacing(20);
-        setPadding(new Insets(20));
-        getStyleClass().add("page-container");
 
+    public ResultadosPage(DatosResultados datos) {
+        // El VBox raíz ahora solo sostiene el ScrollPane
+        getStyleClass().add("page-container");
+        setPadding(new Insets(0));
+        setSpacing(0);
+
+        // ScrollPane similar al de ConfigPage
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.getStyleClass().add("edge-to-edge");
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+
+        content.setSpacing(20);
+        content.setPadding(new Insets(20));
+
+        scrollPane.setContent(content);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        getChildren().add(scrollPane);
+
+        // A partir de aquí, TODO se agrega a "content" en vez de al VBox raíz
         construirEncabezado();
 
-        getChildren().addAll(
+        content.getChildren().addAll(
                 construirDatosGenerales(),
-                construirBloqueMetricasJuntas() 
+                construirBloqueMetricasJuntas()
         );
         construirVisualizaciones();
         construirTabla();
         actualizarDatos(datos);
     }
 
-    
     private void construirEncabezado() {
         BorderPane barra = new BorderPane();
         barra.setPadding(new Insets(0, 0, 3, 0));
@@ -69,8 +90,8 @@ private final Label algPlanLabel = new Label();
         textos.getChildren().addAll(titulo);
 
         barra.setLeft(textos);
-        setMargin(barra, new Insets(0, 0, 3, 0));
-        getChildren().add(barra);
+        VBox.setMargin(barra, new Insets(0, 0, 3, 0));
+        content.getChildren().add(barra);   // <-- antes era getChildren()
     }
 
     private Node construirDatosGenerales() {
@@ -90,7 +111,7 @@ private final Label algPlanLabel = new Label();
         return contenedor;
     }
 
-private Node construirBloqueMetricasJuntas() {
+    private Node construirBloqueMetricasJuntas() {
         HBox fila = new HBox(30);
         fila.setAlignment(Pos.CENTER_LEFT);
 
@@ -101,7 +122,6 @@ private Node construirBloqueMetricasJuntas() {
         memoria.setMinWidth(480);
 
         fila.getChildren().addAll(scheduler, memoria);
-
         return fila;
     }
 
@@ -135,7 +155,6 @@ private Node construirBloqueMetricasJuntas() {
         contenedor.getChildren().addAll(titulo, grid);
         return contenedor;
     }
-    
 
     private void construirVisualizaciones() {
         Label subtitulo = new Label("Visualizaciones");
@@ -170,7 +189,7 @@ private Node construirBloqueMetricasJuntas() {
 
         graficas.getChildren().addAll(graficaCpuCard, graficaEspera);
 
-        getChildren().addAll(subtitulo, graficas);
+        content.getChildren().addAll(subtitulo, graficas);  // <-- antes era getChildren()
     }
 
     private void construirTabla() {
@@ -209,7 +228,6 @@ private Node construirBloqueMetricasJuntas() {
         fallosCol.setGraphic(labelFallos);
         fallosCol.setCellValueFactory(new PropertyValueFactory<>("fallosPagina"));
 
-
         tablaProcesos.getColumns().addAll(pidCol, esperaCol, retornoCol, respuestaCol, fallosCol);
         tablaProcesos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         tablaProcesos.setPrefHeight(260);
@@ -217,7 +235,7 @@ private Node construirBloqueMetricasJuntas() {
         tablaProcesos.setStyle("-fx-background-color: #0f0a1a;");
 
         VBox.setVgrow(tablaProcesos, Priority.ALWAYS);
-        getChildren().addAll(titulo, tablaProcesos);
+        content.getChildren().addAll(titulo, tablaProcesos);   // <-- antes era getChildren()
     }
 
     public void actualizarDatos(DatosResultados datos) {
@@ -305,7 +323,7 @@ private Node construirBloqueMetricasJuntas() {
         label.getStyleClass().add("metric-value");
         return label;
     }
-    
+
     private GridPane crearGridMetricas() {
         GridPane grid = new GridPane();
         grid.setHgap(12);
